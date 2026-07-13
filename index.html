@@ -108,6 +108,7 @@ function legend(){ if(lg) lg.remove(); lg=L.control({position:'bottomright'}); c
      ? bar('#b2182b','≥ +8%')+bar('#d6604d','+6 a +8%')+bar('#f4a582','+4 a +6%')+bar('#fddbc7','+2 a +4%')
      : bar('#67001f','≥ +15%')+bar('#b2182b','+10 a +15%')+bar('#d6604d','+5 a +10%')+bar('#f4a582','+2 a +5%')+bar('#fddbc7','0 a +2%')+bar('#67a9cf','decrece')+bar('#2166ac','decrece fuerte');
    div.innerHTML='<b>Δ % población</b><br>'+rows+'<span style="color:#666">media +5,3%</span>';
+  } else { rows = lvl==='zona'
      ? bar('#67001f','≥ +60.000')+bar('#b2182b','+30 a +60 mil')+bar('#d6604d','+15 a +30 mil')+bar('#f4a582','+5 a +15 mil')+bar('#fddbc7','< +5.000')
      : bar('#67001f','≥ +8.000')+bar('#b2182b','+3 a +8 mil')+bar('#d6604d','+1 a +3 mil')+bar('#f4a582','+300 a +1000')+bar('#fddbc7','+0 a +300')+bar('#67a9cf','decrece');
    div.innerHTML='<b>Δ personas</b><br>'+rows; }
