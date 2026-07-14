@@ -7,11 +7,15 @@ const inlineScripts = [...html.matchAll(scriptPattern)]
   .map((match) => match[1].trim())
   .filter(Boolean);
 
-if (inlineScripts.length !== 1) {
-  throw new Error(`Expected exactly one inline dashboard script, found ${inlineScripts.length}`);
+if (inlineScripts.length !== 0) {
+  throw new Error(`Expected dashboard logic in a module, found ${inlineScripts.length} inline scripts`);
 }
 
-new Function(inlineScripts[0]);
+if (!html.includes('type="module" src="js/dashboard.mjs"')) {
+  throw new Error("Missing js/dashboard.mjs module reference");
+}
+
+const dashboard = fs.readFileSync("js/dashboard.mjs", "utf8");
 
 const requiredIds = [
   "map",
@@ -21,6 +25,8 @@ const requiredIds = [
   "tesf",
   "tten",
   "info",
+  "compare",
+  "share",
   "warnings",
 ];
 for (const id of requiredIds) {
@@ -33,4 +39,10 @@ if (!html.includes("municipios 2020-2025") || !html.includes("2020-2024")) {
   throw new Error("Population periods are not explicitly documented in the dashboard");
 }
 
-console.log("Dashboard JavaScript and required controls are valid");
+for (const feature of ["writeState", "renderCompare", "qualityBlock"]) {
+  if (!dashboard.includes(`function ${feature}`)) {
+    throw new Error(`Missing dashboard feature: ${feature}`);
+  }
+}
+
+console.log("Dashboard module and required controls are valid");

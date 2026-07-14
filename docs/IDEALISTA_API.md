@@ -19,15 +19,15 @@ Solo se publicarán **totales agregados por zona y fecha**. No se guardarán anu
 ## Componentes preparados
 
 - `scripts/idealista_client.py`: OAuth, renovación preventiva del token, timeout, reintentos para 429/5xx, `Retry-After`, país dinámico y paginación.
-- `scripts/update_supply.py`: consulta venta y alquiler y genera JSON agregado.
-- `config/idealista_locations.example.json`: plantilla para relacionar códigos propios con `locationId` de Idealista.
+- `scripts/update_supply.py`: consulta venta y alquiler y genera JSON agregado, con totales brutos y tasas comparables.
+- `config/idealista_locations.example.json`: plantilla para relacionar códigos propios con `locationId` de Idealista y, opcionalmente, sus denominadores de población y parque de viviendas.
 - `tests/test_idealista_client.py`: pruebas sin llamadas de red.
 - `docs/update-supply.workflow.yml`: plantilla desactivada para una futura ejecución programada.
 
 ## Activación cuando llegue la aprobación
 
 1. Confirmar en la documentación recibida los límites, usos permitidos y versión del endpoint.
-2. Copiar `config/idealista_locations.example.json` a `config/idealista_locations.json` y sustituir los marcadores por IDs reales. Los IDs no deben inventarse.
+2. Copiar `config/idealista_locations.example.json` a `config/idealista_locations.json` y sustituir los marcadores por IDs reales. Los IDs no deben inventarse. Completar `population` y `housing_stock` solo con valores oficiales compatibles con la fecha del corte; si faltan, dejarlos en `null`.
 3. Instalar dependencias:
 
    ```bash
@@ -52,6 +52,15 @@ Solo se publicarán **totales agregados por zona y fecha**. No se guardarán anu
 
 6. Revisar los totales y los límites antes de activar cualquier programación.
 
+## Salida y comparación territorial
+
+Por cada zona se conservan `sale_total`, `rent_total` y `total_supply`. Si la configuración contiene denominadores válidos, también se calculan:
+
+- venta, alquiler y oferta total por 1.000 habitantes;
+- venta, alquiler y oferta total por 1.000 viviendas.
+
+No se rellenan tasas cuando falta el denominador: un dato ausente permanece ausente. Antes de incorporar la serie al panel hay que comprobar que el total de la API representa anuncios activos, que el mismo anuncio no se duplica entre cortes y que población/parque de viviendas usan una geografía y fecha compatibles.
+
 ## Seguridad
 
 - Nunca copiar las credenciales en `index.html`, JSON, capturas, logs o commits.
@@ -62,4 +71,3 @@ Solo se publicarán **totales agregados por zona y fecha**. No se guardarán anu
 ## Procedencia
 
 El diseño toma como referencia las ideas útiles de `yagueto/idealista-api` (cliente OAuth, objeto de búsqueda y respuesta estructurada), pero incorpora controles adicionales y una salida limitada a agregados. Véase `THIRD_PARTY_NOTICES.md`.
-

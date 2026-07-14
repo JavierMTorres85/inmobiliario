@@ -10,10 +10,13 @@ from pathlib import Path
 import time
 from typing import Any
 
-from idealista_client import IdealistaAPIError, IdealistaClient, SearchRequest
+try:
+    from .idealista_client import IdealistaAPIError, IdealistaClient, SearchRequest
+except ImportError:  # Direct execution: python scripts/update_supply.py
+    from idealista_client import IdealistaAPIError, IdealistaClient, SearchRequest
 
 
-def load_locations(path: Path) -> list[dict[str, str]]:
+def load_locations(path: Path) -> list[dict[str, Any]]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, list) or not payload:
         raise ValueError("locations file must contain a non-empty JSON list")
@@ -23,7 +26,20 @@ def load_locations(path: Path) -> list[dict[str, str]]:
             raise ValueError(f"location {index} must contain {sorted(required)}")
         if str(location["location_id"]).startswith("REPLACE_"):
             raise ValueError(f"location {location['name']} still has a placeholder location_id")
+        for denominator in ("population", "housing_stock"):
+            value = location.get(denominator)
+            if value is not None and (
+                isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0
+            ):
+                raise ValueError(f"location {location['name']} has an invalid {denominator}")
     return payload
+
+
+def per_thousand(total: int, denominator: int | float | None) -> float | None:
+    """Return a comparable supply rate without inventing missing denominators."""
+    if denominator is None:
+        return None
+    return round(total * 1000 / denominator, 2)
 
 
 def write_json_atomic(path: Path, payload: Any) -> None:
@@ -38,7 +54,7 @@ def write_json_atomic(path: Path, payload: Any) -> None:
 
 def collect(
     client: IdealistaClient,
-    locations: list[dict[str, str]],
+    locations: list[dict[str, Any]],
     *,
     delay: float,
 ) -> dict[str, Any]:
@@ -52,6 +68,10 @@ def collect(
             "level": location["level"],
             "idealista_location_id": location["location_id"],
         }
+        if location.get("population") is not None:
+            row["population"] = location["population"]
+        if location.get("housing_stock") is not None:
+            row["housing_stock"] = location["housing_stock"]
         for operation in ("sale", "rent"):
             response = client.search(
                 SearchRequest(
@@ -66,13 +86,28 @@ def collect(
             row[f"{operation}_total"] = response.total
             if delay:
                 time.sleep(delay)
+        row["total_supply"] = row["sale_total"] + row["rent_total"]
+        for operation in ("sale", "rent", "total_supply"):
+            total_key = operation if operation == "total_supply" else f"{operation}_total"
+            prefix = "total" if operation == "total_supply" else operation
+            inhabitants = per_thousand(row[total_key], location.get("population"))
+            homes = per_thousand(row[total_key], location.get("housing_stock"))
+            if inhabitants is not None:
+                row[f"{prefix}_per_1000_inhabitants"] = inhabitants
+            if homes is not None:
+                row[f"{prefix}_per_1000_homes"] = homes
         results.append(row)
 
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "generated_at": collected_at.isoformat().replace("+00:00", "Z"),
         "source": "Idealista Search API",
         "property_type": "homes",
+        "normalization": {
+            "unit": "active listings per 1,000",
+            "denominators": ["population", "housing_stock"],
+            "note": "Rates are only emitted when the corresponding denominator is supplied.",
+        },
         "locations": results,
     }
 
@@ -111,4 +146,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

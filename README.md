@@ -18,6 +18,17 @@ Cinco métricas conmutables (pestañas arriba a la izquierda), tres niveles por 
 
 En todas: **pincha** un polígono → ficha con rankings ("Nº más caro", "Nº donde más renta el alquiler"…) e insights; botón **"20 similares"** que resalta en verde los más parecidos en la métrica activa. Gris = sin dato público suficiente.
 
+El panel permite copiar un **enlace reproducible** que conserva métrica, unidad, encuadre, zona seleccionada y comparación. La ficha muestra la fuente, periodo, naturaleza y cobertura del dato. El comparador enfrenta dos zonas del mismo nivel. La interfaz adapta sus controles y fichas a móvil y admite navegación por teclado.
+
+## Estructura del panel
+
+- `index.html`: interfaz y estilos.
+- `js/dashboard.mjs`: mapa, controles, enlace compartible y comparador.
+- `data/municipalities.json`, `districts.json`, `neighborhoods.json` y `zones.json`: datos por nivel geográfico.
+- `data/manifest.json`: procedencia, periodo, tipo y cobertura de cada métrica.
+
+Cada cambio propuesto en una rama o en `main` ejecuta validación automática de Python, pruebas, JSON, credenciales y JavaScript mediante GitHub Actions.
+
 ## 📄 Documentos
 
 | Fichero | Qué contiene |
@@ -28,7 +39,7 @@ En todas: **pincha** un polígono → ficha con rankings ("Nº más caro", "Nº 
 
 ## Preparación para la API de idealista
 
-Se ha añadido una base Python inactiva para recoger en el futuro totales agregados de anuncios de venta y alquiler, sin publicar credenciales ni anuncios individuales. Incluye OAuth, renovación del token, timeouts, reintentos, paginación, plantilla de localizaciones, pruebas y un workflow mensual desactivado. La activación está documentada en [`docs/IDEALISTA_API.md`](docs/IDEALISTA_API.md).
+Se ha añadido una base Python inactiva para recoger en el futuro totales agregados de anuncios de venta y alquiler, sin publicar credenciales ni anuncios individuales. Incluye OAuth, renovación del token, timeouts, reintentos, paginación, plantilla de localizaciones, pruebas, normalización opcional por 1.000 habitantes o viviendas y un workflow mensual desactivado. La activación está documentada en [`docs/IDEALISTA_API.md`](docs/IDEALISTA_API.md).
 
 Hasta disponer de acceso y datos de oferta, la quinta métrica se denomina **demanda-precio** y no oferta-demanda.
 

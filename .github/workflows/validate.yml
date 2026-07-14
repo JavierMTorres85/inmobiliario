@@ -43,5 +43,6 @@ jobs:
           node-version: "22"
 
       - name: Validate dashboard JavaScript and required controls
-        run: node scripts/check_dashboard.mjs
-
+        run: |
+          node --check js/dashboard.mjs
+          node scripts/check_dashboard.mjs
