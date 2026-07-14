@@ -1,5 +1,11 @@
 # Third-party notices
 
+## MapLibre GL JS
+
+The interactive map uses MapLibre GL JS 5.24.0, distributed under the BSD
+3-Clause license. The dark base-map style and tiles are provided by CARTO and
+retain their attribution in the map control.
+
 The Idealista API preparation was informed by the public project
 [`yagueto/idealista-api`](https://github.com/yagueto/idealista-api), distributed
 under the MIT License.
