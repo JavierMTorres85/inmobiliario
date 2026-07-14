@@ -11,7 +11,6 @@ target.searchParams.set("lat", "40.42");
 target.searchParams.set("lng", "-3.72");
 target.searchParams.set("zoom", "10");
 target.searchParams.set("zone", "M:28022");
-target.searchParams.set("compare", "M:28022,D:1");
 
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
@@ -29,7 +28,9 @@ try {
   await page.getByRole("heading", { name: "Boadilla del Monte" }).waitFor();
   await page.getByText("Todos los datos disponibles", { exact: true }).waitFor();
   await page.getByText("Azul = inicio · naranja = final.").waitFor();
-  await page.getByText("Comparabilidad media", { exact: true }).waitFor();
+  if (await page.locator("#compare").isVisible()) throw new Error("Comparator opens before the selected zone is added");
+  await page.getByRole("button", { name: "Añadir al comparador", exact: true }).click();
+  if (!(await page.locator("#compare").isVisible())) throw new Error("Comparator does not open after adding the selected zone");
 
   await page.getByRole("button", { name: "Población 3D", exact: true }).click();
   await page.waitForFunction(() => new URL(location.href).searchParams.get("view") === "3d");
@@ -51,11 +52,14 @@ try {
   if (!new URL(page.url()).searchParams.get("metric")?.includes("ren")) {
     throw new Error("Metric changes are not being persisted in the URL");
   }
+  if (await page.getByRole("button", { name: "Población 3D", exact: true }).isVisible()) throw new Error("3D control remains visible outside population");
 
   const search = page.getByLabel("Buscar municipio, distrito o barrio");
   await search.fill("Centro — distrito");
   await search.press("Enter");
   await page.getByRole("heading", { name: "Centro", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Añadir al comparador", exact: true }).click();
+  await page.getByText("Comparabilidad media", { exact: true }).waitFor();
 
   const legendRanges = page.locator(".legend-range");
   if ((await legendRanges.count()) !== 5) throw new Error("Interactive legend must expose five populated quantile ranges");
@@ -83,6 +87,16 @@ try {
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Exportar CSV", exact: true }).click();
   await download;
+
+  const macroUrl = new URL(baseUrl);
+  macroUrl.searchParams.set("metric", "pre");
+  macroUrl.searchParams.set("zoom", "8");
+  macroUrl.searchParams.set("zone", "C:CM");
+  await page.goto(macroUrl.href, { waitUntil: "domcontentloaded" });
+  await page.locator("#load").waitFor({ state: "hidden", timeout: 60_000 });
+  await page.getByRole("heading", { name: "Comunidad de Madrid", exact: true }).waitFor();
+  await page.getByText("Precio medio de venta", { exact: true }).waitFor();
+  if (!(await page.locator("#macroWrap").isVisible())) throw new Error("Territorial summary selector is hidden at regional zoom");
 
   const sparseZone = new URL(baseUrl);
   sparseZone.searchParams.set("metric", "esf");
