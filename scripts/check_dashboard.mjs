@@ -28,6 +28,8 @@ const requiredIds = [
   "compare",
   "share",
   "zoneSearch",
+  "togglePanel",
+  "metricSelect",
   "warnings",
 ];
 for (const id of requiredIds) {
@@ -40,7 +42,7 @@ if (!html.includes("municipios 2020-2025") || !html.includes("2020-2024")) {
   throw new Error("Population periods are not explicitly documented in the dashboard");
 }
 
-for (const feature of ["writeState", "renderCompare", "qualityBlock", "historyBlock", "annualPct", "focusZone", "exportComparison", "comparabilityBlock"]) {
+for (const feature of ["writeState", "renderCompare", "qualityBlock", "historyBlock", "annualPct", "focusZone", "exportComparison", "comparabilityBlock", "closeMobilePanel"]) {
   if (!dashboard.includes(`function ${feature}`)) {
     throw new Error(`Missing dashboard feature: ${feature}`);
   }

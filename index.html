@@ -5,8 +5,8 @@
 <style>
  html,body{margin:0;height:100%;font-family:Arial,Helvetica,sans-serif}
  #map{position:absolute;inset:0;background:#0b0b0b}
- .panel{position:absolute;top:10px;left:52px;z-index:1000;background:rgba(255,255,255,.96);padding:9px 12px;border-radius:7px;box-shadow:0 1px 5px rgba(0,0,0,.35);max-width:360px}
- .panel h1{font-size:14px;margin:0 0 4px} .panel p{font-size:11px;margin:0 0 8px;color:#555}
+ .panel{position:absolute;top:10px;left:52px;z-index:1000;background:rgba(255,255,255,.96);padding:9px 12px;border-radius:7px;box-shadow:0 1px 5px rgba(0,0,0,.35);max-width:360px}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.panel-body{display:block}
+ .panel h1{font-size:14px;margin:0 0 4px}.panel-toggle{display:none;border:0;border-radius:5px;background:#1F4E78;color:#fff;font-weight:bold;padding:7px 10px}.panel p{font-size:11px;margin:0 0 8px;color:#555}
  .tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
  .tabs button{border:1px solid #1F4E78;background:#fff;color:#1F4E78;padding:4px 8px;border-radius:5px;cursor:pointer;font-size:11.5px}
  .tabs button.on{background:#1F4E78;color:#fff;font-weight:bold}
@@ -14,6 +14,7 @@
  .seg button{flex:1;border:0;background:#fff;color:#b2182b;padding:5px 8px;cursor:pointer}
  .seg button.on{background:#b2182b;color:#fff;font-weight:bold}
  .lvl{font-size:11px;color:#777;margin-top:6px}
+ .metric-select{display:none;font-size:11px;color:#555}.metric-select select{width:100%;margin-top:3px;border:1px solid #1F4E78;border-radius:6px;background:#fff;padding:8px;font-size:14px}
  .legend{background:rgba(255,255,255,.95);padding:8px 10px;border-radius:6px;font-size:11px;line-height:16px;box-shadow:0 1px 5px rgba(0,0,0,.35)}
  .legend b{font-size:12px}
  .info{position:absolute;top:10px;right:10px;width:305px;max-height:calc(100% - 20px);overflow:auto;z-index:1001;background:#fff;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.4);display:none}
@@ -36,7 +37,7 @@
  .lbl{color:#fff;font:bold 10px Arial;text-shadow:0 1px 3px #000,0 -1px 3px #000,1px 0 3px #000,-1px 0 3px #000,0 0 5px #000;pointer-events:none;white-space:nowrap;position:absolute;transform:translate(-50%,-50%)}
  .loading{position:absolute;bottom:14px;left:52px;color:#bbb;font-size:11px;z-index:900}
  .warnings{position:absolute;bottom:14px;left:52px;max-width:520px;background:rgba(120,35,25,.95);color:#fff;padding:7px 10px;border-radius:6px;font-size:11px;z-index:1002;display:none}
- .share{display:flex;align-items:center;gap:7px;margin-top:7px}
+ .more-actions{margin-top:7px;font-size:11px}.more-actions summary{cursor:pointer;color:#1F4E78;font-weight:bold}.share{display:flex;align-items:center;gap:7px;margin-top:7px}
  .share button,.compare button{border:0;border-radius:5px;padding:6px 9px;cursor:pointer;font-weight:bold}
  .share button{background:#1F4E78;color:#fff;font-size:11.5px}.share span{font-size:10.5px;color:#287a3e}
  .tools{display:grid;grid-template-columns:1fr;gap:6px;margin-top:7px}.tools label{font-size:10px;color:#555}.tools input{box-sizing:border-box;width:100%;margin-top:2px;border:1px solid #777;border-radius:5px;padding:6px 7px;font-size:11.5px}
@@ -48,16 +49,17 @@
  .compare .chd h2{font-size:14px;margin:0}.compare .chd button{background:transparent;color:#fff;font-size:19px;padding:0 5px}
  .compare .cbd{padding:9px 11px;font-size:11.5px;overflow:auto}.compare table{width:100%;border-collapse:collapse}.compare th,.compare td{text-align:left;padding:5px;border-bottom:1px solid #eee}.compare th{color:#555}.compare .empty{color:#666}.compare .actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}.compare .actions button{background:#eee;color:#333}.compare .actions button.export{background:#1F4E78;color:#fff}
  .comparability{padding:7px 9px;border-radius:6px;margin-bottom:8px;font-size:11px}.comparability.high{background:#e7f6eb;border-left:4px solid #2e8b45}.comparability.medium{background:#fff5d8;border-left:4px solid #c68a00}.comparability.low{background:#fde8e6;border-left:4px solid #b23b32}.comparability b{display:block}
- button:focus-visible,.leaflet-interactive:focus-visible{outline:3px solid #ffd400;outline-offset:2px}
+ .sheet-toggle{display:none}.panel button,.panel input,.panel select,.info button,.compare button{min-height:36px}button:focus-visible,.leaflet-interactive:focus-visible{outline:3px solid #ffd400;outline-offset:2px}
  @media (max-width:760px){
-  .panel{top:6px;left:42px;right:6px;max-width:none;padding:8px}.panel p{display:none}.tabs{flex-wrap:nowrap;overflow-x:auto}.tabs button{white-space:nowrap;min-height:34px}.seg button{min-height:34px}.tools{grid-template-columns:1fr}.tools button{min-height:34px}
-  .info{top:auto;left:6px;right:6px;bottom:6px;width:auto;max-height:56%;border-radius:10px}.info .hd{position:sticky;top:0;z-index:1}
-  .compare{left:6px;right:6px;bottom:6px;width:auto;max-height:52%}.legend{display:none}.loading,.warnings{left:6px;right:6px;bottom:6px;max-width:none}
+  .panel{top:max(6px,env(safe-area-inset-top));left:6px;right:6px;max-width:none;padding:8px}.panel h1{margin:0;font-size:13px}.panel-toggle{display:block;min-height:44px}.panel-body{display:none;padding-top:7px}.panel.open .panel-body{display:block}.panel p,.tabs{display:none}.metric-select{display:block}.seg button,.panel input,.panel select,.panel button{min-height:44px}.tools{grid-template-columns:1fr}.more-actions{margin-top:8px}
+  .info{top:auto;left:6px;right:6px;bottom:max(6px,env(safe-area-inset-bottom));width:auto;max-height:44%;border-radius:12px}.info.expanded{max-height:82%}.info .hd{position:sticky;top:0;z-index:1;padding-left:48px}.sheet-toggle{display:block;position:absolute;left:7px;top:6px;width:34px;min-height:34px;border:0;background:rgba(255,255,255,.2);color:#fff;border-radius:5px;font-size:16px}.info button{min-height:44px}
+  .compare{left:6px;right:6px;bottom:max(6px,env(safe-area-inset-bottom));width:auto;max-height:58%}.legend{display:block;max-width:calc(100vw - 32px);padding:6px 8px;font-size:10px;line-height:14px}.legend div{max-width:180px}.leaflet-control-zoom{display:none}.loading,.warnings{left:6px;right:6px;bottom:6px;max-width:none}
  }
  @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style></head><body>
-<div class="panel">
- <h1>Mercado de vivienda — Comunidad de Madrid</h1>
+<div class="panel" id="controlPanel">
+ <div class="panel-head"><h1>Mercado de vivienda — Comunidad de Madrid</h1><button type="button" class="panel-toggle" id="togglePanel" aria-expanded="false" aria-controls="panelBody">Opciones</button></div>
+ <div class="panel-body" id="panelBody">
  <div class="tabs" role="group" aria-label="Métrica del mapa">
   <button type="button" id="tpob" class="on" data-metric="pob" aria-pressed="true">Población</button>
   <button type="button" id="tpre" data-metric="pre" aria-pressed="false">Precio €/m²</button>
@@ -65,6 +67,7 @@
   <button type="button" id="tesf" data-metric="esf" aria-pressed="false">Esfuerzo</button>
   <button type="button" id="tten" data-metric="ten" aria-pressed="false">Demanda-precio</button>
  </div>
+ <label class="metric-select" for="metricSelect">Métrica<select id="metricSelect"><option value="pob">Población</option><option value="pre">Precio €/m²</option><option value="ren">Rentabilidad</option><option value="esf">Esfuerzo</option><option value="ten">Demanda-precio</option></select></label>
  <p id="mdesc">Crecimiento anual equivalente: municipios 2020-2025; distritos y barrios 2020-2024. Rojo = gana · Azul = pierde. <b>Pincha</b> para la ficha.</p>
  <div class="seg" id="segpob" role="group" aria-label="Unidad de población"><button type="button" id="bAbs" aria-pressed="false">Cambio total</button><button type="button" id="bPct" class="on" aria-pressed="true">Crecimiento anual (%)</button></div>
  <div class="lvl" id="lvl">Nivel: municipios</div>
@@ -72,7 +75,8 @@
   <label for="zoneSearch">Buscar municipio, distrito o barrio<input id="zoneSearch" list="zoneOptions" autocomplete="off" placeholder="Ej.: Boadilla, Centro…"></label>
   <datalist id="zoneOptions"></datalist>
  </div>
- <div class="share"><button type="button" id="share">Copiar enlace de esta vista</button><span id="shareStatus" role="status" aria-live="polite"></span></div>
+ <details class="more-actions"><summary>Más opciones</summary><div class="share"><button type="button" id="share">Copiar enlace de esta vista</button><span id="shareStatus" role="status" aria-live="polite"></span></div></details>
+ </div>
 </div>
 <aside class="info" id="info" aria-label="Ficha de la zona" aria-live="polite"></aside>
 <aside class="compare" id="compare" aria-label="Comparador de zonas">

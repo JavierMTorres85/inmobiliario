@@ -20,6 +20,8 @@ En todas: **pincha** un polígono → ficha con rankings ("Nº más caro", "Nº 
 
 El panel permite copiar un **enlace reproducible** que conserva métrica, unidad, encuadre, zona seleccionada y comparación. La ficha diferencia siempre el inicio (azul) y el final (naranja), mientras que fuente, periodo, naturaleza y cobertura quedan en «Fuente y metodología». El comparador admite dos zonas, indica si la comparación es alta, media o baja y exporta CSV o una imagen SVG. La interfaz incorpora búsqueda por municipio, distrito o barrio, adapta sus controles a móvil y admite navegación por teclado.
 
+En móvil los controles permanecen plegados bajo **Opciones**, la métrica se elige desde un selector táctil y la ficha se abre como panel inferior reducido o ampliable. La leyenda permanece visible y los controles principales respetan un área táctil mínima de 44 px.
+
 La comparación temporal aparece directamente en la ficha: **azul = inicio** y **naranja = final**, siempre con los años visibles. Los cortes completos se conservan bajo `data/history/`.
 
 ## Estructura del panel

@@ -303,7 +303,8 @@ function openInfo(item,lt){
  const canSim=mv(item,lt)!=null;
  const inCompare=compareItems.some(entry=>entry.lt===lt&&entry.item.c===item.c);
  const info=document.getElementById('info');
- info.innerHTML=`<div class="hd"><button type="button" class="x" data-action="clear-selection" aria-label="Cerrar ficha">&times;</button><h2>${item.n}</h2><div class="sub">${sub}</div></div>
+ info.classList.remove('expanded');
+ info.innerHTML=`<div class="hd"><button type="button" class="sheet-toggle" data-action="toggle-info-size" aria-label="Ampliar ficha" aria-expanded="false">↕</button><button type="button" class="x" data-action="clear-selection" aria-label="Cerrar ficha">&times;</button><h2>${item.n}</h2><div class="sub">${sub}</div></div>
  <div class="bd">${body}
  <button type="button" class="compare-add" data-action="add-compare">${inCompare?'Ver en el comparador':'Añadir al comparador'}</button>
  ${canSim?`<button type="button" class="sim" data-action="show-similar">Mostrar 20 similares en ${MLAB()}</button>`:''}
@@ -398,11 +399,13 @@ map.on('moveend',writeState);
 // ---------- metric switching ----------
 function setMetric(m){if(!VALID_METRICS.has(m))return;METRIC=m;
  ['pob','pre','ren','esf','ten'].forEach(x=>{const button=document.getElementById('t'+x),active=x===m;button.classList.toggle('on',active);button.setAttribute('aria-pressed',String(active));});
+ document.getElementById('metricSelect').value=m;
  document.getElementById('mdesc').innerHTML=MDESC[m];
  document.getElementById('segpob').style.display=(m==='pob')?'flex':'none';
  if(selCode){const arr=arrOf(selType);const it=arr.find(x=>x.c===selCode);simSet=null;if(it)openInfo(it,selType);}
  if(compareItems.length)renderCompare(false);writeState();restyle();}
 document.querySelectorAll('[data-metric]').forEach(button=>button.addEventListener('click',()=>setMetric(button.dataset.metric)));
+document.getElementById('metricSelect').addEventListener('change',event=>{setMetric(event.target.value);closeMobilePanel();});
 document.getElementById('bAbs').onclick=()=>{metric='abs';sw();};
 document.getElementById('bPct').onclick=()=>{metric='pct';sw();};
 function sw(){const abs=metric==='abs';document.getElementById('bAbs').classList.toggle('on',abs);document.getElementById('bAbs').setAttribute('aria-pressed',String(abs));document.getElementById('bPct').classList.toggle('on',!abs);document.getElementById('bPct').setAttribute('aria-pressed',String(!abs));if(selCode){const arr=arrOf(selType);const it=arr.find(x=>x.c===selCode);if(it)openInfo(it,selType);}if(compareItems.length)renderCompare(false);writeState();restyle();}
@@ -416,17 +419,21 @@ async function runSearch(){
  if(!needle)return;
  const entry=SEARCH_ENTRIES.find(candidate=>normalizeSearch(candidate.label)===needle)||SEARCH_ENTRIES.find(candidate=>normalizeSearch(candidate.item.n).startsWith(needle));
  if(!entry){document.getElementById('shareStatus').textContent='Zona no encontrada.';return;}
- input.value=entry.label;await focusZone(entry.lt,entry.item.c);
+ input.value=entry.label;await focusZone(entry.lt,entry.item.c);closeMobilePanel();
 }
 document.getElementById('zoneSearch').addEventListener('change',runSearch);
 document.getElementById('zoneSearch').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();runSearch();}});
 document.getElementById('info').addEventListener('click',event=>{
  const action=event.target.closest('[data-action]')?.dataset.action;
  if(action==='clear-selection')clearSel();
+ else if(action==='toggle-info-size'){const panel=document.getElementById('info'),expanded=panel.classList.toggle('expanded');event.target.setAttribute('aria-expanded',String(expanded));event.target.setAttribute('aria-label',expanded?'Reducir ficha':'Ampliar ficha');}
  else if(action==='add-compare')addCompare();
  else if(action==='show-similar')showSim();
  else if(action==='hide-similar')hideSim();
 });
+const controlPanel=document.getElementById('controlPanel'),panelToggle=document.getElementById('togglePanel');
+function closeMobilePanel(){if(!matchMedia('(max-width:760px)').matches)return;controlPanel.classList.remove('open');panelToggle.setAttribute('aria-expanded','false');panelToggle.textContent='Opciones';}
+panelToggle.addEventListener('click',()=>{const open=controlPanel.classList.toggle('open');panelToggle.setAttribute('aria-expanded',String(open));panelToggle.textContent=open?'Cerrar':'Opciones';});
 document.getElementById('compareBody').addEventListener('click',event=>{
  const remove=event.target.closest('[data-remove-compare]');
  if(remove){compareItems.splice(Number(remove.dataset.removeCompare),1);renderCompare();return;}
