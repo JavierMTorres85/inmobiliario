@@ -27,16 +27,17 @@ El panel permite copiar un **enlace reproducible** que conserva métrica, unidad
 En móvil los controles permanecen plegados bajo **Opciones**, la métrica se elige desde un selector táctil y la ficha se abre como panel inferior reducido o ampliable. La leyenda permanece visible y los controles principales respetan un área táctil mínima de 44 px.
 
 La leyenda divide las zonas con datos en cinco grupos cuantiles, evitando
-intervalos vacíos o un único grupo dominante. Al pasar por un rango se aíslan
-sus zonas; al pulsarlo quedan visibles únicamente sus polígonos, contornos y
-nombres. La selección se conserva en el enlace y se elimina pulsando de nuevo
-el rango activo.
+intervalos vacíos o un único grupo dominante. Se pueden acumular varios rangos:
+los elegidos conservan el color exacto de su barra y su relieve 3D, mientras el
+resto queda blanco y plano. La selección se conserva en el enlace y cada rango
+se elimina pulsándolo de nuevo.
 
 La perspectiva **Población 3D** conserva el color de la métrica activa y eleva
 cada municipio o distrito según su población actual. La altura usa una raíz
 cuadrada declarada para que Madrid no aplaste visualmente al resto. Los barrios
 permanecen planos porque el corte actual no contiene población total oficial a
-ese nivel.
+ese nivel. Al entrar se encuadra Madrid en primer plano y la cámara admite giro
+horizontal e inclinación vertical con el ratón, además del control de brújula.
 
 El control **Tiempo observado** reproduce únicamente años respaldados por los
 campos del corte actual: municipios 2020, 2024 y 2025; distritos 2020, 2023 y
