@@ -77,6 +77,10 @@ if (!dashboard.includes("['case',['boolean',['get','rangeMatch'],false],.96,0]")
   throw new Error("Selected legend range must hide non-matching polygons");
 }
 
+if (!dashboard.includes("legendBins(queryRange[1]).find(bin=>bin.index===Number(queryRange[2]))")) {
+  throw new Error("Legend range must be restored before URL state is rewritten");
+}
+
 for (const feature of ["observedSeries", "observedPoint", "availableYears", "setTimeYear", "toggleTimeline"]) {
   if (!dashboard.includes(`function ${feature}`)) throw new Error(`Missing phase 6 timeline feature: ${feature}`);
 }
