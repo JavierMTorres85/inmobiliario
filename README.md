@@ -22,7 +22,7 @@ Cinco métricas conmutables (pestañas arriba a la izquierda), tres niveles por 
 
 En todas: **pincha** un polígono → ficha con rankings ("Nº más caro", "Nº donde más renta el alquiler"…) e insights; botón **"20 similares"** que resalta en verde los más parecidos en la métrica activa. Gris = sin dato público suficiente.
 
-El panel permite copiar un **enlace reproducible** que conserva métrica, unidad, encuadre, zona seleccionada y comparación. La ficha diferencia siempre el inicio (azul) y el final (naranja) y reúne todos los indicadores disponibles de la zona, omitiendo campos vacíos. El comparador admite dos zonas, indica si la comparación es alta, media o baja y exporta CSV o una imagen SVG. La interfaz incorpora búsqueda por municipio, distrito o barrio, adapta sus controles a móvil y admite navegación por teclado.
+La URL conserva métrica, unidad, encuadre, zona seleccionada y comparación. La ficha diferencia siempre el inicio (azul) y el final (naranja) y reúne todos los indicadores disponibles de la zona, omitiendo campos vacíos. El comparador admite dos zonas, indica si la comparación es alta, media o baja y exporta CSV o una imagen SVG. La interfaz incorpora búsqueda por municipio, distrito o barrio, adapta sus controles a móvil y admite navegación por teclado.
 
 En móvil los controles permanecen plegados bajo **Opciones**, la métrica se elige desde un selector táctil y la ficha se abre como panel inferior reducido o ampliable. La leyenda permanece visible y los controles principales respetan un área táctil mínima de 44 px.
 
@@ -39,12 +39,10 @@ permanecen planos porque el corte actual no contiene población total oficial a
 ese nivel. Al entrar se encuadra Madrid en primer plano y la cámara admite giro
 horizontal e inclinación vertical con el ratón, además del control de brújula.
 
-El control **Tiempo observado** reproduce únicamente años respaldados por los
-campos del corte actual: municipios 2020, 2024 y 2025; distritos 2020, 2023 y
-2024. La altura representa la población exacta del corte y el color la tasa
-anual equivalente desde la observación anterior. No se interpolan 2021–2023 ni
-se presenta una animación anual falsa; completar esos años requerirá incorporar
-una serie oficial adicional.
+El control de tiempo recorre año a año 2020–2025 en municipios y 2020–2024 en
+distritos. Conserva como anclas los cortes disponibles e interpola linealmente
+los años intermedios solo para producir una transición visual continua; no
+altera ni completa los archivos de datos originales.
 
 La comparación temporal aparece directamente en la ficha: **azul = inicio** y **naranja = final**, siempre con los años visibles. Los cortes completos se conservan bajo `data/history/`.
 
