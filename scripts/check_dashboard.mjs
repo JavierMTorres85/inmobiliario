@@ -68,6 +68,15 @@ for (const feature of ["populationHeight", "updateViewMode"]) {
 
 if (!dashboard.includes("type:'fill-extrusion'")) throw new Error("3D population extrusion layer is missing");
 
+if (!dashboard.includes("Math.ceil(values.length*group/5)") || !dashboard.includes("filter(bin=>bin.count>0)")) {
+  throw new Error("Legend ranges must be populated quantile groups");
+}
+
+if (!dashboard.includes("['case',['boolean',['get','rangeMatch'],false],.96,0]") ||
+    !dashboard.includes("['case',['boolean',['get','rangeMatch'],false],1,0]")) {
+  throw new Error("Selected legend range must hide non-matching polygons");
+}
+
 for (const feature of ["observedSeries", "observedPoint", "availableYears", "setTimeYear", "toggleTimeline"]) {
   if (!dashboard.includes(`function ${feature}`)) throw new Error(`Missing phase 6 timeline feature: ${feature}`);
 }
