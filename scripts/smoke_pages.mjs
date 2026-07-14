@@ -45,7 +45,7 @@ try {
   if ((await legendRanges.count()) !== 5) throw new Error("Interactive legend must expose five proportional ranges");
   await legendRanges.nth(2).click();
   await page.waitForFunction(() => new URL(location.href).searchParams.has("range"));
-  await page.getByRole("button", { name: "Mostrar todos los nombres", exact: true }).click();
+  await page.locator("[data-labels-toggle]").click();
   await page.waitForFunction(() => new URL(location.href).searchParams.get("labels") === "all");
 
   const download = page.waitForEvent("download");
