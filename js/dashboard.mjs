@@ -47,7 +47,7 @@ function writeState(){
  history.replaceState(null,'',`${location.pathname}?${params}${location.hash}`);
 }
 const MDESC={
- pob:'Crecimiento anual equivalente: municipios 2020-2025; distritos y barrios de Madrid 2020-2024. Rojo = gana · Azul = pierde. <b>Pincha</b> para la ficha.',
+ pob:'Crecimiento poblacional en municipios de Madrid, período 2020-2025.',
  pre:'Precio de venta €/m² (informe idealista, jun-2026) con serie 2021-2026. Más oscuro = más caro. Zoom sobre Madrid: distritos y barrios. <b>Pincha</b> para ficha con serie y rankings.',
  ren:'Rentabilidad bruta del alquiler = alquiler×12 ÷ precio de venta (idealista 2026). Verde oscuro = renta más. <b>Pincha</b> para la ficha.',
  esf:'Esfuerzo de compra: años de renta íntegra del hogar medio (INE 2023) para una vivienda de 80 m² al precio actual. Morado oscuro = menos asequible. <b>Pincha</b> para la ficha.',
@@ -340,7 +340,8 @@ function observedSeries(record,lt){
  if(lt==='D'&&record.p20!=null&&record.p25!=null&&record.la!=null)return [{year:2020,population:record.p20},{year:2023,population:record.p25-record.la},{year:2024,population:record.p25}];
  return [];
 }
-function observedPoint(record,lt,year){const series=observedSeries(record,lt),index=series.findIndex(point=>point.year===year);if(index<0)return null;const point={...series[index],growth:null,from:null};if(index>0){const previous=series[index-1],years=point.year-previous.year;point.growth=(Math.pow(point.population/previous.population,1/years)-1)*100;point.from=previous.year;}return point;}
+function interpolatedPopulation(series,year){const exact=series.find(point=>point.year===year);if(exact)return exact.population;const after=series.find(point=>point.year>year),before=[...series].reverse().find(point=>point.year<year);if(!before||!after)return null;const position=(year-before.year)/(after.year-before.year);return before.population+(after.population-before.population)*position;}
+function observedPoint(record,lt,year){const series=observedSeries(record,lt),population=interpolatedPopulation(series,year);if(population==null)return null;const previous=interpolatedPopulation(series,year-1),growth=previous==null?null:(population/previous-1)*100;return {year,population:Math.round(population),growth,from:growth==null?null:year-1};}
 function rawCode(feature,lt){return lt==='M'?String(feature.properties.mun_code):(lt==='D'?String(feature.properties.cartodb_id):String(feature.properties.COD_DISBAR));}
 function activeLevel(){const zoom=map.getZoom();return zoom>=Z_BAR?'B':(zoom>=Z_DIST?'D':'M');}
 function selectedLegendRanges(lt){return legendPinned.filter(range=>range.lt===lt);}
@@ -400,19 +401,14 @@ function updateViewMode(animate=true){
  document.getElementById('view2d').classList.toggle('on',!is3D);document.getElementById('view2d').setAttribute('aria-pressed',String(!is3D));document.getElementById('view3d').classList.toggle('on',is3D);document.getElementById('view3d').setAttribute('aria-pressed',String(is3D));
  const camera=is3D?{center:[-3.7038,40.4168],zoom:9.35,pitch:64,bearing:-24,padding:{top:190,bottom:0,left:0,right:0},duration:animate?900:0}:{pitch:0,bearing:0,padding:{top:0,bottom:0,left:0,right:0},duration:animate?700:0};map.easeTo(camera);writeState();restyle();
 }
-function availableYears(lt=activeLevel()){return lt==='M'?[2020,2024,2025]:(lt==='D'?[2020,2023,2024]:[]);}
-function updateTimelineUI(){const lt=activeLevel(),years=availableYears(lt),slider=document.getElementById('timeSlider'),output=document.getElementById('timeYear'),note=document.getElementById('timeNote');slider.disabled=!years.length;slider.max=String(Math.max(0,years.length-1));const index=timeYear==null?years.length-1:years.indexOf(timeYear);slider.value=String(Math.max(0,index));output.textContent=timeYear==null?'Actual':String(timeYear);note.textContent=!years.length?'Barrios: sin población total oficial; timelapse no disponible.':`${lt==='M'?'Municipios':'Distritos'}: ${years.join(' · ')}. Solo observaciones exactas; color = variación anualizada desde el corte anterior.`;}
-function setTimeYear(year){if(year!=null&&METRIC!=='pob')setMetric('pob');if(year!=null&&metric!=='pct'){metric='pct';sw();}timeYear=year;writeState();refreshMapVisuals();updateTimelineUI();legend();}
+function availableYears(lt=activeLevel()){const limits=lt==='M'?[2020,2025]:(lt==='D'?[2020,2024]:null);return limits?Array.from({length:limits[1]-limits[0]+1},(_,index)=>limits[0]+index):[];}
+function updateTimelineUI(){const years=availableYears(),slider=document.getElementById('timeSlider'),output=document.getElementById('timeYear');slider.disabled=!years.length;slider.max=String(Math.max(0,years.length-1));const index=timeYear==null?years.length-1:years.indexOf(timeYear);slider.value=String(Math.max(0,index));output.textContent=timeYear==null?'Actual':String(timeYear);}
+function setTimeYear(year){if(year!=null&&METRIC!=='pob')setMetric('pob');if(year!=null&&metric!=='pct'){metric='pct';sw();}timeYear=year;for(const lt of ['M','D','B']){const prefix=MAP_CONFIG[lt].prefix;for(const property of ['fill-color','fill-extrusion-color','fill-extrusion-height']){const layer=property==='fill-color'?`${prefix}-fill`:`${prefix}-extrusion`;if(map.getLayer(layer))map.setPaintProperty(layer,`${property}-transition`,{duration:1050,delay:0});}}writeState();refreshMapVisuals();updateTimelineUI();legend();}
 function stopTimeline(){if(timeTimer){clearInterval(timeTimer);timeTimer=null;}const button=document.getElementById('timePlay');button.textContent='▶ Reproducir';button.setAttribute('aria-pressed','false');}
-function toggleTimeline(){if(timeTimer){stopTimeline();return;}const years=availableYears();if(!years.length)return;let index=Math.max(0,years.indexOf(timeYear));document.getElementById('timePlay').textContent='■ Detener';document.getElementById('timePlay').setAttribute('aria-pressed','true');setTimeYear(years[index]);timeTimer=setInterval(()=>{index=(index+1)%years.length;setTimeYear(years[index]);},1400);}
+function toggleTimeline(){if(timeTimer){stopTimeline();return;}const years=availableYears();if(!years.length)return;let index=timeYear==null?-1:years.indexOf(timeYear);if(index>=years.length-1)index=-1;document.getElementById('timePlay').textContent='■ Detener';document.getElementById('timePlay').setAttribute('aria-pressed','true');const advance=()=>{index++;setTimeYear(years[index]);if(index>=years.length-1)stopTimeline();};advance();if(index<years.length-1)timeTimer=setInterval(advance,1200);}
 function restyle(){
  refreshMapVisuals();
- const z=map.getZoom();
- let txt;
- if(z>=Z_BAR) txt='municipios + barrios de Madrid';
- else if(z>=Z_DIST) txt='municipios + distritos de Madrid';
- else txt=z<Z_MUNI?'municipios (vista general)':'municipios (detalle)';
- document.getElementById('lvl').textContent='Nivel: '+txt+(is3D?(activeLevel()==='B'?' · 3D sin altura: no hay total barrial':` · altura = población ${timeYear??'actual'} (escala √)`):'');updateTimelineUI();legend();
+ updateTimelineUI();legend();
 }
 const LOAD_WARNINGS=[];
 function warnLoad(message){LOAD_WARNINGS.push(message);const el=document.getElementById('warnings');el.textContent=LOAD_WARNINGS.join(' · ');el.style.display='block';}
@@ -471,15 +467,6 @@ document.getElementById('compareBody').addEventListener('click',event=>{
  const exportButton=event.target.closest('[data-export]');if(exportButton)exportComparison(exportButton.dataset.export);
 });
 document.getElementById('closeCompare').addEventListener('click',()=>{document.getElementById('compare').style.display='none';});
-document.getElementById('share').addEventListener('click',async()=>{
- writeState();const status=document.getElementById('shareStatus');
- try{
-  if(navigator.clipboard)await navigator.clipboard.writeText(location.href);
-  else{const area=document.createElement('textarea');area.value=location.href;area.style.position='fixed';area.style.opacity='0';document.body.append(area);area.select();document.execCommand('copy');area.remove();}
-  status.textContent='Enlace copiado';
- }catch(error){status.textContent='No se pudo copiar; copia la URL del navegador.';}
- setTimeout(()=>{status.textContent='';},3500);
-});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'){if(document.getElementById('info').style.display==='block')clearSel();else document.getElementById('compare').style.display='none';}});
 // ---------- legend ----------
 function grad(arr){return 'linear-gradient(to right,'+[0,0.2,0.4,0.6,0.8,1].map(t=>_rampArr(arr,t)).join(',')+')';}
