@@ -14,8 +14,7 @@
  .seg button{flex:1;border:0;background:#fff;color:#b2182b;padding:5px 8px;cursor:pointer}
  .seg button.on{background:#b2182b;color:#fff;font-weight:bold}
  .view-mode{display:flex;gap:4px;margin-top:6px}.view-mode button{flex:1;border:1px solid #5b4b8a;background:#fff;color:#5b4b8a;border-radius:5px;padding:5px 8px;cursor:pointer}.view-mode button.on{background:#5b4b8a;color:#fff;font-weight:bold}
- .timeline{margin-top:7px;padding-top:7px;border-top:1px solid #ddd}.timeline-head{display:flex;justify-content:space-between;font-size:11px;font-weight:bold}.timeline input{width:100%;margin:5px 0}.timeline-actions{display:flex;gap:4px}.timeline-actions button{flex:1;border:1px solid #007f9e;background:#fff;color:#007f9e;border-radius:5px;padding:4px 6px;cursor:pointer;font-size:10.5px}.timeline-note{font-size:9.5px;color:#666;margin-top:4px}
- .lvl{font-size:11px;color:#777;margin-top:6px}
+ .timeline{margin-top:7px;padding-top:7px;border-top:1px solid #ddd}.timeline-head{display:flex;justify-content:space-between;font-size:11px;font-weight:bold}.timeline input{width:100%;margin:5px 0}.timeline-actions{display:flex;gap:4px}.timeline-actions button{flex:1;border:1px solid #007f9e;background:#fff;color:#007f9e;border-radius:5px;padding:4px 6px;cursor:pointer;font-size:10.5px}
  .metric-select{display:none;font-size:11px;color:#555}.metric-select select{width:100%;margin-top:3px;border:1px solid #1F4E78;border-radius:6px;background:#fff;padding:8px;font-size:14px}
  .legend{position:absolute;right:10px;bottom:28px;z-index:900;background:rgba(255,255,255,.95);padding:8px 10px;border-radius:6px;font-size:11px;line-height:16px;box-shadow:0 1px 5px rgba(0,0,0,.35)}
  .legend b{font-size:12px}
@@ -40,9 +39,7 @@
  .lbl{color:#fff;font:bold 10px Arial;text-shadow:0 1px 3px #000,0 -1px 3px #000,1px 0 3px #000,-1px 0 3px #000,0 0 5px #000;pointer-events:none;white-space:nowrap;position:absolute;transform:translate(-50%,-50%)}
  .loading{position:absolute;bottom:14px;left:52px;color:#bbb;font-size:11px;z-index:900}
  .warnings{position:absolute;bottom:14px;left:52px;max-width:520px;background:rgba(120,35,25,.95);color:#fff;padding:7px 10px;border-radius:6px;font-size:11px;z-index:1002;display:none}
- .more-actions{margin-top:7px;font-size:11px}.more-actions summary{cursor:pointer;color:#1F4E78;font-weight:bold}.share{display:flex;align-items:center;gap:7px;margin-top:7px}
- .share button,.compare button{border:0;border-radius:5px;padding:6px 9px;cursor:pointer;font-weight:bold}
- .share button{background:#1F4E78;color:#fff;font-size:11.5px}.share span{font-size:10.5px;color:#287a3e}
+ .compare button{border:0;border-radius:5px;padding:6px 9px;cursor:pointer;font-weight:bold}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
  .tools{display:grid;grid-template-columns:1fr;gap:6px;margin-top:7px}.tools label{font-size:10px;color:#555}.tools input{box-sizing:border-box;width:100%;margin-top:2px;border:1px solid #777;border-radius:5px;padding:6px 7px;font-size:11.5px}
  .all-data{margin-top:10px}.all-data h3{font-size:12px;margin:0 0 6px}.data-card{display:grid;gap:2px;margin-bottom:6px;padding:7px 8px;border:1px solid #d7e1ea;border-left:4px solid #1F4E78;border-radius:6px;background:#f7fafc}.data-card strong{font-size:14px}.data-card span{font-size:10.5px;color:#555}.no-data{display:grid;gap:5px;padding:10px;border-left:4px solid #777;background:#f3f3f3}.no-data span{font-size:11px;color:#555}
  .changes{margin-top:9px;border:1px solid #ddd;border-radius:6px;padding:8px}.changes h3{font-size:11.5px;margin:0 0 6px}.change-pair{display:grid;grid-template-columns:1fr 1fr;gap:6px}.change-pair div{border-radius:5px;padding:7px}.change-pair .old{background:#e6f0fb;border:1px solid #3978b5;color:#164b7d}.change-pair .new{background:#fff0df;border:1px solid #d96f00;color:#7c3b00}.change-pair strong{display:block;font-size:15px}.changes .note{font-size:10.5px;color:#666;margin-top:5px}
@@ -54,7 +51,7 @@
  .comparability{padding:7px 9px;border-radius:6px;margin-bottom:8px;font-size:11px}.comparability.high{background:#e7f6eb;border-left:4px solid #2e8b45}.comparability.medium{background:#fff5d8;border-left:4px solid #c68a00}.comparability.low{background:#fde8e6;border-left:4px solid #b23b32}.comparability b{display:block}
  .sheet-toggle{display:none}.panel button,.panel input,.panel select,.info button,.compare button{min-height:36px}button:focus-visible,.maplibregl-canvas:focus-visible{outline:3px solid #ffd400;outline-offset:2px}
  @media (max-width:760px){
-  .panel{top:max(6px,env(safe-area-inset-top));left:6px;right:6px;max-width:none;padding:8px}.panel h1{margin:0;font-size:13px}.panel-toggle{display:block;min-height:44px}.panel-body{display:none;padding-top:7px}.panel.open .panel-body{display:block}.panel p,.tabs{display:none}.metric-select{display:block}.seg button,.panel input,.panel select,.panel button{min-height:44px}.tools{grid-template-columns:1fr}.more-actions{margin-top:8px}
+  .panel{top:max(6px,env(safe-area-inset-top));left:6px;right:6px;max-width:none;padding:8px}.panel h1{margin:0;font-size:13px}.panel-toggle{display:block;min-height:44px}.panel-body{display:none;padding-top:7px}.panel.open .panel-body{display:block}.panel p,.tabs{display:none}.metric-select{display:block}.seg button,.panel input,.panel select,.panel button{min-height:44px}.tools{grid-template-columns:1fr}
   .info{top:auto;left:6px;right:6px;bottom:max(6px,env(safe-area-inset-bottom));width:auto;max-height:44%;border-radius:12px}.info.expanded{max-height:82%}.info .hd{position:sticky;top:0;z-index:1;padding-left:48px}.sheet-toggle{display:block;position:absolute;left:7px;top:6px;width:34px;min-height:34px;border:0;background:rgba(255,255,255,.2);color:#fff;border-radius:5px;font-size:16px}.info button{min-height:44px}
   .compare{left:6px;right:6px;bottom:max(6px,env(safe-area-inset-bottom));width:auto;max-height:58%}.legend{display:block;right:6px;bottom:28px;max-width:calc(100vw - 32px);padding:6px 8px;font-size:10px;line-height:14px}.legend div{max-width:180px}.legend-range{min-height:36px}.maplibregl-ctrl-top-left{display:none}.loading,.warnings{left:6px;right:6px;bottom:6px;max-width:none}
  }
@@ -71,16 +68,15 @@
   <button type="button" id="tten" data-metric="ten" aria-pressed="false">Demanda-precio</button>
  </div>
  <label class="metric-select" for="metricSelect">Métrica<select id="metricSelect"><option value="pob">Población</option><option value="pre">Precio €/m²</option><option value="ren">Rentabilidad</option><option value="esf">Esfuerzo</option><option value="ten">Demanda-precio</option></select></label>
- <p id="mdesc">Crecimiento anual equivalente: municipios 2020-2025; distritos y barrios 2020-2024. Rojo = gana · Azul = pierde. <b>Pincha</b> para la ficha.</p>
+ <p id="mdesc">Crecimiento poblacional en municipios de Madrid, período 2020-2025.</p>
  <div class="seg" id="segpob" role="group" aria-label="Unidad de población"><button type="button" id="bAbs" aria-pressed="false">Cambio total</button><button type="button" id="bPct" class="on" aria-pressed="true">Crecimiento anual (%)</button></div>
  <div class="view-mode" role="group" aria-label="Perspectiva del mapa"><button type="button" id="view2d" class="on" aria-pressed="true">Mapa 2D</button><button type="button" id="view3d" aria-pressed="false" title="Arrastra con el botón derecho para girar e inclinar">Población 3D</button></div>
- <div class="timeline" id="timeline"><div class="timeline-head"><label for="timeSlider">Tiempo observado</label><output id="timeYear">Actual</output></div><input type="range" id="timeSlider" min="0" max="2" value="2" step="1"><div class="timeline-actions"><button type="button" id="timePlay" aria-pressed="false">▶ Reproducir</button><button type="button" id="timeReset">Volver a actual</button></div><div class="timeline-note" id="timeNote">Solo cortes exactos; no se interpolan años ausentes.</div></div>
- <div class="lvl" id="lvl">Nivel: municipios</div>
+ <div class="timeline" id="timeline"><div class="timeline-head"><label for="timeSlider">Tiempo observado</label><output id="timeYear">Actual</output></div><input type="range" id="timeSlider" min="0" max="5" value="5" step="1"><div class="timeline-actions"><button type="button" id="timePlay" aria-pressed="false">▶ Reproducir</button><button type="button" id="timeReset">Volver a actual</button></div></div>
  <div class="tools">
   <label for="zoneSearch">Buscar municipio, distrito o barrio<input id="zoneSearch" list="zoneOptions" autocomplete="off" placeholder="Ej.: Boadilla, Centro…"></label>
   <datalist id="zoneOptions"></datalist>
  </div>
- <details class="more-actions"><summary>Más opciones</summary><div class="share"><button type="button" id="share">Copiar enlace de esta vista</button><span id="shareStatus" role="status" aria-live="polite"></span></div></details>
+ <span id="shareStatus" class="sr-only" role="status" aria-live="polite"></span>
  </div>
 </div>
 <aside class="info" id="info" aria-label="Ficha de la zona" aria-live="polite"></aside>
@@ -92,4 +88,4 @@
 <div class="warnings" id="warnings" role="status" aria-live="polite"></div>
 <div class="legend" id="mapLegend" aria-label="Leyenda del mapa"></div>
 <div id="map" role="region" aria-label="Mapa interactivo del mercado de vivienda de la Comunidad de Madrid"></div>
-<script type="module" src="js/dashboard.mjs?v=6.3.0"></script></body></html>
+<script type="module" src="js/dashboard.mjs?v=6.4.0"></script></body></html>
