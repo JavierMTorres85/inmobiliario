@@ -454,6 +454,9 @@ function legendBins(lt=activeLevel()){
 }
 function fitLegendRange(range){const features=GEO_BY_LEVEL[range.lt].features.filter(feature=>{const record=RECORDS[range.lt][rawCode(feature,range.lt)];return record&&matchesLegend(record,range.lt);}),bounds=boundsForFeatures(features);if(bounds)map.fitBounds(bounds,{padding:40,maxZoom:range.lt==='B'?14:12});}
 function legendControls(){const bins=legendBins();if(!bins.length)return '<div class="legend-note">La selección por categoría se incorporará en una fase posterior.</div>';return '<div class="legend-ranges">'+bins.map(bin=>`<button type="button" class="legend-range${legendPinned?.lt===bin.lt&&legendPinned.index===bin.index?' active':''}" data-legend-bin="${bin.index}" aria-pressed="${legendPinned?.lt===bin.lt&&legendPinned.index===bin.index}"><span class="swatch" style="background:${bin.color}"></span><span>${legendFormat(bin.min)} a ${legendFormat(bin.max)}</span><span class="count">${bin.count}</span></button>`).join('')+'</div><div class="legend-note">Pasa por un rango para destacar · pulsa para fijar. <span class="legend-selected">Contorno turquesa = rango</span>.</div><div class="legend-actions"><button type="button" data-legend-clear>Quitar selección</button><button type="button" data-labels-toggle>'+(labelsAll?'Evitar solapes':'Mostrar todos los nombres')+'</button></div>';}
+function selectLegendRange(index){const range=legendBins()[index];if(!range)return;legendPinned=legendPinned?.lt===range.lt&&legendPinned.index===range.index?null:range;legendHover=null;writeState();restyle();if(legendPinned)fitLegendRange(legendPinned);}
+function clearLegendRange(){legendPinned=null;legendHover=null;writeState();restyle();}
+function toggleAllLabels(){labelsAll=!labelsAll;writeState();for(const lt of ['M','D','B']){const layer=`${MAP_CONFIG[lt].prefix}-label`;if(map.getLayer(layer))map.setLayoutProperty(layer,'text-allow-overlap',labelsAll);}legend();}
 function legend(){const div=document.getElementById('mapLegend');let html='';
  if(METRIC==='pob'){
   const g='linear-gradient(to right,rgb(5,48,97),rgb(67,147,195),rgb(247,247,247),rgb(244,165,130),rgb(178,24,43),rgb(103,0,31))';
@@ -492,12 +495,14 @@ function legend(){const div=document.getElementById('mapLegend');let html='';
    +'<div style="color:#888;margin-top:2px">escala lineal · recorte p2-p98 (extremos saturan) · misma escala en los 3 niveles</div>'
    +'<div style="color:#888">gris = sin dato · <span style="color:#2ea043">verde=similar</span></div>';
  }
- div.innerHTML=html+legendControls();}
+ div.innerHTML=html+legendControls();
+ div.querySelectorAll('[data-legend-bin]').forEach(button=>{button.addEventListener('mouseenter',()=>{legendHover=legendBins()[Number(button.dataset.legendBin)]||null;refreshMapVisuals();});button.addEventListener('click',()=>selectLegendRange(Number(button.dataset.legendBin)));});
+ div.querySelector('[data-legend-clear]')?.addEventListener('click',clearLegendRange);
+ div.querySelector('[data-labels-toggle]')?.addEventListener('click',toggleAllLabels);
+}
 
 const mapLegend=document.getElementById('mapLegend');
-mapLegend.addEventListener('mouseover',event=>{const button=event.target.closest('[data-legend-bin]');if(!button)return;legendHover=legendBins()[Number(button.dataset.legendBin)]||null;refreshMapVisuals();});
 mapLegend.addEventListener('mouseleave',()=>{if(legendHover){legendHover=null;refreshMapVisuals();}});
-mapLegend.addEventListener('click',event=>{const button=event.target.closest('[data-legend-bin]');if(button){const range=legendBins()[Number(button.dataset.legendBin)];legendPinned=legendPinned?.lt===range.lt&&legendPinned.index===range.index?null:range;legendHover=null;writeState();restyle();if(legendPinned)fitLegendRange(legendPinned);return;}if(event.target.closest('[data-legend-clear]')){legendPinned=null;legendHover=null;writeState();restyle();return;}if(event.target.closest('[data-labels-toggle]')){labelsAll=!labelsAll;writeState();for(const lt of ['M','D','B']){const layer=`${MAP_CONFIG[lt].prefix}-label`;if(map.getLayer(layer))map.setLayoutProperty(layer,'text-allow-overlap',labelsAll);}legend();}});
 
 const initialCompare=(query.get('compare')||'').split(',').map(decodeRef).filter(Boolean);
 for(const reference of initialCompare){
