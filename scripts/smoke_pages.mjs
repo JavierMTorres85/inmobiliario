@@ -27,7 +27,7 @@ try {
   await page.locator("#load").waitFor({ state: "hidden", timeout: 60_000 });
   await page.locator("#map .maplibregl-canvas").first().waitFor({ timeout: 15_000 });
   await page.getByRole("heading", { name: "Boadilla del Monte" }).waitFor();
-  await page.getByText("Fuente y metodología", { exact: true }).waitFor();
+  await page.getByText("Todos los datos disponibles", { exact: true }).waitFor();
   await page.getByText("Azul = inicio · naranja = final.").waitFor();
   await page.getByText("Comparabilidad media", { exact: true }).waitFor();
 
@@ -66,6 +66,17 @@ try {
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Exportar CSV", exact: true }).click();
   await download;
+
+  const sparseZone = new URL(baseUrl);
+  sparseZone.searchParams.set("metric", "esf");
+  sparseZone.searchParams.set("zoom", "14");
+  sparseZone.searchParams.set("zone", "B:106");
+  await page.goto(sparseZone.href, { waitUntil: "domcontentloaded" });
+  await page.locator("#load").waitFor({ state: "hidden", timeout: 60_000 });
+  await page.getByRole("heading", { name: "Cuatro Vientos", exact: true }).waitFor();
+  await page.getByText("Esta zona no tiene indicadores cuantitativos en el conjunto actual.", { exact: true }).waitFor();
+  if (await page.getByText("Fuente y metodología", { exact: true }).count()) throw new Error("Removed methodology panel is still visible");
+  if (await page.locator("#info").getByText("n.d.", { exact: true }).count()) throw new Error("Sparse zone card exposes empty n.d. placeholders");
 
   await page.setViewportSize({ width: 390, height: 844 });
   const panelBox = await page.locator(".panel").boundingBox();

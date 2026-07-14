@@ -48,10 +48,14 @@ if (!html.includes("municipios 2020-2025") || !html.includes("2020-2024")) {
   throw new Error("Population periods are not explicitly documented in the dashboard");
 }
 
-for (const feature of ["writeState", "renderCompare", "qualityBlock", "historyBlock", "annualPct", "focusZone", "exportComparison", "comparabilityBlock", "closeMobilePanel"]) {
+for (const feature of ["writeState", "renderCompare", "completeDataBlock", "historyBlock", "annualPct", "focusZone", "exportComparison", "comparabilityBlock", "closeMobilePanel"]) {
   if (!dashboard.includes(`function ${feature}`)) {
     throw new Error(`Missing dashboard feature: ${feature}`);
   }
+}
+
+if (html.includes("Fuente y metodología") || dashboard.includes("Fuente y metodología")) {
+  throw new Error("The user interface must never expose the removed methodology panel");
 }
 
 for (const feature of ["activeLevel", "legendBins", "fitLegendRange", "refreshMapVisuals"]) {

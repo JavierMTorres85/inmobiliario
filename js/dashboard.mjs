@@ -139,12 +139,15 @@ function spark(s){if(!s)return '';const years=[21,22,23,24,25,26];const mx=Math.
  return h+'</div></div>';}
 function arrOf(lt){return lt==='M'?MARR:(lt==='D'?DARR:BARR);}
 function uniOf(lt){return lt==='M'?'municipios':(lt==='D'?'distritos':'barrios');}
-function qualityBlock(lt){
- const quality=DATA_MANIFEST.metrics[METRIC];
- if(!quality)return '';
- return `<details class="quality"><summary>Fuente y metodología</summary><div class="quality-details">
- Fuente: ${quality.source}<br>Periodo: ${quality.periods[lt]}<br>
- Tipo: ${quality.kind}<br>Cobertura en ${uniOf(lt)}: ${quality.coverage[lt]}</div></details>`;
+function completeDataBlock(item,lt){
+ const cards=[];
+ if(lt!=='B'&&item.p25!=null){const year=lt==='M'?2025:2024;cards.push(`<div class="data-card"><b>Población</b><strong>${item.p25.toLocaleString('es')} hab. (${year})</strong>${item.p20!=null?`<span>2020: ${item.p20.toLocaleString('es')} · cambio: ${num(item.a)} (${item.p>=0?'+':''}${item.p}%)</span>`:''}${item.la!=null?`<span>Último año: ${num(item.la)} (${item.lp>=0?'+':''}${item.lp}%)</span>`:''}</div>`);}
+ if(lt==='B'&&item.cp!=null)cards.push(`<div class="data-card"><b>Población</b><strong>${item.cp>=0?'+':''}${item.cp}%</strong><span>Cambio acumulado 2020-2024</span></div>`);
+ if(item.v!=null)cards.push(`<div class="data-card"><b>Precio de venta</b><strong>${item.v.toLocaleString('es')} €/m²</strong>${item.va!=null?`<span>Variación anual: ${item.va>=0?'+':''}${item.va}%</span>`:''}${item.s?.length?`<span>2021→2026: ${item.s[0].toLocaleString('es')} → ${item.s[item.s.length-1].toLocaleString('es')} €/m²</span>`:''}</div>`);
+ if(item.alq!=null||item.rb!=null)cards.push(`<div class="data-card"><b>Alquiler y rentabilidad</b>${item.alq!=null?`<strong>${item.alq.toLocaleString('es')} €/m²/mes</strong>`:''}${item.aa!=null?`<span>Variación anual alquiler: ${item.aa>=0?'+':''}${item.aa}%</span>`:''}${item.rb!=null?`<span>Rentabilidad bruta: <b>${item.rb.toFixed(2)}%</b></span>`:''}</div>`);
+ if(item.r!=null||item.esf!=null)cards.push(`<div class="data-card"><b>Renta y esfuerzo</b>${item.r!=null?`<strong>${item.r.toLocaleString('es')} € por hogar</strong>`:''}${item.esf!=null?`<span>Compra de 80 m²: <b>${item.esf.toFixed(1)} años de renta</b></span>`:''}</div>`);
+ if(item.cu||item.te!=null)cards.push(`<div class="data-card"><b>Demanda-precio</b>${item.cu?`<strong>${item.cu}</strong>`:''}${item.te!=null?`<span>Índice: ${item.te}</span>`:''}</div>`);
+ return cards.length?`<div class="all-data"><h3>Todos los datos disponibles</h3>${cards.join('')}</div>`:'<div class="no-data"><b>Esta zona no tiene indicadores cuantitativos en el conjunto actual.</b><span>No se muestran campos vacíos ni valores inventados.</span></div>';
 }
 function historyPair(item,lt){
  if(METRIC==='pob'&&lt!=='B'&&item.p20!=null&&item.p25!=null){
@@ -290,8 +293,10 @@ function openInfo(item,lt){
   ${METRIC==='ten'&&item.p!=null?`<div class="sec">Demanda</div><div>Población 5 años: <b>${item.p>=0?'+':''}${item.p}%</b></div>`:''}
   <div class="ins">${item.cu?e+' Este índice todavía no incluye la oferta de anuncios; se añadirá cuando esté disponible la API de idealista.':'Fuera de los 44 nodos del análisis demanda-precio (23 municipios tier-A + 21 distritos).'}</div>`;
  }
- body+=historyBlock(item,lt);
- body+=qualityBlock(lt);
+ const activeValue=mv(item,lt);
+ if(activeValue==null)body='';
+ else body+=historyBlock(item,lt);
+ body+=completeDataBlock(item,lt);
  const canSim=mv(item,lt)!=null;
  const inCompare=compareItems.some(entry=>entry.lt===lt&&entry.item.c===item.c);
  const info=document.getElementById('info');
