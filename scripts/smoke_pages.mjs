@@ -25,7 +25,7 @@ try {
   if (!response?.ok()) throw new Error(`Published page returned HTTP ${response?.status()}`);
 
   await page.locator("#load").waitFor({ state: "hidden", timeout: 60_000 });
-  await page.locator("#map .leaflet-overlay-pane canvas, #map .leaflet-overlay-pane svg").first().waitFor({ timeout: 15_000 });
+  await page.locator("#map .maplibregl-canvas").first().waitFor({ timeout: 15_000 });
   await page.getByRole("heading", { name: "Boadilla del Monte" }).waitFor();
   await page.getByText("Fuente y metodología", { exact: true }).waitFor();
   await page.getByText("Azul = inicio · naranja = final.").waitFor();

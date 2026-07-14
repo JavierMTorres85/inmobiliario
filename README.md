@@ -2,6 +2,10 @@
 
 Análisis del mercado inmobiliario de la Comunidad de Madrid cruzando **demanda** (población), **precio** (€/m² venta), **rentabilidad** (alquiler÷venta) y **esfuerzo** (precio÷renta), por municipio, distrito y barrio. Datos públicos (INE, Ayuntamiento de Madrid, informe de precios de idealista, IGN).
 
+El panel utiliza MapLibre GL JS y sirve desde el propio repositorio los límites
+de municipios, distritos y barrios. El mapa base oscuro procede de CARTO; los
+datos temáticos no dependen de una API de geometrías durante la consulta.
+
 ## 🗺️ Panel interactivo (en vivo)
 
 **https://javiermtorres85.github.io/inmobiliario/**
