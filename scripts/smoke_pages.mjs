@@ -43,10 +43,16 @@ try {
 
   const legendRanges = page.locator(".legend-range");
   if ((await legendRanges.count()) !== 5) throw new Error("Interactive legend must expose five proportional ranges");
-  await legendRanges.nth(2).click();
-  await page.waitForFunction(() => new URL(location.href).searchParams.has("range"));
-  await page.locator("[data-labels-toggle]").click();
-  await page.waitForFunction(() => new URL(location.href).searchParams.get("labels") === "all");
+  const rangeHref = await legendRanges.nth(2).getAttribute("href");
+  if (!rangeHref || !new URL(rangeHref).searchParams.has("range")) throw new Error("Legend link does not encode its range");
+  await page.goto(rangeHref, { waitUntil: "domcontentloaded" });
+  await page.locator("#load").waitFor({ state: "hidden", timeout: 60_000 });
+  if (!(await page.locator(".legend-range.active").isVisible())) throw new Error("Legend range is not restored from the URL");
+  const labelsHref = await page.locator("[data-labels-toggle]").getAttribute("href");
+  if (!labelsHref || new URL(labelsHref).searchParams.get("labels") !== "all") throw new Error("Label link does not encode expanded density");
+  await page.goto(labelsHref, { waitUntil: "domcontentloaded" });
+  await page.locator("#load").waitFor({ state: "hidden", timeout: 60_000 });
+  if (new URL(page.url()).searchParams.get("labels") !== "all") throw new Error("Label density is not restored from the URL");
 
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Exportar CSV", exact: true }).click();
