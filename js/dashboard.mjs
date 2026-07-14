@@ -18,17 +18,18 @@ const Z_MUNI=10, Z_DIST=11, Z_BAR=13;
 const VALID_METRICS=new Set(['pob','pre','ren','esf','ten']);
 const query=new URLSearchParams(location.search);
 const queryMetric=query.get('metric'), queryUnit=query.get('unit');
-const queryRange=/^([MDB]):([0-4])$/.exec(query.get('range')||'');
+const queryRanges=(query.get('range')||'').split(',').map(value=>/^([MDB]):([0-4])$/.exec(value)).filter(Boolean);
 let METRIC=VALID_METRICS.has(queryMetric)?queryMetric:'pob';
 let metric=queryUnit==='abs'?'abs':'pct';
 let is3D=query.get('view')==='3d';
 let timeYear=query.has('year')&&Number.isFinite(Number(query.get('year')))?Number(query.get('year')):null,timeTimer=null;
-let selCode=null, selType='M', simSet=null, simType='M', compareItems=[],legendPinned=null,legendHover=null;
+let selCode=null, selType='M', simSet=null, simType='M', compareItems=[],legendPinned=[];
 let labelsAll=query.get('labels')==='all';
 const nparam=(name,fallback)=>{const raw=query.get(name);if(raw==null||raw==='')return fallback;const value=Number(raw);return Number.isFinite(value)?value:fallback;};
 const initialView=[nparam('lat',40.42),nparam('lng',-3.72),Math.min(17,Math.max(7,nparam('zoom',9)))];
-const map=new maplibregl.Map({container:'map',style:'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',center:[initialView[1],initialView[0]],zoom:initialView[2],maxZoom:17,attributionControl:false});
-map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-left');
+const map=new maplibregl.Map({container:'map',style:'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',center:[initialView[1],initialView[0]],zoom:initialView[2],maxZoom:17,attributionControl:false,dragRotate:true,pitchWithRotate:true});
+map.addControl(new maplibregl.NavigationControl({showCompass:true,visualizePitch:true}),'top-left');
+map.dragRotate.enable();map.touchZoomRotate.enableRotation();
 map.addControl(new maplibregl.AttributionControl({compact:true,customAttribution:'idealista · INE · Ayuntamiento de Madrid · límites ODS/click_that_hood'}));
 let resolveGeometry;const geometryReady=new Promise(resolve=>{resolveGeometry=resolve;});
 function itemFor(lt,code){return arrOf(lt).find(item=>item.c===code);}
@@ -40,7 +41,7 @@ function writeState(){
  if(selCode)params.set('zone',`${selType}:${selCode}`);
  if(compareItems.length)params.set('compare',compareItems.map(entry=>`${entry.lt}:${entry.item.c}`).join(','));
  if(labelsAll)params.set('labels','all');
- if(legendPinned)params.set('range',`${legendPinned.lt}:${legendPinned.index}`);
+ if(legendPinned.length)params.set('range',legendPinned.map(range=>`${range.lt}:${range.index}`).join(','));
  if(is3D)params.set('view','3d');
  if(timeYear!=null)params.set('year',String(timeYear));
  history.replaceState(null,'',`${location.pathname}?${params}${location.hash}`);
@@ -342,13 +343,15 @@ function observedSeries(record,lt){
 function observedPoint(record,lt,year){const series=observedSeries(record,lt),index=series.findIndex(point=>point.year===year);if(index<0)return null;const point={...series[index],growth:null,from:null};if(index>0){const previous=series[index-1],years=point.year-previous.year;point.growth=(Math.pow(point.population/previous.population,1/years)-1)*100;point.from=previous.year;}return point;}
 function rawCode(feature,lt){return lt==='M'?String(feature.properties.mun_code):(lt==='D'?String(feature.properties.cartodb_id):String(feature.properties.COD_DISBAR));}
 function activeLevel(){const zoom=map.getZoom();return zoom>=Z_BAR?'B':(zoom>=Z_DIST?'D':'M');}
-function activeLegendRange(){return legendHover||legendPinned;}
-function matchesLegend(record,lt){const range=activeLegendRange();if(!range||range.lt!==lt)return false;const value=mv(record,lt);return value!=null&&value>=range.min&&(value<range.max||(range.last&&value<=range.max));}
+function selectedLegendRanges(lt){return legendPinned.filter(range=>range.lt===lt);}
+function matchingLegendRange(record,lt){const value=mv(record,lt);if(value==null)return null;return selectedLegendRanges(lt).find(range=>value>=range.min&&(value<range.max||(range.last&&value<=range.max)))||null;}
+function matchesLegend(record,lt){return Boolean(matchingLegendRange(record,lt));}
 function decoratedGeo(lt){
  return {type:'FeatureCollection',features:GEO_BY_LEVEL[lt].features.map(feature=>{
   const code=rawCode(feature,lt),record=RECORDS[lt][code];
   const point=timeYear==null?null:observedPoint(record,lt,timeYear),color=timeYear!=null?(point?(point.growth==null?_ramp(0):colPob(point.growth,'pct')):ND):(record?fillFor(record,lt):ND),height=timeYear!=null?(point?populationHeight(point.population):0):populationHeight(record);
-  return {...feature,properties:{...feature.properties,code,label:record?.n||'',population:point?.population||record?.p25||0,height,color,selected:code===selCode&&lt===selType,similar:Boolean(simSet&&simType===lt&&simSet.has(code)),rangeMatch:Boolean(record&&matchesLegend(record,lt))}};
+  const range=record&&matchingLegendRange(record,lt);
+  return {...feature,properties:{...feature.properties,code,label:record?.n||'',population:point?.population||record?.p25||0,height,color,rangeColor:range?.color||'#f7f7f7',selected:code===selCode&&lt===selType,similar:Boolean(simSet&&simType===lt&&simSet.has(code)),rangeMatch:Boolean(range)}};
  })};
 }
 function extendCoords(bounds,coords){if(typeof coords[0]==='number'){bounds.extend(coords);return;}coords.forEach(value=>extendCoords(bounds,value));}
@@ -378,7 +381,7 @@ function installLevel(lt){
  map.addLayer({id:fillId,type:'fill',source:cfg.source,minzoom:cfg.minzoom,maxzoom:cfg.maxzoom,paint:{'fill-color':['get','color'],'fill-opacity':lt==='M'?.88:.9}});
  map.addLayer({id:`${cfg.prefix}-extrusion`,type:'fill-extrusion',source:cfg.source,minzoom:cfg.minzoom,maxzoom:cfg.maxzoom,layout:{visibility:is3D?'visible':'none'},paint:{'fill-extrusion-color':['get','color'],'fill-extrusion-height':['get','height'],'fill-extrusion-base':0,'fill-extrusion-opacity':.9}});
  map.addLayer({id:lineId,type:'line',source:cfg.source,minzoom:cfg.minzoom,maxzoom:cfg.maxzoom,paint:{
-  'line-color':['case',['boolean',['get','selected'],false],'#ffd400',['boolean',['get','rangeMatch'],false],'#00b6d9',['boolean',['get','similar'],false],'#2ea043',cfg.line],
+  'line-color':['case',['boolean',['get','selected'],false],'#ffd400',['boolean',['get','rangeMatch'],false],['get','rangeColor'],['boolean',['get','similar'],false],'#2ea043',cfg.line],
   'line-width':['case',['boolean',['get','selected'],false],2.8,['boolean',['get','rangeMatch'],false],2.4,['boolean',['get','similar'],false],2.6,cfg.width],
   'line-opacity':1
  }});
@@ -390,12 +393,12 @@ function installLevel(lt){
 }
 function refreshMapVisuals(){
  for(const lt of ['M','D','B']){const source=map.getSource(MAP_CONFIG[lt].source);if(source)source.setData(decoratedGeo(lt));}
- const range=activeLegendRange();for(const lt of ['M','D','B']){const prefix=MAP_CONFIG[lt].prefix,fill=`${prefix}-fill`,extrusion=`${prefix}-extrusion`,line=`${prefix}-line`,label=`${prefix}-label`,selected=range&&range.lt===lt;if(map.getLayer(fill))map.setPaintProperty(fill,'fill-opacity',selected?['case',['boolean',['get','rangeMatch'],false],.96,0]:lt==='M'?.88:.9);if(map.getLayer(extrusion))map.setPaintProperty(extrusion,'fill-extrusion-opacity',selected?['case',['boolean',['get','rangeMatch'],false],.92,0]:.9);if(map.getLayer(line))map.setPaintProperty(line,'line-opacity',selected?['case',['boolean',['get','rangeMatch'],false],1,0]:1);if(map.getLayer(label))map.setPaintProperty(label,'text-opacity',selected?['case',['boolean',['get','rangeMatch'],false],1,0]:1);}
+ for(const lt of ['M','D','B']){const prefix=MAP_CONFIG[lt].prefix,fill=`${prefix}-fill`,extrusion=`${prefix}-extrusion`,line=`${prefix}-line`,label=`${prefix}-label`,filtered=selectedLegendRanges(lt).length>0,color=filtered?['case',['boolean',['get','rangeMatch'],false],['get','rangeColor'],'#f7f7f7']:['get','color'];if(map.getLayer(fill)){map.setPaintProperty(fill,'fill-color',color);map.setPaintProperty(fill,'fill-opacity',lt==='M'?.96:.94);}if(map.getLayer(extrusion)){map.setPaintProperty(extrusion,'fill-extrusion-color',color);map.setPaintProperty(extrusion,'fill-extrusion-height',['case',['boolean',['get','rangeMatch'],false],['get','height'],0]);map.setPaintProperty(extrusion,'fill-extrusion-opacity',filtered?1:.9);}if(map.getLayer(line))map.setPaintProperty(line,'line-opacity',1);if(map.getLayer(label))map.setPaintProperty(label,'text-opacity',filtered?['case',['boolean',['get','rangeMatch'],false],1,0]:1);}
 }
 function updateViewMode(animate=true){
  for(const lt of ['M','D','B']){const cfg=MAP_CONFIG[lt],fill=`${cfg.prefix}-fill`,extrusion=`${cfg.prefix}-extrusion`;if(map.getLayer(fill))map.setLayoutProperty(fill,'visibility',is3D?'none':'visible');if(map.getLayer(extrusion))map.setLayoutProperty(extrusion,'visibility',is3D?'visible':'none');}
  document.getElementById('view2d').classList.toggle('on',!is3D);document.getElementById('view2d').setAttribute('aria-pressed',String(!is3D));document.getElementById('view3d').classList.toggle('on',is3D);document.getElementById('view3d').setAttribute('aria-pressed',String(is3D));
- const camera={pitch:is3D?55:0,bearing:is3D?-18:0,duration:animate?700:0};map.easeTo(camera);writeState();restyle();
+ const camera=is3D?{center:[-3.7038,40.4168],zoom:9.35,pitch:64,bearing:-24,padding:{top:190,bottom:0,left:0,right:0},duration:animate?900:0}:{pitch:0,bearing:0,padding:{top:0,bottom:0,left:0,right:0},duration:animate?700:0};map.easeTo(camera);writeState();restyle();
 }
 function availableYears(lt=activeLevel()){return lt==='M'?[2020,2024,2025]:(lt==='D'?[2020,2023,2024]:[]);}
 function updateTimelineUI(){const lt=activeLevel(),years=availableYears(lt),slider=document.getElementById('timeSlider'),output=document.getElementById('timeYear'),note=document.getElementById('timeNote');slider.disabled=!years.length;slider.max=String(Math.max(0,years.length-1));const index=timeYear==null?years.length-1:years.indexOf(timeYear);slider.value=String(Math.max(0,index));output.textContent=timeYear==null?'Actual':String(timeYear);note.textContent=!years.length?'Barrios: sin población total oficial; timelapse no disponible.':`${lt==='M'?'Municipios':'Distritos'}: ${years.join(' · ')}. Solo observaciones exactas; color = variación anualizada desde el corte anterior.`;}
@@ -413,12 +416,13 @@ function restyle(){
 }
 const LOAD_WARNINGS=[];
 function warnLoad(message){LOAD_WARNINGS.push(message);const el=document.getElementById('warnings');el.textContent=LOAD_WARNINGS.join(' · ');el.style.display='block';}
-map.on('load',()=>{try{for(const lt of ['M','D','B'])installLevel(lt);if(queryRange)legendPinned=legendBins(queryRange[1]).find(bin=>bin.index===Number(queryRange[2]))||null;document.getElementById('load').style.display='none';updateViewMode(false);resolveGeometry(true);}catch(error){document.getElementById('load').textContent='Error al cargar geometrías';warnLoad('No se pudieron preparar las capas locales del mapa.');resolveGeometry(false);}});
+function restoreLegendRanges(){legendPinned=queryRanges.map(match=>legendBins(match[1]).find(bin=>bin.index===Number(match[2]))).filter(Boolean);}
+map.on('load',()=>{try{for(const lt of ['M','D','B'])installLevel(lt);restoreLegendRanges();document.getElementById('load').style.display='none';updateViewMode(false);resolveGeometry(true);}catch(error){document.getElementById('load').textContent='Error al cargar geometrías';warnLoad('No se pudieron preparar las capas locales del mapa.');resolveGeometry(false);}});
 map.on('error',event=>{if(event.error&&!LOAD_WARNINGS.includes('El mapa base no se pudo cargar por completo.'))warnLoad('El mapa base no se pudo cargar por completo.');});
 map.on('zoomend',()=>{stopTimeline();restyle();});
 map.on('moveend',writeState);
 // ---------- metric switching ----------
-function setMetric(m){if(!VALID_METRICS.has(m))return;METRIC=m;legendPinned=null;legendHover=null;if(m!=='pob'&&timeYear!=null){timeYear=null;stopTimeline();}
+function setMetric(m){if(!VALID_METRICS.has(m))return;METRIC=m;legendPinned=[];if(m!=='pob'&&timeYear!=null){timeYear=null;stopTimeline();}
  ['pob','pre','ren','esf','ten'].forEach(x=>{const button=document.getElementById('t'+x),active=x===m;button.classList.toggle('on',active);button.setAttribute('aria-pressed',String(active));});
  document.getElementById('metricSelect').value=m;
  document.getElementById('mdesc').innerHTML=MDESC[m];
@@ -490,7 +494,7 @@ function legendBins(lt=activeLevel()){
 }
 function fitLegendRange(range){const features=GEO_BY_LEVEL[range.lt].features.filter(feature=>{const record=RECORDS[range.lt][rawCode(feature,range.lt)];return record&&matchesLegend(record,range.lt);}),bounds=boundsForFeatures(features);if(bounds)map.fitBounds(bounds,{padding:40,maxZoom:range.lt==='B'?14:12});}
 function optionHref(name,value){const url=new URL(location.href);if(value==null)url.searchParams.delete(name);else url.searchParams.set(name,value);return url.href;}
-function legendControls(){const bins=legendBins();if(!bins.length)return '';const ranges=bins.map(bin=>{const active=legendPinned?.lt===bin.lt&&legendPinned.index===bin.index,href=optionHref('range',active?null:`${bin.lt}:${bin.index}`);return `<a href="${href}" class="legend-range${active?' active':''}" data-legend-bin="${bin.index}" aria-current="${active}"><span class="swatch" style="background:${bin.color}"></span><span>${legendFormat(bin.min)} a ${legendFormat(bin.max)}</span><span class="count">${bin.count}</span></a>`;}).join('');return `<div class="legend-ranges">${ranges}</div>`;}
+function legendControls(){const bins=legendBins();if(!bins.length)return '';const ranges=bins.map(bin=>{const active=legendPinned.some(range=>range.lt===bin.lt&&range.index===bin.index),kept=legendPinned.filter(range=>range.lt===bin.lt&&range.index!==bin.index),next=active?kept:[...kept,bin],href=optionHref('range',next.length?next.map(range=>`${range.lt}:${range.index}`).join(','):null);return `<a href="${href}" class="legend-range${active?' active':''}" data-legend-bin="${bin.index}" aria-current="${active}"><span class="swatch" style="background:${bin.color}"></span><span>${legendFormat(bin.min)} a ${legendFormat(bin.max)}</span><span class="count">${bin.count}</span></a>`;}).join('');return `<div class="legend-ranges">${ranges}</div>`;}
 function legend(){const div=document.getElementById('mapLegend');let html='';
  if(METRIC==='pob'){
   const g='linear-gradient(to right,rgb(5,48,97),rgb(67,147,195),rgb(247,247,247),rgb(244,165,130),rgb(178,24,43),rgb(103,0,31))';
@@ -530,11 +534,7 @@ function legend(){const div=document.getElementById('mapLegend');let html='';
    +'<div style="color:#888">gris = sin dato · <span style="color:#2ea043">verde=similar</span></div>';
  }
  div.innerHTML=html+legendControls();
- div.querySelectorAll('[data-legend-bin]').forEach(button=>{button.addEventListener('mouseenter',()=>{legendHover=legendBins()[Number(button.dataset.legendBin)]||null;refreshMapVisuals();});});
 }
-
-const mapLegend=document.getElementById('mapLegend');
-mapLegend.addEventListener('mouseleave',()=>{if(legendHover){legendHover=null;refreshMapVisuals();}});
 
 const initialCompare=(query.get('compare')||'').split(',').map(decodeRef).filter(Boolean);
 for(const reference of initialCompare){
@@ -544,7 +544,7 @@ for(const reference of initialCompare){
 const initialZone=decodeRef(query.get('zone'));
 if(timeYear!=null){METRIC='pob';metric='pct';}
 setMetric(METRIC);
-if(queryRange)legendPinned=legendBins(queryRange[1]).find(bin=>bin.index===Number(queryRange[2]))||null;
+restoreLegendRanges();
 sw();
 if(compareItems.length)renderCompare();
 if(initialZone){const item=itemFor(initialZone.lt,initialZone.code);if(item)openInfo(item,initialZone.lt);}
