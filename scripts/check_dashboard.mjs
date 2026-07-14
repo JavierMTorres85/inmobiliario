@@ -26,7 +26,6 @@ const requiredIds = [
   "tten",
   "info",
   "compare",
-  "share",
   "zoneSearch",
   "togglePanel",
   "metricSelect",
@@ -44,8 +43,12 @@ for (const id of requiredIds) {
   }
 }
 
-if (!html.includes("municipios 2020-2025") || !html.includes("2020-2024")) {
-  throw new Error("Population periods are not explicitly documented in the dashboard");
+if (!html.includes("Crecimiento poblacional en municipios de Madrid, período 2020-2025.")) {
+  throw new Error("The population description must use the requested concise wording");
+}
+
+for (const removed of ["Rojo = gana", "Nivel: municipios", "Solo cortes exactos", "Copiar enlace de esta vista", "Más opciones"]) {
+  if (html.includes(removed)) throw new Error(`Removed main-menu text is still visible: ${removed}`);
 }
 
 for (const feature of ["writeState", "renderCompare", "completeDataBlock", "historyBlock", "annualPct", "focusZone", "exportComparison", "comparabilityBlock", "closeMobilePanel"]) {
@@ -87,6 +90,12 @@ if (!dashboard.includes("dragRotate:true,pitchWithRotate:true") || !dashboard.in
 
 for (const feature of ["observedSeries", "observedPoint", "availableYears", "setTimeYear", "toggleTimeline"]) {
   if (!dashboard.includes(`function ${feature}`)) throw new Error(`Missing phase 6 timeline feature: ${feature}`);
+}
+
+if (!dashboard.includes("function interpolatedPopulation") ||
+    !dashboard.includes("duration:1050") ||
+    !dashboard.includes("timeTimer=setInterval(advance,1200)")) {
+  throw new Error("The timeline must interpolate every year with smooth transitions");
 }
 
 if (!html.includes("data-legend-bin") && !dashboard.includes("data-legend-bin")) {
