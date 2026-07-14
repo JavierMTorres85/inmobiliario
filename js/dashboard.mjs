@@ -21,6 +21,7 @@ const queryMetric=query.get('metric'), queryUnit=query.get('unit');
 const queryRange=/^([MDB]):([0-4])$/.exec(query.get('range')||'');
 let METRIC=VALID_METRICS.has(queryMetric)?queryMetric:'pob';
 let metric=queryUnit==='abs'?'abs':'pct';
+let is3D=query.get('view')==='3d';
 let selCode=null, selType='M', simSet=null, simType='M', compareItems=[],legendPinned=null,legendHover=null;
 let labelsAll=query.get('labels')==='all';
 const nparam=(name,fallback)=>{const raw=query.get(name);if(raw==null||raw==='')return fallback;const value=Number(raw);return Number.isFinite(value)?value:fallback;};
@@ -39,6 +40,7 @@ function writeState(){
  if(compareItems.length)params.set('compare',compareItems.map(entry=>`${entry.lt}:${entry.item.c}`).join(','));
  if(labelsAll)params.set('labels','all');
  if(legendPinned)params.set('range',`${legendPinned.lt}:${legendPinned.index}`);
+ if(is3D)params.set('view','3d');
  history.replaceState(null,'',`${location.pathname}?${params}${location.hash}`);
 }
 const MDESC={
@@ -322,6 +324,8 @@ const MAP_CONFIG={
  D:{source:'districts',prefix:'district',minzoom:11,maxzoom:13,labelMin:11,labelMax:13,line:'#fff',width:1.1,size:11},
  B:{source:'neighborhoods',prefix:'neighborhood',minzoom:13,maxzoom:18,labelMin:13,labelMax:18,line:'#ddd',width:.8,size:10}
 };
+const MAX_POPULATION=Math.max(...MARR.map(record=>record.p25||0),...DARR.map(record=>record.p25||0));
+function populationHeight(record){return record?.p25?Math.sqrt(record.p25/MAX_POPULATION)*12000:0;}
 function rawCode(feature,lt){return lt==='M'?String(feature.properties.mun_code):(lt==='D'?String(feature.properties.cartodb_id):String(feature.properties.COD_DISBAR));}
 function activeLevel(){const zoom=map.getZoom();return zoom>=Z_BAR?'B':(zoom>=Z_DIST?'D':'M');}
 function activeLegendRange(){return legendHover||legendPinned;}
@@ -329,7 +333,7 @@ function matchesLegend(record,lt){const range=activeLegendRange();if(!range||ran
 function decoratedGeo(lt){
  return {type:'FeatureCollection',features:GEO_BY_LEVEL[lt].features.map(feature=>{
   const code=rawCode(feature,lt),record=RECORDS[lt][code];
-  return {...feature,properties:{...feature.properties,code,label:record?.n||'',population:record?.p25||0,color:record?fillFor(record,lt):ND,selected:code===selCode&&lt===selType,similar:Boolean(simSet&&simType===lt&&simSet.has(code)),rangeMatch:Boolean(record&&matchesLegend(record,lt))}};
+  return {...feature,properties:{...feature.properties,code,label:record?.n||'',population:record?.p25||0,height:populationHeight(record),color:record?fillFor(record,lt):ND,selected:code===selCode&&lt===selType,similar:Boolean(simSet&&simType===lt&&simSet.has(code)),rangeMatch:Boolean(record&&matchesLegend(record,lt))}};
  })};
 }
 function extendCoords(bounds,coords){if(typeof coords[0]==='number'){bounds.extend(coords);return;}coords.forEach(value=>extendCoords(bounds,value));}
@@ -356,6 +360,7 @@ function installLevel(lt){
  const cfg=MAP_CONFIG[lt],fillId=`${cfg.prefix}-fill`,lineId=`${cfg.prefix}-line`,labelId=`${cfg.prefix}-label`;
  map.addSource(cfg.source,{type:'geojson',data:decoratedGeo(lt)});
  map.addLayer({id:fillId,type:'fill',source:cfg.source,minzoom:cfg.minzoom,maxzoom:cfg.maxzoom,paint:{'fill-color':['get','color'],'fill-opacity':lt==='M'?.88:.9}});
+ map.addLayer({id:`${cfg.prefix}-extrusion`,type:'fill-extrusion',source:cfg.source,minzoom:cfg.minzoom,maxzoom:cfg.maxzoom,layout:{visibility:is3D?'visible':'none'},paint:{'fill-extrusion-color':['get','color'],'fill-extrusion-height':['get','height'],'fill-extrusion-base':0,'fill-extrusion-opacity':.9}});
  map.addLayer({id:lineId,type:'line',source:cfg.source,minzoom:cfg.minzoom,maxzoom:cfg.maxzoom,paint:{
   'line-color':['case',['boolean',['get','selected'],false],'#ffd400',['boolean',['get','rangeMatch'],false],'#00b6d9',['boolean',['get','similar'],false],'#2ea043',cfg.line],
   'line-width':['case',['boolean',['get','selected'],false],2.8,['boolean',['get','rangeMatch'],false],2.4,['boolean',['get','similar'],false],2.6,cfg.width]
@@ -370,6 +375,11 @@ function refreshMapVisuals(){
  for(const lt of ['M','D','B']){const source=map.getSource(MAP_CONFIG[lt].source);if(source)source.setData(decoratedGeo(lt));}
  const range=activeLegendRange();for(const lt of ['M','D','B']){const layer=`${MAP_CONFIG[lt].prefix}-fill`;if(map.getLayer(layer))map.setPaintProperty(layer,'fill-opacity',range?['case',['boolean',['get','rangeMatch'],false],.96,.18]:lt==='M'?.88:.9);}
 }
+function updateViewMode(animate=true){
+ for(const lt of ['M','D','B']){const cfg=MAP_CONFIG[lt],fill=`${cfg.prefix}-fill`,extrusion=`${cfg.prefix}-extrusion`;if(map.getLayer(fill))map.setLayoutProperty(fill,'visibility',is3D?'none':'visible');if(map.getLayer(extrusion))map.setLayoutProperty(extrusion,'visibility',is3D?'visible':'none');}
+ document.getElementById('view2d').classList.toggle('on',!is3D);document.getElementById('view2d').setAttribute('aria-pressed',String(!is3D));document.getElementById('view3d').classList.toggle('on',is3D);document.getElementById('view3d').setAttribute('aria-pressed',String(is3D));
+ const camera={pitch:is3D?55:0,bearing:is3D?-18:0,duration:animate?700:0};map.easeTo(camera);writeState();restyle();
+}
 function restyle(){
  refreshMapVisuals();
  const z=map.getZoom();
@@ -377,11 +387,11 @@ function restyle(){
  if(z>=Z_BAR) txt='municipios + barrios de Madrid';
  else if(z>=Z_DIST) txt='municipios + distritos de Madrid';
  else txt=z<Z_MUNI?'municipios (vista general)':'municipios (detalle)';
- document.getElementById('lvl').textContent='Nivel: '+txt;legend();
+ document.getElementById('lvl').textContent='Nivel: '+txt+(is3D?(activeLevel()==='B'?' · 3D sin altura: no hay total barrial':' · altura = población actual (escala √)'):'');legend();
 }
 const LOAD_WARNINGS=[];
 function warnLoad(message){LOAD_WARNINGS.push(message);const el=document.getElementById('warnings');el.textContent=LOAD_WARNINGS.join(' · ');el.style.display='block';}
-map.on('load',()=>{try{for(const lt of ['M','D','B'])installLevel(lt);if(queryRange)legendPinned=legendBins(queryRange[1])[Number(queryRange[2])]||null;document.getElementById('load').style.display='none';restyle();resolveGeometry(true);}catch(error){document.getElementById('load').textContent='Error al cargar geometrías';warnLoad('No se pudieron preparar las capas locales del mapa.');resolveGeometry(false);}});
+map.on('load',()=>{try{for(const lt of ['M','D','B'])installLevel(lt);if(queryRange)legendPinned=legendBins(queryRange[1])[Number(queryRange[2])]||null;document.getElementById('load').style.display='none';updateViewMode(false);resolveGeometry(true);}catch(error){document.getElementById('load').textContent='Error al cargar geometrías';warnLoad('No se pudieron preparar las capas locales del mapa.');resolveGeometry(false);}});
 map.on('error',event=>{if(event.error&&!LOAD_WARNINGS.includes('El mapa base no se pudo cargar por completo.'))warnLoad('El mapa base no se pudo cargar por completo.');});
 map.on('zoomend',restyle);
 map.on('moveend',writeState);
@@ -397,6 +407,8 @@ document.querySelectorAll('[data-metric]').forEach(button=>button.addEventListen
 document.getElementById('metricSelect').addEventListener('change',event=>{setMetric(event.target.value);closeMobilePanel();});
 document.getElementById('bAbs').onclick=()=>{metric='abs';sw();};
 document.getElementById('bPct').onclick=()=>{metric='pct';sw();};
+document.getElementById('view2d').onclick=()=>{is3D=false;updateViewMode();};
+document.getElementById('view3d').onclick=()=>{is3D=true;updateViewMode();};
 function sw(){const abs=metric==='abs';document.getElementById('bAbs').classList.toggle('on',abs);document.getElementById('bAbs').setAttribute('aria-pressed',String(abs));document.getElementById('bPct').classList.toggle('on',!abs);document.getElementById('bPct').setAttribute('aria-pressed',String(!abs));if(selCode){const arr=arrOf(selType);const it=arr.find(x=>x.c===selCode);if(it)openInfo(it,selType);}if(compareItems.length)renderCompare(false);writeState();restyle();}
 const SEARCH_LABEL={M:'municipio',D:'distrito',B:'barrio'};
 const SEARCH_ENTRIES=[...MARR.map(item=>({item,lt:'M'})),...DARR.map(item=>({item,lt:'D'})),...BARR.map(item=>({item,lt:'B'}))].map(entry=>({...entry,label:`${entry.item.n} — ${SEARCH_LABEL[entry.lt]}`}));
@@ -493,7 +505,7 @@ function legend(){const div=document.getElementById('mapLegend');let html='';
    +'<div style="color:#888;margin-top:2px">escala lineal · recorte p2-p98 (extremos saturan) · misma escala en los 3 niveles</div>'
    +'<div style="color:#888">gris = sin dato · <span style="color:#2ea043">verde=similar</span></div>';
  }
- div.innerHTML=html+legendControls();
+ div.innerHTML=html+legendControls()+(is3D?'<div class="legend-note"><b>Altura:</b> población actual · escala √ común. En barrios no hay total disponible.</div>':'');
  div.querySelectorAll('[data-legend-bin]').forEach(button=>{button.addEventListener('mouseenter',()=>{legendHover=legendBins()[Number(button.dataset.legendBin)]||null;refreshMapVisuals();});});
 }
 

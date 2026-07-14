@@ -13,6 +13,7 @@
  .seg{display:flex;border:1px solid #b2182b;border-radius:6px;overflow:hidden;font-size:12px}
  .seg button{flex:1;border:0;background:#fff;color:#b2182b;padding:5px 8px;cursor:pointer}
  .seg button.on{background:#b2182b;color:#fff;font-weight:bold}
+ .view-mode{display:flex;gap:4px;margin-top:6px}.view-mode button{flex:1;border:1px solid #5b4b8a;background:#fff;color:#5b4b8a;border-radius:5px;padding:5px 8px;cursor:pointer}.view-mode button.on{background:#5b4b8a;color:#fff;font-weight:bold}
  .lvl{font-size:11px;color:#777;margin-top:6px}
  .metric-select{display:none;font-size:11px;color:#555}.metric-select select{width:100%;margin-top:3px;border:1px solid #1F4E78;border-radius:6px;background:#fff;padding:8px;font-size:14px}
  .legend{position:absolute;right:10px;bottom:28px;z-index:900;background:rgba(255,255,255,.95);padding:8px 10px;border-radius:6px;font-size:11px;line-height:16px;box-shadow:0 1px 5px rgba(0,0,0,.35)}
@@ -71,6 +72,7 @@
  <label class="metric-select" for="metricSelect">Métrica<select id="metricSelect"><option value="pob">Población</option><option value="pre">Precio €/m²</option><option value="ren">Rentabilidad</option><option value="esf">Esfuerzo</option><option value="ten">Demanda-precio</option></select></label>
  <p id="mdesc">Crecimiento anual equivalente: municipios 2020-2025; distritos y barrios 2020-2024. Rojo = gana · Azul = pierde. <b>Pincha</b> para la ficha.</p>
  <div class="seg" id="segpob" role="group" aria-label="Unidad de población"><button type="button" id="bAbs" aria-pressed="false">Cambio total</button><button type="button" id="bPct" class="on" aria-pressed="true">Crecimiento anual (%)</button></div>
+ <div class="view-mode" role="group" aria-label="Perspectiva del mapa"><button type="button" id="view2d" class="on" aria-pressed="true">Mapa 2D</button><button type="button" id="view3d" aria-pressed="false">Población 3D</button></div>
  <div class="lvl" id="lvl">Nivel: municipios</div>
  <div class="tools">
   <label for="zoneSearch">Buscar municipio, distrito o barrio<input id="zoneSearch" list="zoneOptions" autocomplete="off" placeholder="Ej.: Boadilla, Centro…"></label>
@@ -88,4 +90,4 @@
 <div class="warnings" id="warnings" role="status" aria-live="polite"></div>
 <div class="legend" id="mapLegend" aria-label="Leyenda del mapa"></div>
 <div id="map" role="region" aria-label="Mapa interactivo del mercado de vivienda de la Comunidad de Madrid"></div>
-<script type="module" src="js/dashboard.mjs?v=4.1.3"></script></body></html>
+<script type="module" src="js/dashboard.mjs?v=5.0.0"></script></body></html>

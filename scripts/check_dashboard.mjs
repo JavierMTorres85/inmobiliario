@@ -32,6 +32,8 @@ const requiredIds = [
   "metricSelect",
   "warnings",
   "mapLegend",
+  "view2d",
+  "view3d",
 ];
 for (const id of requiredIds) {
   if (!html.includes(`id="${id}"`)) {
@@ -52,6 +54,12 @@ for (const feature of ["writeState", "renderCompare", "qualityBlock", "historyBl
 for (const feature of ["activeLevel", "legendBins", "fitLegendRange", "refreshMapVisuals"]) {
   if (!dashboard.includes(`function ${feature}`)) throw new Error(`Missing phase 4 map feature: ${feature}`);
 }
+
+for (const feature of ["populationHeight", "updateViewMode"]) {
+  if (!dashboard.includes(`function ${feature}`)) throw new Error(`Missing phase 5 3D feature: ${feature}`);
+}
+
+if (!dashboard.includes("type:'fill-extrusion'")) throw new Error("3D population extrusion layer is missing");
 
 if (!html.includes("data-legend-bin") && !dashboard.includes("data-legend-bin")) {
   throw new Error("Interactive legend ranges are missing");

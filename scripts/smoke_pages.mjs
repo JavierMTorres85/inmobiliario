@@ -31,6 +31,11 @@ try {
   await page.getByText("Azul = inicio · naranja = final.").waitFor();
   await page.getByText("Comparabilidad media", { exact: true }).waitFor();
 
+  await page.getByRole("button", { name: "Población 3D", exact: true }).click();
+  await page.waitForFunction(() => new URL(location.href).searchParams.get("view") === "3d");
+  await page.getByRole("button", { name: "Mapa 2D", exact: true }).click();
+  await page.waitForFunction(() => !new URL(location.href).searchParams.has("view"));
+
   await page.getByRole("button", { name: "Rentabilidad", exact: true }).click();
   if (!new URL(page.url()).searchParams.get("metric")?.includes("ren")) {
     throw new Error("Metric changes are not being persisted in the URL");

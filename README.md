@@ -32,6 +32,12 @@ conserva en el enlace compartible. Los rótulos muestran únicamente el nivel
 geográfico activo; el usuario puede forzar todos los nombres cuando necesite
 comprobar la cobertura, aceptando posibles solapes.
 
+La perspectiva **Población 3D** conserva el color de la métrica activa y eleva
+cada municipio o distrito según su población actual. La altura usa una raíz
+cuadrada declarada para que Madrid no aplaste visualmente al resto. Los barrios
+permanecen planos porque el corte actual no contiene población total oficial a
+ese nivel.
+
 La comparación temporal aparece directamente en la ficha: **azul = inicio** y **naranja = final**, siempre con los años visibles. Los cortes completos se conservan bajo `data/history/`.
 
 ## Estructura del panel
