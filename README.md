@@ -38,6 +38,13 @@ cuadrada declarada para que Madrid no aplaste visualmente al resto. Los barrios
 permanecen planos porque el corte actual no contiene población total oficial a
 ese nivel.
 
+El control **Tiempo observado** reproduce únicamente años respaldados por los
+campos del corte actual: municipios 2020, 2024 y 2025; distritos 2020, 2023 y
+2024. La altura representa la población exacta del corte y el color la tasa
+anual equivalente desde la observación anterior. No se interpolan 2021–2023 ni
+se presenta una animación anual falsa; completar esos años requerirá incorporar
+una serie oficial adicional.
+
 La comparación temporal aparece directamente en la ficha: **azul = inicio** y **naranja = final**, siempre con los años visibles. Los cortes completos se conservan bajo `data/history/`.
 
 ## Estructura del panel
@@ -50,6 +57,9 @@ La comparación temporal aparece directamente en la ficha: **azul = inicio** y *
 - `data/releases.json` y `data/history/`: índice y copias inmutables de cada corte.
 
 Cada cambio propuesto en una rama o en `main` ejecuta validación automática de Python, pruebas, JSON/GeoJSON, cobertura, credenciales y JavaScript mediante GitHub Actions. Tras publicar, una segunda automatización abre GitHub Pages con Chromium y prueba los flujos esenciales. El mantenimiento está documentado en [`docs/DATA_MAINTENANCE.md`](docs/DATA_MAINTENANCE.md).
+
+La cadena de puntos de restauración y el procedimiento sin `push --force` se
+documentan en [`docs/ROLLBACK.md`](docs/ROLLBACK.md).
 
 ## 📄 Documentos
 
