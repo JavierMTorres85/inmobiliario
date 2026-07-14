@@ -33,6 +33,10 @@ try {
 
   await page.getByRole("button", { name: "Población 3D", exact: true }).click();
   await page.waitForFunction(() => new URL(location.href).searchParams.get("view") === "3d");
+  await page.locator("#timeSlider").fill("0");
+  await page.waitForFunction(() => new URL(location.href).searchParams.get("year") === "2020");
+  await page.getByRole("button", { name: "Volver a actual", exact: true }).click();
+  await page.waitForFunction(() => !new URL(location.href).searchParams.has("year"));
   await page.getByRole("button", { name: "Mapa 2D", exact: true }).click();
   await page.waitForFunction(() => !new URL(location.href).searchParams.has("view"));
 
