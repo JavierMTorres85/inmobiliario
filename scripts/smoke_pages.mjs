@@ -44,9 +44,9 @@ try {
   const legendRanges = page.locator(".legend-range");
   if ((await legendRanges.count()) !== 5) throw new Error("Interactive legend must expose five proportional ranges");
   await legendRanges.nth(2).click();
-  if (!new URL(page.url()).searchParams.get("range")) throw new Error("Legend selection is not persisted in the URL");
+  await page.waitForFunction(() => new URL(location.href).searchParams.has("range"));
   await page.getByRole("button", { name: "Mostrar todos los nombres", exact: true }).click();
-  if (new URL(page.url()).searchParams.get("labels") !== "all") throw new Error("Label density is not persisted in the URL");
+  await page.waitForFunction(() => new URL(location.href).searchParams.get("labels") === "all");
 
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Exportar CSV", exact: true }).click();
