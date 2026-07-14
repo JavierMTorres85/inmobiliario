@@ -51,17 +51,19 @@ try {
   await page.getByRole("heading", { name: "Centro", exact: true }).waitFor();
 
   const legendRanges = page.locator(".legend-range");
-  if ((await legendRanges.count()) !== 5) throw new Error("Interactive legend must expose five proportional ranges");
+  if ((await legendRanges.count()) !== 5) throw new Error("Interactive legend must expose five populated quantile ranges");
+  const rangeCounts = (await page.locator(".legend-range .count").allTextContents()).map(Number);
+  const rangeTotal = rangeCounts.reduce((sum, value) => sum + value, 0);
+  if (rangeCounts.some((value) => value < 1 || value > Math.ceil(rangeTotal / 2))) throw new Error("Legend contains an empty or dominant range");
+  const legendText = await page.locator("#mapLegend").innerText();
+  if (/Pasa por un rango|Quitar selección|Evitar solapes|Altura:/.test(legendText)) throw new Error("Legend still exposes removed explanatory controls");
   const rangeHref = await legendRanges.nth(2).getAttribute("href");
   if (!rangeHref || !new URL(rangeHref).searchParams.has("range")) throw new Error("Legend link does not encode its range");
   await page.goto(rangeHref, { waitUntil: "domcontentloaded" });
   await page.locator("#load").waitFor({ state: "hidden", timeout: 60_000 });
   if (!(await page.locator(".legend-range.active").isVisible())) throw new Error("Legend range is not restored from the URL");
-  const labelsHref = await page.locator("[data-labels-toggle]").getAttribute("href");
-  if (!labelsHref || new URL(labelsHref).searchParams.get("labels") !== "all") throw new Error("Label link does not encode expanded density");
-  await page.goto(labelsHref, { waitUntil: "domcontentloaded" });
-  await page.locator("#load").waitFor({ state: "hidden", timeout: 60_000 });
-  if (new URL(page.url()).searchParams.get("labels") !== "all") throw new Error("Label density is not restored from the URL");
+  const clearHref = await page.locator(".legend-range.active").getAttribute("href");
+  if (!clearHref || new URL(clearHref).searchParams.has("range")) throw new Error("Active range cannot be cleared by clicking it again");
 
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Exportar CSV", exact: true }).click();
