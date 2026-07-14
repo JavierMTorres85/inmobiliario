@@ -11,7 +11,7 @@ if (inlineScripts.length !== 0) {
   throw new Error(`Expected dashboard logic in a module, found ${inlineScripts.length} inline scripts`);
 }
 
-if (!html.includes('type="module" src="js/dashboard.mjs"')) {
+if (!html.includes('type="module" src="js/dashboard.mjs')) {
   throw new Error("Missing js/dashboard.mjs module reference");
 }
 
