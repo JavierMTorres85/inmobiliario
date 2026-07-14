@@ -413,7 +413,7 @@ function restyle(){
 }
 const LOAD_WARNINGS=[];
 function warnLoad(message){LOAD_WARNINGS.push(message);const el=document.getElementById('warnings');el.textContent=LOAD_WARNINGS.join(' · ');el.style.display='block';}
-map.on('load',()=>{try{for(const lt of ['M','D','B'])installLevel(lt);if(queryRange)legendPinned=legendBins(queryRange[1])[Number(queryRange[2])]||null;document.getElementById('load').style.display='none';updateViewMode(false);resolveGeometry(true);}catch(error){document.getElementById('load').textContent='Error al cargar geometrías';warnLoad('No se pudieron preparar las capas locales del mapa.');resolveGeometry(false);}});
+map.on('load',()=>{try{for(const lt of ['M','D','B'])installLevel(lt);if(queryRange)legendPinned=legendBins(queryRange[1]).find(bin=>bin.index===Number(queryRange[2]))||null;document.getElementById('load').style.display='none';updateViewMode(false);resolveGeometry(true);}catch(error){document.getElementById('load').textContent='Error al cargar geometrías';warnLoad('No se pudieron preparar las capas locales del mapa.');resolveGeometry(false);}});
 map.on('error',event=>{if(event.error&&!LOAD_WARNINGS.includes('El mapa base no se pudo cargar por completo.'))warnLoad('El mapa base no se pudo cargar por completo.');});
 map.on('zoomend',()=>{stopTimeline();restyle();});
 map.on('moveend',writeState);
@@ -543,6 +543,8 @@ for(const reference of initialCompare){
 }
 const initialZone=decodeRef(query.get('zone'));
 if(timeYear!=null){METRIC='pob';metric='pct';}
-setMetric(METRIC);sw();
+setMetric(METRIC);
+if(queryRange)legendPinned=legendBins(queryRange[1]).find(bin=>bin.index===Number(queryRange[2]))||null;
+sw();
 if(compareItems.length)renderCompare();
 if(initialZone){const item=itemFor(initialZone.lt,initialZone.code);if(item)openInfo(item,initialZone.lt);}
