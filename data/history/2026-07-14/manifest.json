@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "updated": "2026-07-14",
+  "levels": {
+    "M": "municipios",
+    "D": "distritos",
+    "B": "barrios"
+  },
+  "metrics": {
+    "pob": {
+      "label": "Población",
+      "source": "INE (municipios) y Ayuntamiento de Madrid (distritos y barrios)",
+      "periods": {"M": "2020-2025", "D": "2020-2024", "B": "2020-2024"},
+      "kind": "dato administrativo directo; variación calculada",
+      "coverage": {"M": "179/179", "D": "21/21", "B": "45/131"}
+    },
+    "pre": {
+      "label": "Precio de venta",
+      "source": "Informe público de precios de idealista",
+      "periods": {"M": "junio de 2026", "D": "junio de 2026", "B": "junio de 2026"},
+      "kind": "indicador agregado publicado",
+      "coverage": {"M": "68/179", "D": "21/21", "B": "115/131"}
+    },
+    "ren": {
+      "label": "Rentabilidad bruta",
+      "source": "Cálculo propio con venta y alquiler de idealista",
+      "periods": {"M": "abril-junio de 2026", "D": "abril-junio de 2026", "B": "abril-junio de 2026"},
+      "kind": "dato derivado: alquiler x 12 / venta",
+      "coverage": {"M": "31/179", "D": "21/21", "B": "86/131"}
+    },
+    "esf": {
+      "label": "Esfuerzo de compra",
+      "source": "Cálculo propio con idealista e INE Atlas de Renta",
+      "periods": {"M": "precio 2026 / renta 2023", "D": "precio 2026 / renta 2023", "B": "sin dato"},
+      "kind": "estimación derivada para una vivienda de 80 m²",
+      "coverage": {"M": "68/179", "D": "21/21", "B": "0/131"}
+    },
+    "ten": {
+      "label": "Demanda-precio",
+      "source": "Modelo propio con población y serie de precios",
+      "periods": {"M": "2020-2026", "D": "2020-2026", "B": "sin dato"},
+      "kind": "índice analítico; todavía no incorpora oferta",
+      "coverage": {"M": "23/179", "D": "21/21", "B": "0/131"}
+    },
+    "supply": {
+      "label": "Oferta de anuncios",
+      "source": "Idealista Search API",
+      "periods": {"M": "pendiente", "D": "pendiente", "B": "pendiente"},
+      "kind": "pendiente de autorización oficial",
+      "coverage": {"M": "0/179", "D": "0/21", "B": "0/131"}
+    }
+  }
+}

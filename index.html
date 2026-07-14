@@ -39,15 +39,18 @@
  .share{display:flex;align-items:center;gap:7px;margin-top:7px}
  .share button,.compare button{border:0;border-radius:5px;padding:6px 9px;cursor:pointer;font-weight:bold}
  .share button{background:#1F4E78;color:#fff;font-size:11.5px}.share span{font-size:10.5px;color:#287a3e}
+ .tools{display:grid;grid-template-columns:1fr auto;gap:6px;margin-top:7px}.tools label{font-size:10px;color:#555}.tools input{box-sizing:border-box;width:100%;margin-top:2px;border:1px solid #777;border-radius:5px;padding:6px 7px;font-size:11.5px}.tools button{align-self:end;border:1px solid #b85c00;background:#fff;color:#8a4300;border-radius:5px;padding:6px 8px;cursor:pointer;font-size:11px;font-weight:bold}.tools button.on{background:#d96f00;color:#fff}
  .quality{margin-top:10px;padding:8px;background:#fff8e6;border:1px solid #e2c978;border-radius:6px;font-size:11px;line-height:1.45}
+ .changes{margin-top:9px;border:1px solid #ddd;border-radius:6px;padding:8px}.changes h3{font-size:11.5px;margin:0 0 6px}.change-pair{display:grid;grid-template-columns:1fr 1fr;gap:6px}.change-pair div{border-radius:5px;padding:7px}.change-pair .old{background:#e6f0fb;border:1px solid #3978b5;color:#164b7d}.change-pair .new{background:#fff0df;border:1px solid #d96f00;color:#7c3b00}.change-pair strong{display:block;font-size:15px}.changes .note{font-size:10.5px;color:#666;margin-top:5px}
  .quality b{color:#6b4d00}.info button.compare-add{margin-top:7px;width:100%;background:#7253a3;color:#fff;border:0;padding:7px;border-radius:6px;cursor:pointer;font-size:12.5px;font-weight:bold}
  .compare{position:absolute;left:52px;bottom:14px;width:min(650px,calc(100% - 420px));z-index:1001;background:#fff;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.4);display:none;overflow:hidden}
  .compare .chd{display:flex;align-items:center;justify-content:space-between;background:#7253a3;color:#fff;padding:8px 11px}
  .compare .chd h2{font-size:14px;margin:0}.compare .chd button{background:transparent;color:#fff;font-size:19px;padding:0 5px}
- .compare .cbd{padding:9px 11px;font-size:11.5px;overflow:auto}.compare table{width:100%;border-collapse:collapse}.compare th,.compare td{text-align:left;padding:5px;border-bottom:1px solid #eee}.compare th{color:#555}.compare .empty{color:#666}.compare .actions{display:flex;gap:6px;margin-top:7px}.compare .actions button{background:#eee;color:#333}
+ .compare .cbd{padding:9px 11px;font-size:11.5px;overflow:auto}.compare table{width:100%;border-collapse:collapse}.compare th,.compare td{text-align:left;padding:5px;border-bottom:1px solid #eee}.compare th{color:#555}.compare .empty{color:#666}.compare .actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}.compare .actions button{background:#eee;color:#333}.compare .actions button.export{background:#1F4E78;color:#fff}
+ .comparability{padding:7px 9px;border-radius:6px;margin-bottom:8px;font-size:11px}.comparability.high{background:#e7f6eb;border-left:4px solid #2e8b45}.comparability.medium{background:#fff5d8;border-left:4px solid #c68a00}.comparability.low{background:#fde8e6;border-left:4px solid #b23b32}.comparability b{display:block}
  button:focus-visible,.leaflet-interactive:focus-visible{outline:3px solid #ffd400;outline-offset:2px}
  @media (max-width:760px){
-  .panel{top:6px;left:42px;right:6px;max-width:none;padding:8px}.panel p{display:none}.tabs{flex-wrap:nowrap;overflow-x:auto}.tabs button{white-space:nowrap;min-height:34px}.seg button{min-height:34px}
+  .panel{top:6px;left:42px;right:6px;max-width:none;padding:8px}.panel p{display:none}.tabs{flex-wrap:nowrap;overflow-x:auto}.tabs button{white-space:nowrap;min-height:34px}.seg button{min-height:34px}.tools{grid-template-columns:1fr}.tools button{min-height:34px}
   .info{top:auto;left:6px;right:6px;bottom:6px;width:auto;max-height:56%;border-radius:10px}.info .hd{position:sticky;top:0;z-index:1}
   .compare{left:6px;right:6px;bottom:6px;width:auto;max-height:52%}.legend{display:none}.loading,.warnings{left:6px;right:6px;bottom:6px;max-width:none}
  }
@@ -65,6 +68,11 @@
  <p id="mdesc">Crecimiento poblacional: municipios 2020-2025; distritos y barrios de Madrid 2020-2024. Rojo = gana · Azul = pierde. <b>Pincha</b> para la ficha.</p>
  <div class="seg" id="segpob" role="group" aria-label="Unidad de población"><button type="button" id="bAbs" class="on" aria-pressed="true">Totales (personas)</button><button type="button" id="bPct" aria-pressed="false">Porcentaje (%)</button></div>
  <div class="lvl" id="lvl">Nivel: zonas</div>
+ <div class="tools">
+  <label for="zoneSearch">Buscar municipio, distrito o barrio<input id="zoneSearch" list="zoneOptions" autocomplete="off" placeholder="Ej.: Boadilla, Centro…"></label>
+  <datalist id="zoneOptions"></datalist>
+  <button type="button" id="toggleChanges" aria-pressed="false">Anterior azul · actual naranja</button>
+ </div>
  <div class="share"><button type="button" id="share">Copiar enlace de esta vista</button><span id="shareStatus" role="status" aria-live="polite"></span></div>
 </div>
 <aside class="info" id="info" aria-label="Ficha de la zona" aria-live="polite"></aside>

@@ -18,7 +18,9 @@ Cinco métricas conmutables (pestañas arriba a la izquierda), tres niveles por 
 
 En todas: **pincha** un polígono → ficha con rankings ("Nº más caro", "Nº donde más renta el alquiler"…) e insights; botón **"20 similares"** que resalta en verde los más parecidos en la métrica activa. Gris = sin dato público suficiente.
 
-El panel permite copiar un **enlace reproducible** que conserva métrica, unidad, encuadre, zona seleccionada y comparación. La ficha muestra la fuente, periodo, naturaleza y cobertura del dato. El comparador enfrenta dos zonas del mismo nivel. La interfaz adapta sus controles y fichas a móvil y admite navegación por teclado.
+El panel permite copiar un **enlace reproducible** que conserva métrica, unidad, encuadre, zona seleccionada, comparación y modo histórico. La ficha muestra la fuente, periodo, naturaleza y cobertura del dato. El comparador admite dos zonas, indica si la comparación es alta, media o baja y exporta CSV o una imagen SVG. La interfaz incorpora búsqueda por municipio, distrito o barrio, adapta sus controles a móvil y admite navegación por teclado.
+
+El modo **Anterior azul · actual naranja** nunca mezcla visualmente ambos cortes: muestra dos bloques con color, fecha y una advertencia cuando el valor anterior es estimado o no existe. Los cortes completos se conservan bajo `data/history/`.
 
 ## Estructura del panel
 
@@ -26,8 +28,10 @@ El panel permite copiar un **enlace reproducible** que conserva métrica, unidad
 - `js/dashboard.mjs`: mapa, controles, enlace compartible y comparador.
 - `data/municipalities.json`, `districts.json`, `neighborhoods.json` y `zones.json`: datos por nivel geográfico.
 - `data/manifest.json`: procedencia, periodo, tipo y cobertura de cada métrica.
+- `data/geo/`: límites locales de 179 municipios, 21 distritos y 131 barrios; la visita ya no consulta APIs geográficas externas.
+- `data/releases.json` y `data/history/`: índice y copias inmutables de cada corte.
 
-Cada cambio propuesto en una rama o en `main` ejecuta validación automática de Python, pruebas, JSON, credenciales y JavaScript mediante GitHub Actions.
+Cada cambio propuesto en una rama o en `main` ejecuta validación automática de Python, pruebas, JSON/GeoJSON, cobertura, credenciales y JavaScript mediante GitHub Actions. Tras publicar, una segunda automatización abre GitHub Pages con Chromium y prueba los flujos esenciales. El mantenimiento está documentado en [`docs/DATA_MAINTENANCE.md`](docs/DATA_MAINTENANCE.md).
 
 ## 📄 Documentos
 

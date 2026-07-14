@@ -1,0 +1,11 @@
+{
+  "name": "inmobiliario-dashboard",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "smoke:pages": "node scripts/smoke_pages.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.61.1"
+  }
+}

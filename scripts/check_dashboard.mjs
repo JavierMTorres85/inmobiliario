@@ -27,6 +27,8 @@ const requiredIds = [
   "info",
   "compare",
   "share",
+  "zoneSearch",
+  "toggleChanges",
   "warnings",
 ];
 for (const id of requiredIds) {
@@ -39,10 +41,25 @@ if (!html.includes("municipios 2020-2025") || !html.includes("2020-2024")) {
   throw new Error("Population periods are not explicitly documented in the dashboard");
 }
 
-for (const feature of ["writeState", "renderCompare", "qualityBlock"]) {
+for (const feature of ["writeState", "renderCompare", "qualityBlock", "historyBlock", "focusZone", "exportComparison", "comparabilityBlock"]) {
   if (!dashboard.includes(`function ${feature}`)) {
     throw new Error(`Missing dashboard feature: ${feature}`);
   }
+}
+
+for (const [path, expected] of [
+  ["data/geo/municipalities.geojson", 179],
+  ["data/geo/districts.geojson", 21],
+  ["data/geo/neighborhoods.geojson", 131],
+]) {
+  const collection = JSON.parse(fs.readFileSync(path, "utf8"));
+  if (collection.type !== "FeatureCollection" || collection.features.length !== expected) {
+    throw new Error(`${path} must contain ${expected} local features`);
+  }
+}
+
+if (dashboard.includes("public.opendatasoft.com") || dashboard.includes("services.arcgis.com")) {
+  throw new Error("Dashboard still depends on a remote boundary API at runtime");
 }
 
 if (!dashboard.includes("if(raw==null||raw==='')return fallback")) {

@@ -23,3 +23,14 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Límites geográficos
+
+Las copias GeoJSON servidas por el panel se generan mediante
+`scripts/update_geometries.py` a partir de:
+
+- municipios de Madrid: `georef-spain-municipio`, publicado en el portal público de Opendatasoft;
+- distritos de Madrid: `codeforgermany/click_that_hood`;
+- barrios oficiales: servicio ArcGIS de límites administrativos del Ayuntamiento de Madrid.
+
+Solo se conservan los códigos necesarios, el nombre oficial del barrio y la geometría redondeada. La atribución visible del mapa mantiene las fuentes correspondientes.
