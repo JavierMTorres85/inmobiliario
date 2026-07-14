@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "releases": [
+    {
+      "id": "2026-07-14",
+      "date": "2026-07-14",
+      "label": "Corte inicial versionado",
+      "path": "history/2026-07-14"
+    }
+  ]
+}

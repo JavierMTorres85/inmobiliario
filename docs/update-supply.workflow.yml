@@ -1,0 +1,39 @@
+# TEMPLATE ONLY — do not copy to .github/workflows until API access and limits are confirmed.
+name: Update aggregate Idealista supply
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 5 1 * *"
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -r requirements-api.txt
+      - name: Collect aggregate counts
+        env:
+          IDEALISTA_API_KEY: ${{ secrets.IDEALISTA_API_KEY }}
+          IDEALISTA_API_SECRET: ${{ secrets.IDEALISTA_API_SECRET }}
+        run: |
+          python scripts/update_supply.py \
+            --locations config/idealista_locations.json \
+            --output data/idealista_supply.json \
+            --snapshot-dir data/idealista_supply_history
+      - name: Commit changed aggregates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/idealista_supply.json data/idealista_supply_history
+          git diff --cached --quiet && exit 0
+          git commit -m "Update aggregate Idealista supply"
+          git push
+

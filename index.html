@@ -19,7 +19,7 @@
  .info{position:absolute;top:10px;right:10px;width:305px;max-height:calc(100% - 20px);overflow:auto;z-index:1001;background:#fff;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.4);display:none}
  .info .hd{background:#1F4E78;color:#fff;padding:10px 12px;border-radius:8px 8px 0 0;position:relative}
  .info .hd h2{margin:0;font-size:15px} .info .hd .sub{font-size:11px;opacity:.85}
- .info .x{position:absolute;top:8px;right:10px;cursor:pointer;font-size:16px;color:#fff}
+ .info .x{position:absolute;top:5px;right:7px;cursor:pointer;font-size:20px;color:#fff;background:transparent;border:0;padding:2px 6px}
  .info .bd{padding:11px 13px;font-size:12.5px;line-height:1.5;color:#222}
  .info .big{font-size:19px;font-weight:bold} .info .rk{color:#1F4E78;font-weight:bold}
  .info .sec{margin:9px 0 3px;font-weight:bold;color:#444;border-top:1px solid #eee;padding-top:7px}
@@ -35,343 +35,52 @@
  .leaflet-tooltip.mt{font-size:12px;line-height:15px}
  .lbl{color:#fff;font:bold 10px Arial;text-shadow:0 1px 3px #000,0 -1px 3px #000,1px 0 3px #000,-1px 0 3px #000,0 0 5px #000;pointer-events:none;white-space:nowrap;position:absolute;transform:translate(-50%,-50%)}
  .loading{position:absolute;bottom:14px;left:52px;color:#bbb;font-size:11px;z-index:900}
+ .warnings{position:absolute;bottom:14px;left:52px;max-width:520px;background:rgba(120,35,25,.95);color:#fff;padding:7px 10px;border-radius:6px;font-size:11px;z-index:1002;display:none}
+ .share{display:flex;align-items:center;gap:7px;margin-top:7px}
+ .share button,.compare button{border:0;border-radius:5px;padding:6px 9px;cursor:pointer;font-weight:bold}
+ .share button{background:#1F4E78;color:#fff;font-size:11.5px}.share span{font-size:10.5px;color:#287a3e}
+ .tools{display:grid;grid-template-columns:1fr auto;gap:6px;margin-top:7px}.tools label{font-size:10px;color:#555}.tools input{box-sizing:border-box;width:100%;margin-top:2px;border:1px solid #777;border-radius:5px;padding:6px 7px;font-size:11.5px}.tools button{align-self:end;border:1px solid #b85c00;background:#fff;color:#8a4300;border-radius:5px;padding:6px 8px;cursor:pointer;font-size:11px;font-weight:bold}.tools button.on{background:#d96f00;color:#fff}
+ .quality{margin-top:10px;padding:8px;background:#fff8e6;border:1px solid #e2c978;border-radius:6px;font-size:11px;line-height:1.45}
+ .changes{margin-top:9px;border:1px solid #ddd;border-radius:6px;padding:8px}.changes h3{font-size:11.5px;margin:0 0 6px}.change-pair{display:grid;grid-template-columns:1fr 1fr;gap:6px}.change-pair div{border-radius:5px;padding:7px}.change-pair .old{background:#e6f0fb;border:1px solid #3978b5;color:#164b7d}.change-pair .new{background:#fff0df;border:1px solid #d96f00;color:#7c3b00}.change-pair strong{display:block;font-size:15px}.changes .note{font-size:10.5px;color:#666;margin-top:5px}
+ .quality b{color:#6b4d00}.info button.compare-add{margin-top:7px;width:100%;background:#7253a3;color:#fff;border:0;padding:7px;border-radius:6px;cursor:pointer;font-size:12.5px;font-weight:bold}
+ .compare{position:absolute;left:52px;bottom:14px;width:min(650px,calc(100% - 420px));z-index:1001;background:#fff;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.4);display:none;overflow:hidden}
+ .compare .chd{display:flex;align-items:center;justify-content:space-between;background:#7253a3;color:#fff;padding:8px 11px}
+ .compare .chd h2{font-size:14px;margin:0}.compare .chd button{background:transparent;color:#fff;font-size:19px;padding:0 5px}
+ .compare .cbd{padding:9px 11px;font-size:11.5px;overflow:auto}.compare table{width:100%;border-collapse:collapse}.compare th,.compare td{text-align:left;padding:5px;border-bottom:1px solid #eee}.compare th{color:#555}.compare .empty{color:#666}.compare .actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}.compare .actions button{background:#eee;color:#333}.compare .actions button.export{background:#1F4E78;color:#fff}
+ .comparability{padding:7px 9px;border-radius:6px;margin-bottom:8px;font-size:11px}.comparability.high{background:#e7f6eb;border-left:4px solid #2e8b45}.comparability.medium{background:#fff5d8;border-left:4px solid #c68a00}.comparability.low{background:#fde8e6;border-left:4px solid #b23b32}.comparability b{display:block}
+ button:focus-visible,.leaflet-interactive:focus-visible{outline:3px solid #ffd400;outline-offset:2px}
+ @media (max-width:760px){
+  .panel{top:6px;left:42px;right:6px;max-width:none;padding:8px}.panel p{display:none}.tabs{flex-wrap:nowrap;overflow-x:auto}.tabs button{white-space:nowrap;min-height:34px}.seg button{min-height:34px}.tools{grid-template-columns:1fr}.tools button{min-height:34px}
+  .info{top:auto;left:6px;right:6px;bottom:6px;width:auto;max-height:56%;border-radius:10px}.info .hd{position:sticky;top:0;z-index:1}
+  .compare{left:6px;right:6px;bottom:6px;width:auto;max-height:52%}.legend{display:none}.loading,.warnings{left:6px;right:6px;bottom:6px;max-width:none}
+ }
+ @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style></head><body>
 <div class="panel">
  <h1>Mercado de vivienda — Comunidad de Madrid</h1>
- <div class="tabs">
-  <button id="tpob" class="on" onclick="setMetric('pob')">Población</button>
-  <button id="tpre" onclick="setMetric('pre')">Precio €/m²</button>
-  <button id="tren" onclick="setMetric('ren')">Rentabilidad</button>
-  <button id="tesf" onclick="setMetric('esf')">Esfuerzo</button>
-  <button id="tten" onclick="setMetric('ten')">Tensión</button>
+ <div class="tabs" role="group" aria-label="Métrica del mapa">
+  <button type="button" id="tpob" class="on" data-metric="pob" aria-pressed="true">Población</button>
+  <button type="button" id="tpre" data-metric="pre" aria-pressed="false">Precio €/m²</button>
+  <button type="button" id="tren" data-metric="ren" aria-pressed="false">Rentabilidad</button>
+  <button type="button" id="tesf" data-metric="esf" aria-pressed="false">Esfuerzo</button>
+  <button type="button" id="tten" data-metric="ten" aria-pressed="false">Demanda-precio</button>
  </div>
- <p id="mdesc">Crecimiento poblacional 2020-2025. Rojo = gana · Azul = pierde. Aleja: 5 zonas · Acerca: municipios · Zoom sobre Madrid: distritos y barrios. <b>Pincha</b> para la ficha.</p>
- <div class="seg" id="segpob"><button id="bAbs" class="on">Totales (personas)</button><button id="bPct">Porcentaje (%)</button></div>
+ <p id="mdesc">Crecimiento poblacional: municipios 2020-2025; distritos y barrios de Madrid 2020-2024. Rojo = gana · Azul = pierde. <b>Pincha</b> para la ficha.</p>
+ <div class="seg" id="segpob" role="group" aria-label="Unidad de población"><button type="button" id="bAbs" class="on" aria-pressed="true">Totales (personas)</button><button type="button" id="bPct" aria-pressed="false">Porcentaje (%)</button></div>
  <div class="lvl" id="lvl">Nivel: zonas</div>
+ <div class="tools">
+  <label for="zoneSearch">Buscar municipio, distrito o barrio<input id="zoneSearch" list="zoneOptions" autocomplete="off" placeholder="Ej.: Boadilla, Centro…"></label>
+  <datalist id="zoneOptions"></datalist>
+  <button type="button" id="toggleChanges" aria-pressed="false">Anterior azul · actual naranja</button>
+ </div>
+ <div class="share"><button type="button" id="share">Copiar enlace de esta vista</button><span id="shareStatus" role="status" aria-live="polite"></span></div>
 </div>
-<div class="info" id="info"></div>
+<aside class="info" id="info" aria-label="Ficha de la zona" aria-live="polite"></aside>
+<aside class="compare" id="compare" aria-label="Comparador de zonas">
+ <div class="chd"><h2>Comparador de dos zonas</h2><button type="button" id="closeCompare" aria-label="Cerrar comparador">&times;</button></div>
+ <div class="cbd" id="compareBody"></div>
+</aside>
 <div class="loading" id="load">Cargando geometría…</div>
-<div id="map"></div>
-<script>
-const MDATA={"28001":{"n":"Acebeda, La","z":"Norte","p20":68,"p25":70,"a":2,"p":2.9,"la":2,"lp":2.9,"r":31213},"28002":{"n":"Ajalvir","z":"Este","p20":4721,"p25":4868,"a":147,"p":3.1,"la":5,"lp":0.1,"r":45022},"28003":{"n":"Alameda del Valle","z":"Norte","p20":204,"p25":267,"a":63,"p":30.9,"la":12,"lp":4.7,"r":34432},"28004":{"n":"Álamo, El","z":"Sur","p20":9862,"p25":10594,"a":732,"p":7.4,"la":164,"lp":1.6,"r":36817,"v":2070,"va":15.0,"esf":4.5},"28005":{"n":"Alcalá de Henares","z":"Este","p20":197562,"p25":203208,"a":5646,"p":2.9,"la":2506,"lp":1.2,"r":41866,"v":2903,"va":15.8,"alq":13.2,"aa":7.4,"s":[1841,1939,2034,2233,2508,2903],"cu":"Frío/estable","te":-0.84,"rb":5.46,"esf":5.5},"28006":{"n":"Alcobendas","z":"Centro / Metropolitano","p20":118417,"p25":123342,"a":4925,"p":4.2,"la":1969,"lp":1.6,"r":65139,"v":3983,"va":9.0,"alq":16.5,"aa":6.5,"s":[2550,2630,2812,2965,3654,3983],"cu":"Frío/estable","te":-0.75,"rb":4.97,"esf":4.9},"28007":{"n":"Alcorcón","z":"Centro / Metropolitano","p20":172384,"p25":175719,"a":3335,"p":1.9,"la":2094,"lp":1.2,"r":41634,"v":3388,"va":15.4,"alq":13.9,"aa":4.8,"s":[2104,2227,2335,2368,2936,3388],"cu":"Frío/estable","te":-0.67,"rb":4.92,"esf":6.5},"28008":{"n":"Aldea del Fresno","z":"Sur","p20":2973,"p25":3503,"a":530,"p":17.8,"la":81,"lp":2.4,"r":33409},"28009":{"n":"Algete","z":"Norte","p20":20864,"p25":21144,"a":280,"p":1.3,"la":-23,"lp":-0.1,"r":57767,"v":2308,"va":5.9,"esf":3.2},"28010":{"n":"Alpedrete","z":"Oeste","p20":14839,"p25":15686,"a":847,"p":5.7,"la":143,"lp":0.9,"r":51116,"v":2679,"va":16.7,"esf":4.2},"28011":{"n":"Ambite","z":"Este","p20":609,"p25":732,"a":123,"p":20.2,"la":35,"lp":5.0,"r":27945},"28012":{"n":"Anchuelo","z":"Este","p20":1286,"p25":1414,"a":128,"p":10.0,"la":22,"lp":1.6,"r":35506},"28013":{"n":"Aranjuez","z":"Este","p20":60332,"p25":63040,"a":2708,"p":4.5,"la":748,"lp":1.2,"r":40453,"v":2364,"va":22.1,"alq":11.6,"aa":6.1,"rb":5.89,"esf":4.7},"28014":{"n":"Arganda del Rey","z":"Este","p20":56678,"p25":60419,"a":3741,"p":6.6,"la":906,"lp":1.5,"r":40353,"v":2590,"va":19.8,"alq":12.9,"aa":15.6,"rb":5.98,"esf":5.1},"28015":{"n":"Arroyomolinos","z":"Sur","p20":32935,"p25":38075,"a":5140,"p":15.6,"la":867,"lp":2.3,"r":54546,"v":2664,"va":18.7,"alq":11.2,"aa":25.5,"s":[1644,1830,1901,2004,2245,2664],"cu":"Caliente (dem↑ prec↑)","te":1.95,"rb":5.05,"esf":3.9},"28016":{"n":"Atazar, El","z":"Norte","p20":90,"p25":110,"a":20,"p":22.2,"la":3,"lp":2.8,"r":27367},"28017":{"n":"Batres","z":"Sur","p20":1750,"p25":1976,"a":226,"p":12.9,"la":33,"lp":1.7,"r":47860},"28018":{"n":"Becerril de la Sierra","z":"Oeste","p20":5875,"p25":6737,"a":862,"p":14.7,"la":164,"lp":2.5,"r":45765,"v":2265,"va":13.3,"esf":4.0},"28019":{"n":"Belmonte de Tajo","z":"Este","p20":1683,"p25":1955,"a":272,"p":16.2,"la":38,"lp":2.0,"r":33971},"28021":{"n":"Berrueco, El","z":"Norte","p20":777,"p25":795,"a":18,"p":2.3,"la":-21,"lp":-2.6,"r":36501},"28020":{"n":"Berzosa del Lozoya","z":"Norte","p20":222,"p25":242,"a":20,"p":9.0,"la":11,"lp":4.8,"r":40063},"28022":{"n":"Boadilla del Monte","z":"Oeste","p20":56734,"p25":66349,"a":9615,"p":16.9,"la":510,"lp":0.8,"r":89455,"v":4279,"va":24.7,"alq":13.3,"aa":10.1,"s":[2501,2719,2896,3084,3431,4279],"cu":"Caliente (dem↑ prec↑)","te":3.1,"rb":3.73,"esf":3.8},"28023":{"n":"Boalo, El","z":"Oeste","p20":7663,"p25":8770,"a":1107,"p":14.4,"la":223,"lp":2.6,"r":50159},"28024":{"n":"Braojos","z":"Norte","p20":206,"p25":233,"a":27,"p":13.1,"la":14,"lp":6.4,"r":36388},"28025":{"n":"Brea de Tajo","z":"Este","p20":506,"p25":577,"a":71,"p":14.0,"la":-2,"lp":-0.3,"r":26395},"28026":{"n":"Brunete","z":"Sur","p20":10760,"p25":11287,"a":527,"p":4.9,"la":-13,"lp":-0.1,"r":46320},"28027":{"n":"Buitrago del Lozoya","z":"Norte","p20":1959,"p25":2034,"a":75,"p":3.8,"la":61,"lp":3.1,"r":37493},"28028":{"n":"Bustarviejo","z":"Norte","p20":2522,"p25":2870,"a":348,"p":13.8,"la":41,"lp":1.4,"r":37339},"28029":{"n":"Cabanillas de la Sierra","z":"Norte","p20":785,"p25":961,"a":176,"p":22.4,"la":20,"lp":2.1,"r":43672},"28030":{"n":"Cabrera, La","z":"Norte","p20":2736,"p25":2889,"a":153,"p":5.6,"la":-33,"lp":-1.1,"r":40944},"28031":{"n":"Cadalso de los Vidrios","z":"Oeste","p20":3047,"p25":3372,"a":325,"p":10.7,"la":144,"lp":4.5,"r":30752},"28032":{"n":"Camarma de Esteruelas","z":"Este","p20":7437,"p25":8331,"a":894,"p":12.0,"la":225,"lp":2.8,"r":43253,"v":2198,"va":14.4,"esf":4.1},"28033":{"n":"Campo Real","z":"Este","p20":6420,"p25":6974,"a":554,"p":8.6,"la":172,"lp":2.5,"r":38067,"v":2145,"va":24.6,"esf":4.5},"28034":{"n":"Canencia","z":"Norte","p20":447,"p25":475,"a":28,"p":6.3,"la":6,"lp":1.3,"r":29513},"28035":{"n":"Carabaña","z":"Este","p20":2081,"p25":2451,"a":370,"p":17.8,"la":99,"lp":4.2,"r":31090},"28036":{"n":"Casarrubuelos","z":"Sur","p20":3845,"p25":4323,"a":478,"p":12.4,"la":112,"lp":2.7,"r":41197},"28037":{"n":"Cenicientos","z":"Oeste","p20":2038,"p25":2152,"a":114,"p":5.6,"la":4,"lp":0.2,"r":28218},"28038":{"n":"Cercedilla","z":"Oeste","p20":7205,"p25":7772,"a":567,"p":7.9,"la":125,"lp":1.6,"r":39930},"28039":{"n":"Cervera de Buitrago","z":"Norte","p20":162,"p25":165,"a":3,"p":1.9,"la":4,"lp":2.5,"r":35200},"28051":{"n":"Chapinería","z":"Sur","p20":2414,"p25":2705,"a":291,"p":12.1,"la":63,"lp":2.4,"r":39745},"28052":{"n":"Chinchón","z":"Este","p20":5413,"p25":5800,"a":387,"p":7.1,"la":-18,"lp":-0.3,"r":33815,"v":1357,"va":-4.5,"esf":3.2},"28040":{"n":"Ciempozuelos","z":"Sur","p20":25104,"p25":26350,"a":1246,"p":5.0,"la":210,"lp":0.8,"r":40944,"v":2037,"va":20.4,"esf":4.0},"28041":{"n":"Cobeña","z":"Norte","p20":7486,"p25":7670,"a":184,"p":2.5,"la":-89,"lp":-1.1,"r":62110},"28046":{"n":"Collado Mediano","z":"Oeste","p20":7105,"p25":7722,"a":617,"p":8.7,"la":175,"lp":2.3,"r":50414,"v":2284,"va":10.0,"esf":3.6},"28047":{"n":"Collado Villalba","z":"Oeste","p20":64378,"p25":67274,"a":2896,"p":4.5,"la":576,"lp":0.9,"r":41413,"v":2845,"va":12.6,"alq":14.0,"aa":7.1,"s":[1820,1953,2104,2134,2526,2845],"cu":"Recorrido (dem↑ prec rezag.)","te":-0.67,"rb":5.91,"esf":5.5},"28043":{"n":"Colmenar de Oreja","z":"Este","p20":8154,"p25":9127,"a":973,"p":11.9,"la":239,"lp":2.7,"r":33834},"28042":{"n":"Colmenar del Arroyo","z":"Sur","p20":1785,"p25":2044,"a":259,"p":14.5,"la":29,"lp":1.4,"r":40034},"28045":{"n":"Colmenar Viejo","z":"Norte","p20":51938,"p25":58730,"a":6792,"p":13.1,"la":1701,"lp":3.0,"r":52003,"v":3111,"va":22.0,"alq":12.0,"aa":11.2,"rb":4.63,"esf":4.8},"28044":{"n":"Colmenarejo","z":"Oeste","p20":9230,"p25":9640,"a":410,"p":4.4,"la":17,"lp":0.2,"r":49871,"v":2415,"va":4.7,"esf":3.9},"28048":{"n":"Corpa","z":"Este","p20":723,"p25":832,"a":109,"p":15.1,"la":40,"lp":5.1,"r":34806},"28049":{"n":"Coslada","z":"Centro / Metropolitano","p20":81391,"p25":80512,"a":-879,"p":-1.1,"la":-248,"lp":-0.3,"r":41836,"v":3324,"va":21.8,"alq":14.9,"aa":8.3,"s":[2006,2159,2300,2392,2729,3324],"cu":"Precio↑ sin demanda","te":-0.78,"rb":5.38,"esf":6.4},"28050":{"n":"Cubas de la Sagra","z":"Sur","p20":6539,"p25":7238,"a":699,"p":10.7,"la":250,"lp":3.6,"r":48589},"28053":{"n":"Daganzo de Arriba","z":"Este","p20":10337,"p25":10764,"a":427,"p":4.1,"la":61,"lp":0.6,"r":53691},"28054":{"n":"Escorial, El","z":"Oeste","p20":16365,"p25":17171,"a":806,"p":4.9,"la":-5,"lp":-0.0,"r":45779,"v":2639,"va":9.0,"esf":4.6},"28055":{"n":"Estremera","z":"Este","p20":1334,"p25":1473,"a":139,"p":10.4,"la":6,"lp":0.4,"r":30792},"28056":{"n":"Fresnedillas de la Oliva","z":"Sur","p20":1651,"p25":1883,"a":232,"p":14.1,"la":46,"lp":2.5,"r":35963},"28057":{"n":"Fresno de Torote","z":"Este","p20":2299,"p25":2561,"a":262,"p":11.4,"la":13,"lp":0.5,"r":43247},"28058":{"n":"Fuenlabrada","z":"Sur","p20":194514,"p25":190076,"a":-4438,"p":-2.3,"la":-714,"lp":-0.4,"r":38299,"v":2856,"va":12.9,"alq":12.5,"aa":6.0,"s":[1803,1879,1906,2007,2530,2856],"cu":"Frío/estable","te":-1.78,"rb":5.25,"esf":6.0},"28059":{"n":"Fuente el Saz de Jarama","z":"Norte","p20":6807,"p25":7413,"a":606,"p":8.9,"la":34,"lp":0.5,"r":43309},"28060":{"n":"Fuentidueña de Tajo","z":"Este","p20":2136,"p25":2372,"a":236,"p":11.0,"la":44,"lp":1.9,"r":31356},"28061":{"n":"Galapagar","z":"Oeste","p20":34497,"p25":36758,"a":2261,"p":6.6,"la":574,"lp":1.6,"r":49504,"v":2713,"va":17.9,"alq":14.0,"aa":11.7,"rb":6.19,"esf":4.4},"28062":{"n":"Garganta de los Montes","z":"Norte","p20":377,"p25":441,"a":64,"p":17.0,"la":25,"lp":6.0,"r":35472},"28063":{"n":"Gargantilla del Lozoya y Pinilla de Buitrago","z":"Norte","p20":309,"p25":396,"a":87,"p":28.2,"la":-1,"lp":-0.3,"r":29519},"28064":{"n":"Gascones","z":"Norte","p20":176,"p25":252,"a":76,"p":43.2,"la":13,"lp":5.4,"r":43848},"28065":{"n":"Getafe","z":"Centro / Metropolitano","p20":185180,"p25":193238,"a":8058,"p":4.4,"la":3332,"lp":1.8,"r":41792,"v":3277,"va":15.2,"alq":14.7,"aa":11.3,"s":[2007,2128,2245,2425,2845,3277],"cu":"Caliente (dem↑ prec↑)","te":0.02,"rb":5.38,"esf":6.3},"28066":{"n":"Griñón","z":"Sur","p20":10435,"p25":10799,"a":364,"p":3.5,"la":81,"lp":0.8,"r":51037,"v":2228,"va":21.9,"esf":3.5},"28067":{"n":"Guadalix de la Sierra","z":"Norte","p20":6440,"p25":6993,"a":553,"p":8.6,"la":89,"lp":1.3,"r":41488,"v":2375,"va":14.8,"esf":4.6},"28068":{"n":"Guadarrama","z":"Oeste","p20":16560,"p25":17547,"a":987,"p":6.0,"la":485,"lp":2.8,"r":44863,"v":2680,"va":24.4,"esf":4.8},"28069":{"n":"Hiruela, La","z":"Norte","p20":65,"p25":88,"a":23,"p":35.4,"la":5,"lp":6.0,"r":31213},"28070":{"n":"Horcajo de la Sierra-Aoslos","z":"Norte","p20":152,"p25":219,"a":67,"p":44.1,"la":-14,"lp":-6.0,"r":35029},"28071":{"n":"Horcajuelo de la Sierra","z":"Norte","p20":89,"p25":104,"a":15,"p":16.9,"la":-7,"lp":-6.3,"r":30153},"28072":{"n":"Hoyo de Manzanares","z":"Oeste","p20":8529,"p25":9310,"a":781,"p":9.2,"la":132,"lp":1.4,"r":56407},"28073":{"n":"Humanes de Madrid","z":"Sur","p20":19701,"p25":20500,"a":799,"p":4.1,"la":426,"lp":2.1,"r":36888,"v":2544,"va":11.1,"s":[1640,1683,1718,1856,2289,2544],"cu":"Frío/estable","te":-0.88,"esf":5.5},"28074":{"n":"Leganés","z":"Centro / Metropolitano","p20":191114,"p25":195734,"a":4620,"p":2.4,"la":1650,"lp":0.9,"r":38660,"v":3258,"va":15.5,"alq":14.3,"aa":12.6,"s":[1993,2072,2138,2258,2820,3258],"cu":"Precio↑ sin demanda","te":-0.33,"rb":5.27,"esf":6.7},"28075":{"n":"Loeches","z":"Este","p20":8897,"p25":9261,"a":364,"p":4.1,"la":61,"lp":0.7,"r":42908,"v":2055,"va":-4.8,"esf":3.8},"28076":{"n":"Lozoya","z":"Norte","p20":580,"p25":598,"a":18,"p":3.1,"la":-19,"lp":-3.1,"r":35223},"28901":{"n":"Lozoyuela-Navas-Sieteiglesias","z":"Norte","p20":1340,"p25":1468,"a":128,"p":9.6,"la":-15,"lp":-1.0,"r":33065},"28078":{"n":"Madarcos","z":"Norte","p20":49,"p25":69,"a":20,"p":40.8,"la":-1,"lp":-1.4,"r":31213},"28079":{"n":"Madrid","z":"Centro / Metropolitano","p20":3334730,"p25":3506730,"a":172000,"p":5.2,"la":89959,"lp":2.6,"r":49916,"v":6013,"va":6.6,"alq":23.3,"aa":8.6,"rb":4.65,"esf":9.6},"28080":{"n":"Majadahonda","z":"Oeste","p20":72155,"p25":73625,"a":1470,"p":2.0,"la":270,"lp":0.4,"r":74987,"v":4925,"va":21.6,"alq":15.8,"aa":3.3,"s":[3275,3515,3637,3650,4049,4925],"cu":"Frío/estable","te":-1.78,"rb":3.85,"esf":5.3},"28082":{"n":"Manzanares el Real","z":"Norte","p20":8936,"p25":9648,"a":712,"p":8.0,"la":98,"lp":1.0,"r":44742,"v":2575,"va":15.1,"esf":4.6},"28083":{"n":"Meco","z":"Este","p20":14670,"p25":15922,"a":1252,"p":8.5,"la":190,"lp":1.2,"r":48565,"v":2308,"va":17.4,"esf":3.8},"28084":{"n":"Mejorada del Campo","z":"Este","p20":23639,"p25":25049,"a":1410,"p":6.0,"la":390,"lp":1.6,"r":38219,"v":2417,"va":21.9,"s":[1543,1612,1641,1834,1984,2417],"cu":"Recorrido (dem↑ prec rezag.)","te":-0.36,"esf":5.1},"28085":{"n":"Miraflores de la Sierra","z":"Norte","p20":6362,"p25":7350,"a":988,"p":15.5,"la":211,"lp":3.0,"r":41298,"v":2069,"va":1.4,"esf":4.0},"28086":{"n":"Molar, El","z":"Norte","p20":9287,"p25":9999,"a":712,"p":7.7,"la":-53,"lp":-0.5,"r":37511,"v":2080,"va":9.3,"esf":4.4},"28087":{"n":"Molinos, Los","z":"Oeste","p20":4433,"p25":4781,"a":348,"p":7.9,"la":50,"lp":1.1,"r":44619},"28088":{"n":"Montejo de la Sierra","z":"Norte","p20":364,"p25":404,"a":40,"p":11.0,"la":30,"lp":8.0,"r":32549},"28089":{"n":"Moraleja de Enmedio","z":"Sur","p20":5200,"p25":5580,"a":380,"p":7.3,"la":4,"lp":0.1,"r":45942},"28090":{"n":"Moralzarzal","z":"Oeste","p20":13334,"p25":14772,"a":1438,"p":10.8,"la":186,"lp":1.3,"r":53552,"v":2714,"va":6.4,"esf":4.1},"28091":{"n":"Morata de Tajuña","z":"Este","p20":7847,"p25":8397,"a":550,"p":7.0,"la":78,"lp":0.9,"r":34744},"28092":{"n":"Móstoles","z":"Sur","p20":210309,"p25":214817,"a":4508,"p":2.1,"la":811,"lp":0.4,"r":38622,"v":3005,"va":16.1,"alq":13.4,"aa":5.6,"s":[1794,1894,1919,2092,2588,3005],"cu":"Precio↑ sin demanda","te":0.03,"rb":5.35,"esf":6.2},"28093":{"n":"Navacerrada","z":"Oeste","p20":3091,"p25":3311,"a":220,"p":7.1,"la":21,"lp":0.6,"r":45842},"28094":{"n":"Navalafuente","z":"Norte","p20":1511,"p25":1693,"a":182,"p":12.0,"la":21,"lp":1.3,"r":36012},"28095":{"n":"Navalagamella","z":"Sur","p20":2637,"p25":3169,"a":532,"p":20.2,"la":58,"lp":1.9,"r":35963},"28096":{"n":"Navalcarnero","z":"Sur","p20":29985,"p25":33331,"a":3346,"p":11.2,"la":648,"lp":2.0,"r":43431,"v":2411,"va":11.2,"alq":11.6,"rb":5.77,"esf":4.4},"28097":{"n":"Navarredonda y San Mamés","z":"Norte","p20":129,"p25":163,"a":34,"p":26.4,"la":12,"lp":7.9,"r":31718},"28099":{"n":"Navas del Rey","z":"Sur","p20":2966,"p25":3420,"a":454,"p":15.3,"la":73,"lp":2.2,"r":35017},"28100":{"n":"Nuevo Baztán","z":"Este","p20":6454,"p25":7429,"a":975,"p":15.1,"la":90,"lp":1.2,"r":45765},"28101":{"n":"Olmeda de las Fuentes","z":"Este","p20":346,"p25":429,"a":83,"p":24.0,"la":21,"lp":5.1,"r":46808},"28102":{"n":"Orusco de Tajuña","z":"Este","p20":1295,"p25":1531,"a":236,"p":18.2,"la":20,"lp":1.3,"r":30063},"28104":{"n":"Paracuellos de Jarama","z":"Norte","p20":25917,"p25":27650,"a":1733,"p":6.7,"la":412,"lp":1.5,"r":63913,"v":3063,"va":17.7,"alq":13.3,"aa":11.6,"rb":5.21,"esf":3.8},"28106":{"n":"Parla","z":"Sur","p20":133482,"p25":137471,"a":3989,"p":3.0,"la":2638,"lp":2.0,"r":35177,"v":2382,"va":15.8,"alq":13.2,"aa":12.2,"s":[1461,1523,1589,1679,2057,2382],"cu":"Precio↑ sin demanda","te":-0.26,"rb":6.65,"esf":5.4},"28107":{"n":"Patones","z":"Norte","p20":539,"p25":617,"a":78,"p":14.5,"la":15,"lp":2.5,"r":37616},"28108":{"n":"Pedrezuela","z":"Norte","p20":6150,"p25":6606,"a":456,"p":7.4,"la":139,"lp":2.1,"r":42764,"v":2522,"va":35.5,"esf":4.7},"28109":{"n":"Pelayos de la Presa","z":"Oeste","p20":2676,"p25":3195,"a":519,"p":19.4,"la":59,"lp":1.9,"r":30359},"28110":{"n":"Perales de Tajuña","z":"Este","p20":2990,"p25":3260,"a":270,"p":9.0,"la":53,"lp":1.7,"r":33671},"28111":{"n":"Pezuela de las Torres","z":"Este","p20":867,"p25":1008,"a":141,"p":16.3,"la":19,"lp":1.9,"r":33453},"28112":{"n":"Pinilla del Valle","z":"Norte","p20":190,"p25":200,"a":10,"p":5.3,"la":0,"lp":0.0,"r":34252},"28113":{"n":"Pinto","z":"Sur","p20":53325,"p25":56651,"a":3326,"p":6.2,"la":648,"lp":1.2,"r":42700,"v":2858,"va":13.8,"alq":13.4,"aa":11.2,"rb":5.63,"esf":5.4},"28114":{"n":"Piñuécar-Gandullas","z":"Norte","p20":179,"p25":183,"a":4,"p":2.2,"la":-2,"lp":-1.1,"r":31525},"28115":{"n":"Pozuelo de Alarcón","z":"Centro / Metropolitano","p20":87165,"p25":89770,"a":2605,"p":3.0,"la":392,"lp":0.4,"r":96290,"v":5134,"va":13.1,"alq":16.6,"aa":9.5,"s":[3254,3428,3530,3833,4538,5134],"cu":"Frío/estable","te":-0.81,"rb":3.88,"esf":4.3},"28116":{"n":"Pozuelo del Rey","z":"Este","p20":1172,"p25":1302,"a":130,"p":11.1,"la":10,"lp":0.8,"r":36272},"28117":{"n":"Prádena del Rincón","z":"Norte","p20":125,"p25":146,"a":21,"p":16.8,"la":7,"lp":5.0,"r":38615},"28118":{"n":"Puebla de la Sierra","z":"Norte","p20":73,"p25":98,"a":25,"p":34.2,"la":5,"lp":5.4,"r":31213},"28902":{"n":"Puentes Viejas","z":"Norte","p20":699,"p25":759,"a":60,"p":8.6,"la":-16,"lp":-2.1,"r":36383},"28119":{"n":"Quijorna","z":"Sur","p20":3541,"p25":4044,"a":503,"p":14.2,"la":43,"lp":1.1,"r":43822},"28120":{"n":"Rascafría","z":"Norte","p20":1725,"p25":1704,"a":-21,"p":-1.2,"la":-3,"lp":-0.2,"r":36162},"28121":{"n":"Redueña","z":"Norte","p20":270,"p25":288,"a":18,"p":6.7,"la":0,"lp":0.0,"r":35776},"28122":{"n":"Ribatejada","z":"Este","p20":801,"p25":905,"a":104,"p":13.0,"la":5,"lp":0.6,"r":37881},"28123":{"n":"Rivas-Vaciamadrid","z":"Centro / Metropolitano","p20":90973,"p25":103148,"a":12175,"p":13.4,"la":1199,"lp":1.2,"r":54628,"v":3166,"va":5.3,"alq":13.1,"aa":9.9,"s":[2198,2368,2390,2529,3006,3166],"cu":"Recorrido (dem↑ prec rezag.)","te":-0.39,"rb":4.97,"esf":4.6},"28124":{"n":"Robledillo de la Jara","z":"Norte","p20":95,"p25":118,"a":23,"p":24.2,"la":-13,"lp":-9.9,"r":32116},"28125":{"n":"Robledo de Chavela","z":"Oeste","p20":4364,"p25":4818,"a":454,"p":10.4,"la":93,"lp":2.0,"r":37151,"v":1759,"va":23.3,"esf":3.8},"28126":{"n":"Robregordo","z":"Norte","p20":65,"p25":79,"a":14,"p":21.5,"la":6,"lp":8.2,"r":31213},"28127":{"n":"Rozas de Madrid, Las","z":"Oeste","p20":96113,"p25":99037,"a":2924,"p":3.0,"la":447,"lp":0.5,"r":74371,"v":4083,"va":17.0,"alq":15.2,"aa":7.9,"s":[2715,2896,3116,3195,3488,4083],"cu":"Frío/estable","te":-1.59,"rb":4.47,"esf":4.4},"28128":{"n":"Rozas de Puerto Real","z":"Oeste","p20":555,"p25":579,"a":24,"p":4.3,"la":-1,"lp":-0.2,"r":29427},"28129":{"n":"San Agustín del Guadalix","z":"Norte","p20":13466,"p25":13825,"a":359,"p":2.7,"la":63,"lp":0.5,"r":60674,"v":3046,"esf":4.0},"28130":{"n":"San Fernando de Henares","z":"Centro / Metropolitano","p20":39566,"p25":39059,"a":-507,"p":-1.3,"la":79,"lp":0.2,"r":40448,"v":2951,"va":13.0,"esf":5.8},"28131":{"n":"San Lorenzo de El Escorial","z":"Oeste","p20":18532,"p25":18872,"a":340,"p":1.8,"la":137,"lp":0.7,"r":44280,"v":2833,"va":16.6,"alq":13.5,"aa":18.9,"rb":5.72,"esf":5.1},"28132":{"n":"San Martín de la Vega","z":"Sur","p20":19633,"p25":21010,"a":1377,"p":7.0,"la":277,"lp":1.3,"r":38563,"v":1911,"va":16.5,"esf":4.0},"28133":{"n":"San Martín de Valdeiglesias","z":"Oeste","p20":8679,"p25":9324,"a":645,"p":7.4,"la":165,"lp":1.8,"r":34141,"v":1610,"va":17.9,"esf":3.8},"28134":{"n":"San Sebastián de los Reyes","z":"Centro / Metropolitano","p20":91224,"p25":96992,"a":5768,"p":6.3,"la":2023,"lp":2.1,"r":52413,"v":4145,"va":17.4,"alq":17.0,"aa":3.9,"s":[2540,2597,2719,3019,3530,4145],"cu":"Caliente (dem↑ prec↑)","te":0.39,"rb":4.92,"esf":6.3},"28135":{"n":"Santa María de la Alameda","z":"Oeste","p20":1321,"p25":1584,"a":263,"p":19.9,"la":67,"lp":4.4,"r":29695},"28136":{"n":"Santorcaz","z":"Este","p20":899,"p25":1011,"a":112,"p":12.5,"la":12,"lp":1.2,"r":35890},"28137":{"n":"Santos de la Humosa, Los","z":"Este","p20":2694,"p25":2867,"a":173,"p":6.4,"la":82,"lp":2.9,"r":39530},"28138":{"n":"Serna del Monte, La","z":"Norte","p20":87,"p25":110,"a":23,"p":26.4,"la":5,"lp":4.8,"r":30605},"28140":{"n":"Serranillos del Valle","z":"Sur","p20":4291,"p25":4670,"a":379,"p":8.8,"la":36,"lp":0.8,"r":48628,"v":1819,"va":20.6,"esf":3.0},"28141":{"n":"Sevilla la Nueva","z":"Sur","p20":9393,"p25":9802,"a":409,"p":4.4,"la":145,"lp":1.5,"r":45411,"v":2605,"va":24.9,"esf":4.6},"28143":{"n":"Somosierra","z":"Norte","p20":87,"p25":93,"a":6,"p":6.9,"la":-2,"lp":-2.1,"r":31213},"28144":{"n":"Soto del Real","z":"Norte","p20":8981,"p25":9400,"a":419,"p":4.7,"la":-41,"lp":-0.4,"r":55841},"28145":{"n":"Talamanca de Jarama","z":"Norte","p20":4012,"p25":4607,"a":595,"p":14.8,"la":74,"lp":1.6,"r":39581},"28146":{"n":"Tielmes","z":"Este","p20":2736,"p25":2964,"a":228,"p":8.3,"la":154,"lp":5.5,"r":32256},"28147":{"n":"Titulcia","z":"Este","p20":1341,"p25":1389,"a":48,"p":3.6,"la":2,"lp":0.1,"r":35992},"28148":{"n":"Torrejón de Ardoz","z":"Este","p20":132853,"p25":143526,"a":10673,"p":8.0,"la":2900,"lp":2.1,"r":41459,"v":3078,"va":18.2,"alq":13.9,"aa":5.1,"s":[1918,1904,2042,2184,2605,3078],"cu":"Recorrido (dem↑ prec rezag.)","te":0.43,"rb":5.42,"esf":5.9},"28149":{"n":"Torrejón de la Calzada","z":"Sur","p20":9194,"p25":10653,"a":1459,"p":15.9,"la":275,"lp":2.6,"r":47016,"v":1965,"esf":3.3},"28150":{"n":"Torrejón de Velasco","z":"Sur","p20":4386,"p25":4900,"a":514,"p":11.7,"la":7,"lp":0.1,"r":42058},"28151":{"n":"Torrelaguna","z":"Norte","p20":4854,"p25":5081,"a":227,"p":4.7,"la":90,"lp":1.8,"r":38394},"28152":{"n":"Torrelodones","z":"Oeste","p20":23902,"p25":25433,"a":1531,"p":6.4,"la":117,"lp":0.5,"r":80733,"v":2887,"va":9.6,"alq":13.3,"aa":-2.6,"s":[2069,2224,2391,2649,2633,2887],"cu":"Recorrido (dem↑ prec rezag.)","te":-2.18,"rb":5.53,"esf":2.9},"28153":{"n":"Torremocha de Jarama","z":"Norte","p20":1075,"p25":1157,"a":82,"p":7.6,"la":25,"lp":2.2,"r":40907},"28154":{"n":"Torres de la Alameda","z":"Este","p20":7833,"p25":7824,"a":-9,"p":-0.1,"la":66,"lp":0.9,"r":40471},"28903":{"n":"Tres Cantos","z":"Norte","p20":48326,"p25":54592,"a":6266,"p":13.0,"la":1660,"lp":3.1,"r":67752,"v":4047,"va":11.0,"s":[2699,2864,3165,3259,3645,4047],"cu":"Recorrido (dem↑ prec rezag.)","te":0.2,"esf":4.8},"28155":{"n":"Valdaracete","z":"Este","p20":605,"p25":658,"a":53,"p":8.8,"la":13,"lp":2.0,"r":33452},"28156":{"n":"Valdeavero","z":"Este","p20":1591,"p25":1896,"a":305,"p":19.2,"la":73,"lp":4.0,"r":38216},"28157":{"n":"Valdelaguna","z":"Este","p20":979,"p25":1122,"a":143,"p":14.6,"la":28,"lp":2.6,"r":33072},"28158":{"n":"Valdemanco","z":"Norte","p20":963,"p25":1097,"a":134,"p":13.9,"la":45,"lp":4.3,"r":35959},"28159":{"n":"Valdemaqueda","z":"Oeste","p20":775,"p25":870,"a":95,"p":12.3,"la":37,"lp":4.4,"r":28902},"28160":{"n":"Valdemorillo","z":"Oeste","p20":12772,"p25":14420,"a":1648,"p":12.9,"la":256,"lp":1.8,"r":48965,"v":2462,"va":14.6,"esf":4.0},"28161":{"n":"Valdemoro","z":"Sur","p20":77270,"p25":85972,"a":8702,"p":11.3,"la":2465,"lp":3.0,"r":45042,"v":2555,"va":10.3,"alq":13.6,"aa":16.3,"s":[1717,1805,1820,1906,2316,2555],"cu":"Recorrido (dem↑ prec rezag.)","te":-0.23,"rb":6.39,"esf":4.5},"28162":{"n":"Valdeolmos-Alalpardo","z":"Este","p20":4232,"p25":4626,"a":394,"p":9.3,"la":58,"lp":1.3,"r":53684},"28163":{"n":"Valdepiélagos","z":"Norte","p20":614,"p25":612,"a":-2,"p":-0.3,"la":-7,"lp":-1.1,"r":37068},"28164":{"n":"Valdetorres de Jarama","z":"Norte","p20":4581,"p25":5175,"a":594,"p":13.0,"la":149,"lp":3.0,"r":43471},"28165":{"n":"Valdilecha","z":"Este","p20":2982,"p25":3289,"a":307,"p":10.3,"la":76,"lp":2.4,"r":32202},"28166":{"n":"Valverde de Alcalá","z":"Este","p20":498,"p25":565,"a":67,"p":13.5,"la":12,"lp":2.2,"r":38514},"28167":{"n":"Velilla de San Antonio","z":"Este","p20":12380,"p25":14468,"a":2088,"p":16.9,"la":465,"lp":3.3,"r":44913,"v":2469,"va":7.7,"esf":4.4},"28168":{"n":"Vellón, El","z":"Norte","p20":2004,"p25":2281,"a":277,"p":13.8,"la":115,"lp":5.3,"r":34382},"28169":{"n":"Venturada","z":"Norte","p20":2241,"p25":2622,"a":381,"p":17.0,"la":63,"lp":2.5,"r":61256},"28171":{"n":"Villa del Prado","z":"Sur","p20":6661,"p25":7743,"a":1082,"p":16.2,"la":306,"lp":4.1,"r":35179},"28170":{"n":"Villaconejos","z":"Este","p20":3422,"p25":3569,"a":147,"p":4.3,"la":61,"lp":1.7,"r":30866},"28172":{"n":"Villalbilla","z":"Este","p20":14392,"p25":18687,"a":4295,"p":29.8,"la":687,"lp":3.8,"r":53793,"v":1948,"va":10.2,"esf":2.9},"28173":{"n":"Villamanrique de Tajo","z":"Este","p20":707,"p25":859,"a":152,"p":21.5,"la":34,"lp":4.1,"r":27917},"28174":{"n":"Villamanta","z":"Sur","p20":2605,"p25":2899,"a":294,"p":11.3,"la":76,"lp":2.7,"r":37101},"28175":{"n":"Villamantilla","z":"Sur","p20":1482,"p25":1660,"a":178,"p":12.0,"la":36,"lp":2.2,"r":41530},"28176":{"n":"Villanueva de la Cañada","z":"Sur","p20":22115,"p25":24028,"a":1913,"p":8.7,"la":229,"lp":1.0,"r":70766,"v":3259,"va":20.1,"alq":18.1,"aa":22.9,"rb":6.66,"esf":3.7},"28178":{"n":"Villanueva de Perales","z":"Sur","p20":1592,"p25":1715,"a":123,"p":7.7,"la":41,"lp":2.4,"r":40523},"28177":{"n":"Villanueva del Pardillo","z":"Sur","p20":17396,"p25":18466,"a":1070,"p":6.2,"la":380,"lp":2.1,"r":59787,"v":3000,"esf":4.0},"28179":{"n":"Villar del Olmo","z":"Este","p20":2079,"p25":2341,"a":262,"p":12.6,"la":64,"lp":2.8,"r":36427},"28180":{"n":"Villarejo de Salvanés","z":"Este","p20":7433,"p25":8042,"a":609,"p":8.2,"la":142,"lp":1.8,"r":34795,"v":1416,"va":22.7,"esf":3.3},"28181":{"n":"Villaviciosa de Odón","z":"Sur","p20":28148,"p25":30127,"a":1979,"p":7.0,"la":854,"lp":2.9,"r":68382,"v":3443,"va":18.3,"alq":18.3,"aa":12.0,"rb":6.38,"esf":4.0},"28182":{"n":"Villavieja del Lozoya","z":"Norte","p20":262,"p25":332,"a":70,"p":26.7,"la":8,"lp":2.5,"r":37020},"28183":{"n":"Zarzalejo","z":"Oeste","p20":1734,"p25":1946,"a":212,"p":12.2,"la":72,"lp":3.8,"r":32896}};
-const ZAGG={"Norte":{"p20":261019,"p25":285385,"a":24366,"p":9.3},"Este":{"p20":638345,"p25":681094,"a":42749,"p":6.7},"Sur":{"p20":969879,"p25":1013481,"a":43602,"p":4.5},"Centro / Metropolitano":{"p20":4392144,"p25":4604244,"a":212100,"p":4.8},"Oeste":{"p20":518501,"p25":552827,"a":34326,"p":6.6}};
-const DDATA={"1":{"n":"Centro","p20":140473,"p25":145411,"a":4938,"p":3.5,"la":5724,"lp":4.1,"r":44958,"alq":26.9,"aa":3.4,"s":[4721,5092,5368,6170,7253,7636],"v":7636,"cu":"Caliente (dem↑ prec↑)","te":-0.12,"rb":4.23,"esf":13.6},"2":{"n":"Arganzuela","p20":155660,"p25":156559,"a":899,"p":0.6,"la":3255,"lp":2.1,"r":52857,"alq":22.6,"aa":9.0,"s":[4070,4272,4392,4850,5729,6389],"v":6389,"cu":"Frío/estable","te":-1.33,"rb":4.24,"esf":9.7},"3":{"n":"Retiro","p20":120406,"p25":119757,"a":-649,"p":-0.5,"la":1839,"lp":1.6,"r":64787,"alq":24.4,"aa":8.2,"s":[4652,4881,5061,5549,7295,7655],"v":7655,"cu":"Precio↑ sin demanda","te":-0.82,"rb":3.82,"esf":9.5},"4":{"n":"Salamanca","p20":147854,"p25":149778,"a":1924,"p":1.3,"la":4076,"lp":2.8,"r":69147,"alq":28.8,"aa":8.5,"s":[5855,6413,6627,7846,9818,9988],"v":9988,"cu":"Precio↑ sin demanda","te":0.24,"rb":3.46,"esf":11.6},"5":{"n":"Chamartín","p20":147551,"p25":148111,"a":560,"p":0.4,"la":3315,"lp":2.3,"r":79274,"alq":23.4,"aa":4.2,"s":[5137,5441,5701,6285,7369,8150],"v":8150,"cu":"Frío/estable","te":-1.2,"rb":3.45,"esf":8.2},"6":{"n":"Tetuán","p20":161313,"p25":166211,"a":4898,"p":3.0,"la":6209,"lp":3.9,"r":45762,"alq":23.3,"aa":6.1,"s":[3665,3833,4110,4536,5430,6147],"v":6147,"cu":"Precio↑ sin demanda","te":0.37,"rb":4.55,"esf":10.7},"7":{"n":"Chamberí","p20":140866,"p25":141984,"a":1118,"p":0.8,"la":3780,"lp":2.7,"r":65174,"alq":26.4,"aa":5.5,"s":[5276,5657,5943,6665,8333,8971],"v":8971,"cu":"Precio↑ sin demanda","te":0.06,"rb":3.53,"esf":11.0},"8":{"n":"Fuencarral-El Pardo","p20":249973,"p25":253898,"a":3925,"p":1.6,"la":5455,"lp":2.2,"r":62385,"alq":18.3,"aa":6.0,"s":[3552,3732,3831,4038,4898,5485],"v":5485,"cu":"Frío/estable","te":-1.36,"rb":4.0,"esf":7.0},"9":{"n":"Moncloa-Aravaca","p20":121683,"p25":125223,"a":3540,"p":2.9,"la":3466,"lp":2.8,"r":71711,"alq":22.2,"aa":9.7,"s":[4001,4212,4413,4876,5811,6293],"v":6293,"cu":"Frío/estable","te":-0.73,"rb":4.23,"esf":7.0},"10":{"n":"Latina","p20":242139,"p25":250396,"a":8257,"p":3.4,"la":8724,"lp":3.6,"r":38078,"alq":18.5,"aa":4.5,"s":[2276,2404,2527,2772,3638,3932],"v":3932,"cu":"Caliente (dem↑ prec↑)","te":0.96,"rb":5.65,"esf":8.3},"11":{"n":"Carabanchel","p20":260196,"p25":274406,"a":14210,"p":5.5,"la":12067,"lp":4.6,"r":36350,"alq":18.4,"aa":8.6,"s":[2176,2270,2457,2712,3308,3790],"v":3790,"cu":"Caliente (dem↑ prec↑)","te":1.59,"rb":5.83,"esf":8.3},"12":{"n":"Usera","p20":142894,"p25":149113,"a":6219,"p":4.4,"la":6367,"lp":4.5,"r":34651,"alq":19.7,"aa":5.7,"s":[1997,2133,2276,2497,2997,3603],"v":3603,"cu":"Caliente (dem↑ prec↑)","te":1.92,"rb":6.56,"esf":8.3},"13":{"n":"Puente de Vallecas","p20":240867,"p25":253048,"a":12181,"p":5.1,"la":11445,"lp":4.7,"r":32666,"alq":19.9,"aa":11.3,"s":[1921,2071,2182,2367,2851,3391],"v":3391,"cu":"Caliente (dem↑ prec↑)","te":1.72,"rb":7.04,"esf":8.3},"14":{"n":"Moratalaz","p20":95614,"p25":95123,"a":-491,"p":-0.5,"la":2309,"lp":2.5,"r":42823,"alq":17.1,"aa":10.6,"s":[2583,2658,2784,3136,3902,4607],"v":4607,"cu":"Precio↑ sin demanda","te":0.55,"rb":4.45,"esf":8.6},"15":{"n":"Ciudad Lineal","p20":219867,"p25":230035,"a":10168,"p":4.6,"la":9690,"lp":4.4,"r":46937,"alq":19.7,"aa":5.4,"s":[2974,3139,3382,3676,4606,5174],"v":5174,"cu":"Caliente (dem↑ prec↑)","te":1.37,"rb":4.57,"esf":8.8},"16":{"n":"Hortaleza","p20":193264,"p25":205182,"a":11918,"p":6.2,"la":6791,"lp":3.4,"r":61472,"alq":18.5,"aa":7.2,"s":[3752,3944,3984,4368,5031,5431],"v":5431,"cu":"Recorrido (dem↑ prec rezag.)","te":-1.32,"rb":4.09,"esf":7.1},"17":{"n":"Villaverde","p20":154318,"p25":167952,"a":13634,"p":8.8,"la":8914,"lp":5.6,"r":35011,"alq":17.6,"aa":12.6,"s":[1728,1798,1926,2070,2555,3210],"v":3210,"cu":"Caliente (dem↑ prec↑)","te":3.47,"rb":6.58,"esf":7.3},"18":{"n":"Villa de Vallecas","p20":114512,"p25":122337,"a":7825,"p":6.8,"la":4836,"lp":4.1,"r":39836,"alq":17.9,"aa":8.2,"s":[2373,2550,2640,2830,3275,3829],"v":3829,"cu":"Caliente (dem↑ prec↑)","te":0.62,"rb":5.61,"esf":7.7},"19":{"n":"Vicálvaro","p20":74048,"p25":89772,"a":15724,"p":21.2,"la":5968,"lp":7.1,"r":42870,"alq":16.8,"aa":17.8,"s":[2455,2836,2940,2947,3426,3999],"v":3999,"cu":"Caliente (dem↑ prec↑)","te":3.99,"rb":5.04,"esf":7.5},"20":{"n":"San Blas-Canillejas","p20":161222,"p25":166583,"a":5361,"p":3.3,"la":5364,"lp":3.3,"r":44468,"alq":17.8,"aa":9.1,"s":[2546,2642,2778,2996,3611,4030],"v":4030,"cu":"Recorrido (dem↑ prec rezag.)","te":-0.53,"rb":5.3,"esf":7.3},"21":{"n":"Barajas","p20":50010,"p25":49612,"a":-398,"p":-0.8,"la":966,"lp":2.0,"r":58405,"alq":17.1,"aa":8.8,"s":[3173,3264,3507,3686,4415,5111],"v":5111,"cu":"Frío/estable","te":-1.24,"rb":4.01,"esf":7.0}};
-const BDATA={"172":{"n":"San Cristóbal","d":17},"173":{"n":"Butarque","d":17},"175":{"n":"Ángeles","d":17,"v":3372,"va":25.0,"cp":13.1,"zi":"Los Ángeles"},"174":{"n":"Los Rosales","d":17,"v":3354,"va":30.0,"cp":4.0,"zi":"Los Rosales"},"171":{"n":"Villaverde Alto - Casco Histórico de Villaverde","d":17},"121":{"n":"Orcasitas","d":12,"v":2989,"va":18.5,"cp":1.3,"zi":"Orcasitas"},"183":{"n":"Ensanche de Vallecas","d":18,"v":4429,"va":9.9,"cp":15.0,"zi":"Ensanche de Vallecas - La Gavia","alq":18.0,"aa":7.7,"rb":4.88},"116":{"n":"Buenavista","d":11,"v":3487,"va":18.7,"cp":6.3,"zi":"Buena Vista","alq":18.4,"aa":9.6,"rb":6.33},"106":{"n":"Cuatro Vientos","d":10},"123":{"n":"San Fermín","d":12,"v":3488,"va":25.2,"cp":2.1,"zi":"San Fermín"},"181":{"n":"Casco Histórico de Vallecas","d":18,"v":3262,"va":12.4,"cp":2.5,"zi":"Casco Histórico de Vallecas"},"122":{"n":"Orcasur","d":12,"v":2650,"va":8.3,"cp":4.9,"zi":"12 de Octubre-Orcasur"},"126":{"n":"Zofío","d":12,"v":3707,"va":18.9,"cp":6.1,"zi":"Zofío"},"127":{"n":"Pradolongo","d":12,"v":3559,"va":25.2,"cp":7.4,"zi":"Pradolongo","alq":20.3,"rb":6.84},"117":{"n":"Abrantes","d":11,"v":3558,"va":23.8,"cp":4.1,"zi":"Abrantes"},"115":{"n":"Puerta Bonita","d":11,"v":3534,"va":18.4,"cp":7.9,"zi":"Puerta Bonita","alq":18.6,"aa":7.3,"rb":6.32},"124":{"n":"Almendrales","d":12,"v":4022,"va":23.2,"cp":7.9,"zi":"Almendrales"},"182":{"n":"Santa Eugenia","d":18,"v":3877,"va":22.1,"cp":-2.1,"zi":"Santa Eugenia"},"114":{"n":"Vista Alegre","d":11,"v":3732,"va":13.5,"cp":5.4,"zi":"Vista Alegre"},"131":{"n":"Entrevías","d":13,"v":2902,"va":25.3,"cp":3.8,"zi":"Entrevías"},"107":{"n":"Águilas","d":10,"v":3774,"va":13.0,"cp":0.4,"zi":"Águilas","alq":15.9,"aa":3.4,"rb":5.06},"134":{"n":"Palomeras Sureste","d":13,"v":3459,"va":19.7,"cp":2.9,"zi":"Palomeras sureste","alq":16.8,"aa":9.9,"rb":5.83},"133":{"n":"Palomeras Bajas","d":13,"v":3500,"va":20.9,"cp":2.1,"zi":"Palomeras Bajas"},"24":{"n":"Legazpi","d":2,"v":6688,"va":24.3,"cp":0.2,"zi":"Legazpi","alq":20.4,"aa":10.5,"rb":3.66},"125":{"n":"Moscardó","d":12,"v":3990,"va":11.3,"cp":2.7,"zi":"Moscardó","alq":19.2,"aa":10.2,"rb":5.77},"112":{"n":"Opañel","d":11,"v":4028,"va":14.5,"cp":5.4,"zi":"Opañel","alq":18.9,"aa":11.2,"rb":5.63},"132":{"n":"San Diego","d":13,"v":3487,"va":18.8,"cp":12.4,"zi":"San Diego","alq":21.0,"aa":9.5,"rb":7.23},"135":{"n":"Portazgo","d":13,"v":3307,"va":18.2,"cp":2.7,"zi":"Portazgo"},"111":{"n":"Comillas","d":11,"v":4652,"va":22.7,"cp":2.0,"zi":"Comillas","alq":18.9,"aa":11.9,"rb":4.88},"105":{"n":"Campamento","d":10,"v":3861,"cp":4.1,"zi":"Campamento"},"23":{"n":"Chopera","d":2,"v":6037,"va":10.3,"zi":"Chopera","alq":22.4,"aa":8.6,"rb":4.45},"25":{"n":"Delicias","d":2,"v":6443,"va":13.1,"cp":4.4,"zi":"Delicias","alq":23.8,"aa":10.8,"rb":4.43},"104":{"n":"Aluche","d":10,"v":3913,"va":10.3,"cp":2.3,"zi":"Aluche","alq":16.7,"aa":2.4,"rb":5.12},"141":{"n":"Pavones","d":14},"193":{"n":"Valderrivas","d":19},"113":{"n":"San Isidro","d":11,"v":3944,"va":12.9,"cp":5.4,"zi":"San Isidro","alq":19.1,"aa":6.7,"rb":5.81},"192":{"n":"Valdebernardo","d":19,"v":4381,"zi":"Valdebernardo - Valderribas"},"136":{"n":"Numancia","d":13,"v":3549,"va":15.8,"cp":5.3,"zi":"Numancia","alq":22.3,"aa":16.1,"rb":7.54},"32":{"n":"Adelfas","d":3,"v":6343,"va":4.4,"zi":"Adelfas","alq":20.8,"aa":3.7,"rb":3.94},"22":{"n":"Acacias","d":2,"v":6460,"va":8.0,"zi":"Acacias","alq":22.6,"aa":11.3,"rb":4.2},"31":{"n":"Pacífico","d":3,"v":6721,"va":10.7,"zi":"Pacífico","alq":22.2,"aa":6.0,"rb":3.96},"26":{"n":"Palos de Moguer","d":2,"v":6304,"va":13.8,"zi":"Palos de Moguer","alq":23.3,"aa":9.3,"rb":4.44},"145":{"n":"Fontarrón","d":14,"v":4167,"va":20.0,"zi":"Fontarrón"},"27":{"n":"Atocha","d":2},"101":{"n":"Los Cármenes","d":10,"v":4090,"va":23.7,"cp":3.9,"zi":"Los Cármenes"},"146":{"n":"Vinateros","d":14,"v":4608,"va":18.3,"zi":"Vinateros"},"103":{"n":"Lucero","d":10,"v":3999,"va":14.2,"cp":3.5,"zi":"Lucero","alq":19.0,"aa":2.7,"rb":5.7},"142":{"n":"Horcajo","d":14},"21":{"n":"Imperial","d":2,"v":6429,"va":8.0,"zi":"Imperial","alq":22.1,"aa":3.6,"rb":4.13},"12":{"n":"Embajadores","d":1,"v":6346,"va":9.7,"zi":"Lavapiés-Embajadores","alq":25.9,"aa":3.6,"rb":4.9},"143":{"n":"Marroquina","d":14,"v":4891,"va":14.1,"zi":"Marroquina","alq":17.9,"aa":14.8,"rb":4.39},"36":{"n":"Niño Jesús","d":3,"v":7568,"va":2.8,"zi":"Niño Jesús","alq":23.6,"aa":5.3,"rb":3.74},"102":{"n":"Puerta del Ángel","d":10,"v":4224,"va":2.0,"cp":7.4,"zi":"Puerta del Ángel","alq":20.0,"aa":3.3,"rb":5.68},"144":{"n":"Media Legua","d":14,"v":4720,"va":18.0,"zi":"Media Legua"},"13":{"n":"Cortes","d":1,"v":8035,"va":5.7,"zi":"Huertas-Cortes","alq":26.4,"aa":1.6,"rb":3.94},"16":{"n":"Sol","d":1,"v":7924,"va":3.9,"zi":"Sol","alq":26.1,"aa":2.4,"rb":3.95},"33":{"n":"Estrella","d":3,"v":6701,"va":11.4,"zi":"Estrella","alq":21.8,"aa":8.9,"rb":3.9},"35":{"n":"Los Jerónimos","d":3,"v":7980,"va":14.4,"zi":"Jerónimos","alq":26.1,"aa":6.3,"rb":3.92},"34":{"n":"Ibiza","d":3,"v":9504,"va":5.6,"zi":"Ibiza","alq":27.0,"aa":3.1,"rb":3.41},"11":{"n":"Palacio","d":1,"v":7601,"va":11.5,"cp":3.1,"zi":"Palacio","alq":25.7,"aa":7.4,"rb":4.06},"204":{"n":"Arcos","d":20,"v":3702,"va":15.4,"cp":6.4,"zi":"Arcos"},"42":{"n":"Goya","d":4,"v":10390,"va":0.6,"zi":"Goya","alq":29.3,"aa":6.7,"rb":3.38},"203":{"n":"Amposta","d":20,"v":3375,"va":20.1,"cp":9.9,"zi":"Amposta"},"14":{"n":"Justicia","d":1,"v":9471,"va":4.2,"zi":"Chueca-Justicia","alq":29.5,"aa":2.8,"rb":3.74},"41":{"n":"Recoletos","d":4,"v":11111,"va":0.6,"zi":"Recoletos","alq":32.3,"aa":7.6,"rb":3.49},"15":{"n":"Universidad","d":1,"v":7879,"va":2.6,"zi":"Malasaña-Universidad","alq":27.5,"aa":2.1,"rb":4.19},"43":{"n":"Fuente del Berro","d":4,"v":7739,"va":12.5,"zi":"Fuente del Berro","alq":23.8,"aa":5.9,"rb":3.69},"151":{"n":"Ventas","d":15,"v":4782,"va":16.7,"zi":"Ventas","alq":19.3,"aa":1.8,"rb":4.84},"202":{"n":"Hellín","d":20,"v":3571,"va":19.8,"cp":6.7,"zi":"Hellín"},"92":{"n":"Argüelles","d":9,"v":8180,"va":11.6,"zi":"Argüelles","alq":25.9,"aa":11.2,"rb":3.8},"45":{"n":"Lista","d":4,"v":10612,"va":6.2,"zi":"Lista","alq":27.9,"aa":4.2,"rb":3.15},"152":{"n":"Pueblo Nuevo","d":15,"v":4429,"va":13.9,"zi":"Pueblo Nuevo","alq":20.8,"aa":8.2,"rb":5.64},"46":{"n":"Castellana","d":4,"v":11093,"va":6.9,"zi":"Castellana","alq":30.0,"aa":8.1,"rb":3.25},"74":{"n":"Almagro","d":7,"v":10582,"va":3.3,"zi":"Almagro","alq":28.9,"aa":9.7,"rb":3.28},"73":{"n":"Trafalgar","d":7,"v":9464,"va":7.5,"zi":"Trafalgar","alq":28.3,"aa":3.6,"rb":3.59},"72":{"n":"Arapiles","d":7,"v":8512,"va":14.7,"zi":"Arapiles","alq":25.0,"aa":3.4,"rb":3.52},"71":{"n":"Gaztambide","d":7,"v":8264,"va":17.1,"zi":"Gaztambide","alq":25.0,"aa":7.6,"rb":3.63},"153":{"n":"Quintana","d":15,"v":5251,"va":14.9,"zi":"Quintana","alq":20.0,"aa":6.1,"rb":4.57},"201":{"n":"Simancas","d":20,"v":4122,"va":14.2,"cp":5.1,"zi":"Simancas","alq":18.7,"aa":12.0,"rb":5.44},"44":{"n":"Guindalera","d":4,"v":7268,"va":7.6,"zi":"Guindalera","alq":24.7,"aa":12.5,"rb":4.08},"154":{"n":"La Concepción","d":15,"v":5364,"va":11.7,"zi":"Concepción","alq":20.2,"aa":8.0,"rb":4.52},"75":{"n":"Ríos Rosas","d":7,"v":8835,"va":7.4,"zi":"Nuevos Ministerios-Ríos Rosas","alq":26.0,"aa":4.0,"rb":3.53},"76":{"n":"Vallehermoso","d":7,"v":7952,"va":14.7,"zi":"Vallehermoso","alq":23.7,"aa":6.8,"rb":3.58},"155":{"n":"San Pascual","d":15,"v":5998,"va":17.1,"zi":"San Pascual","alq":19.8,"aa":5.1,"rb":3.96},"207":{"n":"Canillejas","d":20,"v":4123,"va":14.2,"cp":3.1,"zi":"Canillejas","alq":19.4,"aa":-0.3,"rb":5.65},"205":{"n":"Rosas","d":20,"v":4898,"zi":"Rosas"},"208":{"n":"El Salvador","d":20,"v":5652,"va":9.2,"zi":"Salvador","alq":19.4,"rb":4.12},"206":{"n":"Rejas","d":20,"v":4196,"va":3.2,"cp":5.2,"zi":"Rejas","alq":15.1,"aa":-1.0,"rb":4.32},"91":{"n":"Casa de Campo","d":9,"v":6208,"va":17.5,"zi":"Casa de Campo","alq":21.0,"aa":20.5,"rb":4.06},"51":{"n":"El Viso","d":5,"v":9618,"va":12.4,"zi":"El Viso","alq":25.6,"aa":5.4,"rb":3.19},"53":{"n":"Ciudad Jardín","d":5,"v":7342,"va":11.6,"zi":"Ciudad Jardín","alq":24.0,"aa":0.6,"rb":3.92},"52":{"n":"Prosperidad","d":5,"v":7502,"va":13.6,"zi":"Prosperidad","alq":23.0,"aa":3.7,"rb":3.68},"156":{"n":"San Juan Bautista","d":15,"v":6883,"va":21.0,"zi":"San Juan Bautista","alq":19.8,"aa":11.1,"rb":3.45},"62":{"n":"Cuatro Caminos","d":6,"v":7286,"va":16.4,"zi":"Cuatro Caminos","alq":24.4,"aa":-0.1,"rb":4.02},"161":{"n":"Palomas","d":16,"v":5473,"va":12.0,"cp":2.6,"zi":"Palomas","alq":16.3,"rb":3.57},"61":{"n":"Bellas Vistas","d":6,"v":5486,"va":6.6,"zi":"Bellas Vistas","alq":23.7,"aa":11.3,"rb":5.18},"54":{"n":"Hispanoamérica","d":5,"v":8622,"va":13.6,"zi":"Bernabéu-Hispanoamérica","alq":24.0,"aa":6.8,"rb":3.34},"162":{"n":"Piovera","d":16,"v":6532,"va":12.0,"zi":"Conde Orgaz-Piovera","alq":18.2,"aa":6.1,"rb":3.34},"157":{"n":"Colina","d":15,"v":6676,"va":8.8,"zi":"Colina","alq":21.3,"aa":2.1,"rb":3.83},"66":{"n":"Berruguete","d":6,"v":5368,"va":10.7,"zi":"Berruguete","alq":21.7,"aa":4.4,"rb":4.85},"211":{"n":"Alameda de Osuna","d":21,"v":5426,"zi":"Alameda de Osuna","alq":16.3,"aa":9.2,"rb":3.6},"63":{"n":"Castillejos","d":6,"v":7500,"va":15.5,"zi":"Cuzco-Castillejos","alq":23.9,"aa":8.8,"rb":3.82},"97":{"n":"Aravaca","d":9,"v":5444,"va":5.0,"zi":"Aravaca","alq":17.8,"aa":7.9,"rb":3.92},"158":{"n":"Atalaya","d":15},"55":{"n":"Nueva España","d":5,"v":8706,"va":13.7,"zi":"Nueva España","alq":23.3,"aa":7.9,"rb":3.21},"163":{"n":"Canillas","d":16,"v":5165,"va":3.3,"cp":-1.0,"zi":"Canillas","alq":17.6,"aa":7.4,"rb":4.09},"215":{"n":"Corralejos","d":21,"v":5358,"zi":"Campo de las Naciones-Corralejos"},"94":{"n":"Valdezarza","d":9,"v":5096,"va":3.8,"zi":"Valdezarza","alq":19.4,"aa":6.9,"rb":4.57},"65":{"n":"Valdeacederas","d":6,"v":5303,"va":13.5,"zi":"Valdeacederas","alq":21.5,"aa":4.8,"rb":4.87},"64":{"n":"Almenara","d":6,"v":5164,"va":2.2,"zi":"Ventilla-Almenara","alq":23.5,"aa":3.0,"rb":5.46},"95":{"n":"Valdemarín","d":9,"alq":18.3,"aa":0.9},"213":{"n":"Casco Histórico de Barajas","d":21,"v":4743,"zi":"Casco Histórico de Barajas"},"93":{"n":"Ciudad Universitaria","d":9,"v":6107,"va":15.4,"zi":"Ciudad Universitaria","alq":20.9,"aa":0.0,"rb":4.11},"96":{"n":"El Plantío","d":9,"v":4287,"va":17.4,"zi":"El Plantío"},"164":{"n":"Pinar del Rey","d":16,"v":4982,"va":16.0,"cp":0.3,"zi":"Pinar del Rey","alq":18.9,"aa":7.9,"rb":4.55},"165":{"n":"Apóstol Santiago","d":16,"v":4876,"va":18.4,"zi":"Apóstol Santiago"},"56":{"n":"Castilla","d":5,"v":7117,"va":9.8,"zi":"Castilla","alq":20.6,"aa":-1.1,"rb":3.47},"159":{"n":"Costillares","d":15,"v":6298,"va":7.0,"zi":"Costillares","alq":19.0,"aa":3.9,"rb":3.62},"84":{"n":"Pilar","d":8,"v":5536,"va":10.3,"zi":"Pilar","alq":20.8,"aa":7.1,"rb":4.51},"83":{"n":"Peñagrande","d":8,"v":5151,"va":4.3,"zi":"Peñagrande","alq":19.2,"aa":5.5,"rb":4.47},"85":{"n":"La Paz","d":8,"v":5886,"va":13.7,"zi":"La Paz"},"82":{"n":"Fuentelarreina","d":8},"214":{"n":"Timón","d":21,"alq":18.0},"212":{"n":"Aeropuerto","d":21},"166":{"n":"Valdefuentes","d":16,"v":6080,"va":15.9,"cp":18.1,"zi":"Valdebebas - Valdefuentes","alq":17.6,"aa":7.4,"rb":3.47},"87":{"n":"Mirasierra","d":8,"v":6435,"va":9.4,"zi":"Mirasierra","alq":18.4,"rb":3.43},"86":{"n":"Valverde","d":8,"v":4371,"va":10.7,"zi":"Tres Olivos - Valverde","alq":19.8,"aa":6.5,"rb":5.44},"88":{"n":"El Goloso","d":8},"81":{"n":"El Pardo","d":8},"191":{"n":"Casco histórico de Vicálvaro","d":19},"194":{"n":"El Cañaveral","d":19,"v":4449,"va":10.2,"cp":616.9,"zi":"El Cañaveral - Los Berrocales","alq":16.4,"aa":19.1,"rb":4.42}};
-const MARR=Object.entries(MDATA).map(([c,d])=>Object.assign({c},d));
-const DARR=Object.entries(DDATA).map(([c,d])=>Object.assign({c},d));
-const BARR=Object.entries(BDATA).map(([c,d])=>Object.assign({c},d));
-const GEO=off=>`https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/georef-spain-municipio/records?select=mun_code,geo_shape&where=prov_name%3D%22Madrid%22&limit=100&offset=${off}`;
-const GEO_DIST='https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/madrid-districts.geojson';
-const GEO_BAR='https://services.arcgis.com/oSryZQrvtpGJ3f3s/arcgis/rest/services/L%C3%ADmites_administrativos_oficiales_del_Ayuntamiento_de_Madrid/FeatureServer/0/query?where=1%3D1&outFields=COD_DISBAR,NOMBRE&f=geojson&outSR=4326&geometryPrecision=5';
-let METRIC='pob', metric='abs'; const Z_MUNI=10, Z_DIST=11, Z_BAR=13;
-let selCode=null, selType='M', simSet=null, simType='M';
-const map=L.map('map',{preferCanvas:true}).setView([40.42,-3.72],9);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; CARTO · idealista · INE · Ayto. Madrid',maxZoom:17,subdomains:'abcd'}).addTo(map);
-let mLayer=null,dLayer=null,bLayer=null;
-const level=()=>(METRIC==='pob'&&map.getZoom()<Z_MUNI)?'zona':'muni';
-const MDESC={
- pob:'Crecimiento poblacional 2020-2025 (padrón INE). Rojo = gana · Azul = pierde. Aleja: 5 zonas · Acerca: municipios · Zoom sobre Madrid: distritos y barrios. <b>Pincha</b> para la ficha.',
- pre:'Precio de venta €/m² (informe idealista, jun-2026) con serie 2021-2026. Más oscuro = más caro. Zoom sobre Madrid: distritos y barrios. <b>Pincha</b> para ficha con serie y rankings.',
- ren:'Rentabilidad bruta del alquiler = alquiler×12 ÷ precio de venta (idealista 2026). Verde oscuro = renta más. <b>Pincha</b> para la ficha.',
- esf:'Esfuerzo de compra: años de renta íntegra del hogar medio (INE 2023) para una vivienda de 80 m² al precio actual. Morado oscuro = menos asequible. <b>Pincha</b> para la ficha.',
- ten:'Tensión oferta-demanda (44 nodos analizados): cuadrante por demanda (crecimiento poblacional) y tendencia de precio a 5 años. <b>Pincha</b> para la ficha.'};
-// ---------- color (interpolación OkLab: perceptualmente uniforme — mismo salto de valor, mismo salto percibido) ----------
-function _s2l(c){c/=255;return c<=0.04045?c/12.92:Math.pow((c+0.055)/1.055,2.4);}
-function _l2s(c){c=c<=0.0031308?c*12.92:1.055*Math.pow(c,1/2.4)-0.055;return Math.round(Math.max(0,Math.min(1,c))*255);}
-function _rgb2ok(r,g,b){r=_s2l(r);g=_s2l(g);b=_s2l(b);
- const l=Math.cbrt(0.4122214708*r+0.5363325363*g+0.0514459929*b),
-       m=Math.cbrt(0.2119034982*r+0.6806995451*g+0.1073969566*b),
-       s=Math.cbrt(0.0883024619*r+0.2817188376*g+0.6299787005*b);
- return [0.2104542553*l+0.7936177850*m-0.0040720468*s,1.9779984951*l-2.4285922050*m+0.4505937099*s,0.0259040371*l+0.7827717662*m-0.8086757660*s];}
-function _ok2rgb(L0,a,b){let l=L0+0.3963377774*a+0.2158037573*b,m=L0-0.1055613458*a-0.0638541728*b,s=L0-0.0894841775*a-1.2914855480*b;
- l=l*l*l;m=m*m*m;s=s*s*s;
- return [_l2s(4.0767416621*l-3.3077115913*m+0.2309699292*s),_l2s(-1.2684380046*l+2.6097574011*m-0.3413193965*s),_l2s(-0.0041960863*l-0.7034186147*m+1.7076147010*s)];}
-function _mix(c1,c2,t){const o1=_rgb2ok(c1[0],c1[1],c1[2]),o2=_rgb2ok(c2[0],c2[1],c2[2]);
- const r=_ok2rgb(o1[0]+(o2[0]-o1[0])*t,o1[1]+(o2[1]-o1[1])*t,o1[2]+(o2[2]-o1[2])*t);
- return `rgb(${r[0]},${r[1]},${r[2]})`;}
-const _RED=[[247,247,247],[253,219,199],[244,165,130],[214,96,77],[178,24,43],[103,0,31]];
-const _BLU=[[247,247,247],[209,229,240],[103,169,207],[67,147,195],[33,102,172],[5,48,97]];
-const _YOR=[[255,255,204],[255,237,160],[254,178,76],[253,141,60],[227,26,28],[128,0,38]];
-const _GRN=[[247,252,245],[199,233,192],[116,196,118],[35,139,69],[0,90,50],[0,50,25]];
-const _PUR=[[252,251,253],[218,218,235],[158,154,200],[106,81,163],[74,20,134],[45,0,75]];
-function _rampArr(arr,t){const a=Math.min(Math.max(t,0),1)*(arr.length-1);const i=Math.floor(a);if(i>=arr.length-1)return `rgb(${arr[arr.length-1].join(',')})`;return _mix(arr[i],arr[i+1],a-i);}
-function _ramp(s){const arr=s>=0?_RED:_BLU;return _rampArr(arr,Math.abs(s));}
-// Escalas: LINEALES valor→color, con recorte robusto p2-p98 (declarado en leyenda) y única por métrica
-// (compartida entre municipios, distritos y barrios: el mismo color significa el mismo valor).
-// Excepción documentada: población en TOTALES usa raíz cuadrada (distribución extremadamente sesgada:
-// Madrid +172.000 vs mediana +300; en lineal todo sería blanco salvo Madrid). La leyenda lleva las marcas reales.
-function _pctl(vals,p){const s=[...vals].sort((a,b)=>a-b);const i=(s.length-1)*p,lo=Math.floor(i),hi=Math.ceil(i);return s[lo]+(s[hi]-s[lo])*(i-lo);}
-function robust(vals){if(!vals.length)return [0,1];if(vals.length>20)return [_pctl(vals,0.02),_pctl(vals,0.98)];return [Math.min(...vals),Math.max(...vals)];}
-const _BC={};
-function allVals(getter){return [...MARR,...DARR,...BARR].map(getter).filter(v=>v!=null&&isFinite(v));}
-function bnds(key,getter){if(_BC[key])return _BC[key];return _BC[key]=robust(allVals(getter));}
-const GET={pre:x=>x.v,ren:x=>x.rb,esf:x=>x.esf,pobp:x=>x.p!=null?x.p:x.cp,poba:x=>x.a};
-function colPob(v,m,lvl){let hi,lo;
- if(lvl==='zona'){const vals=Object.values(ZAGG).map(z=>m==='abs'?z.a:z.p);hi=Math.max(...vals);lo=Math.min(...vals,m==='abs'?-1:-0.1);}
- else{const b=bnds(m==='abs'?'poba':'pobp',GET[m==='abs'?'poba':'pobp']);hi=b[1];lo=Math.min(b[0],m==='abs'?-1:-0.1);}
- let s;
- if(m==='abs'){s=v>=0?Math.sqrt(v)/Math.sqrt(hi):-Math.sqrt(-v)/Math.sqrt(-lo);}
- else{s=v>=0?v/hi:-(v/lo);}
- return _ramp(Math.max(-1,Math.min(1,s)));}
-function colSeq(v,arr,rng){const t=(v-rng[0])/(rng[1]-rng[0]);return _rampArr(arr,Math.max(0,Math.min(t,1)));}
-const TENCOL={'Caliente':'#d73027','Precio':'#fc8d59','Recorrido':'#2ea043','Fr':'#4575b4'};
-function colTen(cu){if(!cu)return '#3a3a3a';for(const k in TENCOL){if(cu.startsWith(k))return TENCOL[k];}return '#3a3a3a';}
-const ND='#3a3a3a';
-function fillFor(d,lt){ // d=record, lt='M'|'D'|'B'
- if(METRIC==='pob'){
-  if(lt==='B'){return d.cp!=null?colPob(d.cp,'pct','muni'):ND;}
-  const lvl=(lt==='M')?level():'muni';
-  const rec=(lt==='M'&&lvl==='zona')?ZAGG[d.z]:d;
-  return colPob(metric==='abs'?rec.a:rec.p,metric,lvl);}
- if(METRIC==='pre'){return d.v?colSeq(d.v,_YOR,bnds('pre',GET.pre)):ND;}
- if(METRIC==='ren'){return d.rb?colSeq(d.rb,_GRN,bnds('ren',GET.ren)):ND;}
- if(METRIC==='esf'){return d.esf?colSeq(d.esf,_PUR,bnds('esf',GET.esf)):ND;}
- if(METRIC==='ten'){return (lt==='B')?ND:colTen(d.cu);}
- return ND;}
-// ---------- value accessors ----------
-function mv(d,lt){ // active metric value for similarity/rank
- if(METRIC==='pob'){if(lt==='B')return d.cp;return metric==='abs'?d.a:d.p;}
- if(METRIC==='pre')return d.v; if(METRIC==='ren')return d.rb; if(METRIC==='esf')return d.esf; if(METRIC==='ten')return d.te;
- return null;}
-function fmtv(x,lt){ if(x==null)return 'n.d.';
- if(METRIC==='pob'){if(lt==='B')return (x>=0?'+':'')+x+'%';return metric==='abs'?num(x)+' hab':(x>=0?'+':'')+x+'%';}
- if(METRIC==='pre')return x.toLocaleString('es')+' €/m²';
- if(METRIC==='ren')return x.toFixed(2)+'%'; if(METRIC==='esf')return x.toFixed(1)+' años'; if(METRIC==='ten')return x.toFixed(2);
- return String(x);}
-// ---------- styles ----------
-function bordFor(c,lt,base,bw){let bd=base,w=bw;
- if(simSet&&simType===lt&&simSet.has(c)){bd='#2ea043';w=2.6;}
- if(c===selCode&&selType===lt){bd='#ffd400';w=2.8;}
- return [bd,w];}
-function styleMuni(f){const c=f.properties.mun_code,d=MDATA[c];
- if(!d) return {fillColor:'#333',color:'#222',weight:.4,fillOpacity:.5};
- const lvl=level();const [bd,w]=bordFor(c,'M',lvl==='zona'?'#111':'#444',lvl==='zona'?0.4:0.7);
- return {fillColor:fillFor(d,'M'),color:bd,weight:w,fillOpacity:.88};}
-function styleDist(f){const c=String(f.properties.cartodb_id),d=DDATA[c];
- if(!d) return {fillColor:'#333',color:'#fff',weight:1,fillOpacity:.5};
- const [bd,w]=bordFor(c,'D','#fff',1.1);
- return {fillColor:fillFor(d,'D'),color:bd,weight:w,fillOpacity:.9};}
-function styleBar(f){const c=String(f.properties.COD_DISBAR),d=BDATA[c];
- if(!d) return {fillColor:'#333',color:'#ccc',weight:.6,fillOpacity:.5};
- const [bd,w]=bordFor(c,'B','#ddd',0.8);
- return {fillColor:fillFor(d,'B'),color:bd,weight:w,fillOpacity:.9};}
-// ---------- tooltips ----------
-function tipGen(name,extra,d,lt){let v=mv(d,lt);return `<b>${name}</b>${extra}<br><b>${fmtv(v,lt)}</b><br><i>pincha para la ficha</i>`;}
-function tipMuni(f){const d=MDATA[f.properties.mun_code];if(!d)return f.properties.mun_code;
- if(METRIC==='pob'){return `<b>${d.n}</b> &middot; <span style="color:#888">${d.z}</span><br>${d.p20.toLocaleString('es')} &rarr; ${d.p25.toLocaleString('es')}<br><b>${num(d.a)} (${d.p>=0?'+':''}${d.p}%)</b><br><i>pincha para la ficha</i>`;}
- if(METRIC==='ten'){return `<b>${d.n}</b><br><b>${d.cu||'fuera de los 44 nodos analizados'}</b><br><i>pincha para la ficha</i>`;}
- return tipGen(d.n,' &middot; <span style="color:#888">'+d.z+'</span>',d,'M');}
-function tipDist(f){const d=DDATA[String(f.properties.cartodb_id)];if(!d)return f.properties.name;
- if(METRIC==='pob'){return `<b>Distrito ${d.n}</b><br>${d.p20.toLocaleString('es')} &rarr; ${d.p25.toLocaleString('es')}<br><b>${num(d.a)} (${d.p>=0?'+':''}${d.p}%)</b><br><i>pincha para la ficha</i>`;}
- if(METRIC==='ten'){return `<b>Distrito ${d.n}</b><br><b>${d.cu||'n.d.'}</b><br><i>pincha para la ficha</i>`;}
- return tipGen('Distrito '+d.n,'',d,'D');}
-function tipBar(f){const d=BDATA[String(f.properties.COD_DISBAR)];if(!d)return f.properties.NOMBRE;
- if(METRIC==='ten')return `<b>${d.n}</b><br>tensión solo en municipios y distritos`;
- return tipGen(d.n,' &middot; <span style="color:#888">barrio</span>',d,'B');}
-// ---------- ranking / ficha ----------
-function ord(n){return n+'º';}
-function num(x){return (x>=0?'+':'')+x.toLocaleString('es');}
-function rankBy(arr,item,key,asc){const s=arr.filter(x=>x[key]!=null).sort((a,b)=>asc?a[key]-b[key]:b[key]-a[key]);const i=s.findIndex(x=>x.c===item.c);return i<0?null:[i+1,s.length];}
-function rk(r){return r?`<span class="rk">${ord(r[0])}</span> de ${r[1]}`:'n.d.';}
-function median(arr,key){const v=arr.map(x=>x[key]).filter(x=>x!=null).sort((a,b)=>a-b);return v.length?v[Math.floor(v.length/2)]:null;}
-function spark(s){if(!s)return '';const years=[21,22,23,24,25,26];const mx=Math.max(...s),mn=Math.min(...s);
- let h='<div class="sparkbox"><div class="spark">';
- s.forEach((v,i)=>{const t=8+36*(v-mn)/((mx-mn)||1);h+=`<div style="height:${t.toFixed(0)}px" title="jun-20${years[i]}: ${v.toLocaleString('es')} €/m²"><span>'${years[i]}</span></div>`;});
- return h+'</div></div>';}
-function arrOf(lt){return lt==='M'?MARR:(lt==='D'?DARR:BARR);}
-function uniOf(lt){return lt==='M'?'municipios':(lt==='D'?'distritos':'barrios');}
-function openInfo(item,lt){
- selCode=item.c; selType=lt; simSet=null;
- const arr=arrOf(lt), tipo=uniOf(lt);
- const sub=lt==='D'?'Distrito de Madrid':(lt==='B'?('Barrio &middot; distrito '+(DDATA[String(item.d)]||{}).n):('Municipio &middot; zona '+item.z));
- let body='';
- if(METRIC==='pob'&&lt!=='B'){
-  const anio=lt==='D'?'2024':'2025', prev=lt==='D'?'2023':'2024';
-  const media=5.3, momento=item.lp>(item.p/5)*1.25?'acelerando':(item.lp<(item.p/5)*0.7?'desacelerando':'a ritmo estable');
-  body=`<div><span class="big">${item.p25.toLocaleString('es')}</span> hab. (${anio})</div>
-  <div>${rk(rankBy(arr,item,'p25'))} más poblado</div>
-  <div class="sec">Crecimiento 2020-${anio} (5 años)</div>
-  <div>${num(item.a)} hab &nbsp;·&nbsp; <b>${item.p>=0?'+':''}${item.p}%</b></div>
-  <div>${rk(rankBy(arr,item,'a'))} que más sumó &nbsp;|&nbsp; ${rk(rankBy(arr,item,'p'))} en %</div>
-  <div class="sec">Último año (${prev}&rarr;${anio})</div>
-  <div>${num(item.la)} hab &nbsp;·&nbsp; <b>${item.lp>=0?'+':''}${item.lp}%</b></div>
-  <div>${rk(rankBy(arr,item,'la'))} que más sumó &nbsp;|&nbsp; ${rk(rankBy(arr,item,'lp'))} en %</div>
-  <div class="ins">Crece <b>${item.p}%</b> en 5 años, ${item.p>=media?'por encima':'por debajo'} de la media regional (+${media}%). Va <b>${momento}</b> (último año ${item.lp>=0?'+':''}${item.lp}% vs ~${(item.p/5).toFixed(1)}%/año del quinquenio).</div>`;
- } else if(METRIC==='pob'&&lt==='B'){
-  body=`<div><span class="big">${item.cp!=null?((item.cp>=0?'+':'')+item.cp+'%'):'n.d.'}</span> población 2020-2024</div>
-  <div>${rk(rankBy(arr,item,'cp'))} que más creció (barrios con dato)</div>
-  ${item.v?`<div class="sec">Precio</div><div>${item.v.toLocaleString('es')} €/m² ${item.va!=null?('· Δ anual <b>'+(item.va>=0?'+':'')+item.va+'%</b>'):''}</div>`:''}
-  <div class="ins">${item.cp!=null?('Padrón del Ayuntamiento 2020→2024.'+(item.cp>10?' Crecimiento fuerte: zona de nueva obra o densificación.':'')):'Sin dato de padrón para la zona idealista equivalente.'}</div>`;
- } else if(METRIC==='pre'){
-  const med=median(arr,'v');
-  const d5=item.s?Math.round((item.s[5]/item.s[0]-1)*100):null;
-  const cagr=item.s?((Math.pow(item.s[5]/item.s[0],1/5)-1)*100):null;
-  const momento=(item.va!=null&&cagr!=null)?(item.va>cagr*1.25?'acelerando':(item.va<cagr*0.7?'frenándose':'a ritmo estable')):null;
-  body=`<div><span class="big">${item.v?item.v.toLocaleString('es'):'n.d.'}</span> €/m² (jun-2026)</div>
-  <div>${rk(rankBy(arr,item,'v'))} más caro de los ${tipo} con dato</div>
-  ${item.va!=null?`<div class="sec">Variación anual</div><div><b>${item.va>=0?'+':''}${item.va}%</b> &nbsp;·&nbsp; ${rk(rankBy(arr,item,'va'))} que más sube</div>`:''}
-  ${item.s?`<div class="sec">Serie jun-2021 → jun-2026</div>${spark(item.s)}<div>${item.s[0].toLocaleString('es')} → ${item.s[5].toLocaleString('es')} €/m² &nbsp;·&nbsp; <b>+${d5}% en 5 años</b> (${cagr.toFixed(1)}%/año)</div>`:''}
-  <div class="ins">${item.v?(`Precio ${item.v>=med?'por encima':'por debajo'} de la mediana de su nivel (${med.toLocaleString('es')} €/m²).`+(momento?` La subida va <b>${momento}</b> (anual ${item.va>=0?'+':''}${item.va}% vs ${cagr.toFixed(1)}%/año del quinquenio).`:'')):'Sin dato de precio en el informe idealista.'}</div>`;
- } else if(METRIC==='ren'){
-  const med=median(arr,'rb');
-  body=`<div><span class="big">${item.rb?item.rb.toFixed(2)+'%':'n.d.'}</span> rentabilidad bruta anual</div>
-  <div>${rk(rankBy(arr,item,'rb'))} donde más renta el alquiler</div>
-  ${item.alq?`<div class="sec">Componentes</div><div>Alquiler: <b>${item.alq.toLocaleString('es')} €/m²/mes</b>${item.aa!=null?(' (Δ anual '+(item.aa>=0?'+':'')+item.aa+'%)'):''}</div><div>Venta: <b>${item.v?item.v.toLocaleString('es'):'n.d.'} €/m²</b></div>`:''}
-  <div class="ins">${item.rb?(`Cada 100.000 € invertidos generan ~<b>${Math.round(item.rb*1000).toLocaleString('es')} €/año</b> brutos. ${item.rb>=med?'Por encima':'Por debajo'} de la mediana (${med.toFixed(2)}%). Bruta: sin gastos, impuestos ni vacancia.`):'Sin dato de alquiler idealista para calcularla.'}</div>`;
- } else if(METRIC==='esf'){
-  const med=median(arr,'esf');
-  body=`<div><span class="big">${item.esf?item.esf.toFixed(1):'n.d.'}</span> años de renta del hogar</div>
-  <div>${rk(rankBy(arr,item,'esf'))} menos asequible</div>
-  ${item.r?`<div class="sec">Componentes</div><div>Vivienda tipo 80 m²: <b>${item.v?(item.v*80).toLocaleString('es'):'n.d.'} €</b></div><div>Renta neta media/hogar (2023): <b>${item.r.toLocaleString('es')} €</b></div>`:''}
-  <div class="ins">${item.esf?(`Comprar 80 m² cuesta <b>${item.esf.toFixed(1)} años</b> de renta íntegra del hogar medio, ${item.esf>=med?'peor':'mejor'} que la mediana (${med?med.toFixed(1):'—'}). Ojo: la renta es de quien ya vive ahí; en zonas de inversión el comprador suele venir de fuera.`):'Faltan precio o renta para calcularlo.'}</div>`;
- } else if(METRIC==='ten'){
-  const expl={'Caliente':'demanda y precio suben a la vez: mercado tensionado.','Recorrido':'la demanda empuja pero el precio aún va por detrás: donde puede haber recorrido.','Precio':'el precio sube sin empuje demográfico: revisar obra nueva, inversión o escasez.','Fr':'sin tensión apreciable.'};
-  let e='';for(const k in expl){if(item.cu&&item.cu.startsWith(k)){e=expl[k];break;}}
-  body=`<div><span class="big">${item.cu||'n.d.'}</span></div>
-  ${item.te!=null?`<div>Tensión: <b>${item.te}</b> &nbsp;·&nbsp; ${rk(rankBy(arr,item,'te'))} más tensionado</div>`:''}
-  ${item.s?`<div class="sec">Precio 2021→2026</div><div>${item.s[0].toLocaleString('es')} → ${item.s[5].toLocaleString('es')} €/m² (+${Math.round((item.s[5]/item.s[0]-1)*100)}%)</div>`:''}
-  ${METRIC==='ten'&&item.p!=null?`<div class="sec">Demanda</div><div>Población 5 años: <b>${item.p>=0?'+':''}${item.p}%</b></div>`:''}
-  <div class="ins">${item.cu?e+' La pata de oferta (nº de anuncios) se añadirá con la API de idealista.':'Fuera de los 44 nodos del análisis de tensión (23 municipios tier-A + 21 distritos).'}</div>`;
- }
- const canSim=mv(item,lt)!=null;
- const info=document.getElementById('info');
- info.innerHTML=`<div class="hd"><span class="x" onclick="clearSel()">&times;</span><h2>${item.n}</h2><div class="sub">${sub}</div></div>
- <div class="bd">${body}
- ${canSim?`<button class="sim" onclick="showSim()">Mostrar 20 similares en ${MLAB()}</button>`:''}
- <div id="simbox"></div></div>`;
- info.style.display='block';
- restyle();
-}
-function MLAB(){return METRIC==='pob'?(metric==='abs'?'crecimiento (totales)':'crecimiento (%)'):(METRIC==='pre'?'precio':(METRIC==='ren'?'rentabilidad':(METRIC==='esf'?'esfuerzo':'tensión')));}
-function clearSel(){selCode=null;simSet=null;document.getElementById('info').style.display='none';restyle();}
-function showSim(){
- const arr=arrOf(selType); const self=arr.find(x=>x.c===selCode); if(!self)return;
- const v=mv(self,selType); if(v==null)return;
- const near=arr.filter(x=>x.c!==selCode&&mv(x,selType)!=null).map(x=>({x,d:Math.abs(mv(x,selType)-v)})).sort((a,b)=>a.d-b.d).slice(0,20);
- simSet=new Set(near.map(o=>o.x.c)); simType=selType;
- let html='<div class="clr" style="text-align:center;color:#2ea043;font-weight:bold;margin-top:8px">20 similares en '+MLAB()+'</div><div class="simlist">';
- near.forEach(o=>{html+=`<div><span>${o.x.n}</span><span class="g">${fmtv(mv(o.x,selType),selType)}</span></div>`;});
- html+='</div><button class="clr" onclick="hideSim()">Quitar resaltado</button>';
- document.getElementById('simbox').innerHTML=html;
- restyle(); fitSim();
-}
-function hideSim(){simSet=null;document.getElementById('simbox').innerHTML='';restyle();}
-function layerOf(lt){return lt==='M'?mLayer:(lt==='D'?dLayer:bLayer);}
-function codeOf(l,lt){return lt==='M'?l.feature.properties.mun_code:(lt==='D'?String(l.feature.properties.cartodb_id):String(l.feature.properties.COD_DISBAR));}
-function fitSim(){ if(!simSet)return; const lyr=layerOf(simType); if(!lyr)return; const b=[];
- lyr.eachLayer(l=>{const c=codeOf(l,simType); if(simSet.has(c)||c===selCode){try{b.push(l.getBounds());}catch(e){}}});
- if(b.length){let bb=b[0];for(let i=1;i<b.length;i++)bb=bb.extend(b[i]); map.fitBounds(bb,{padding:[40,40],maxZoom:simType==='B'?14:12});} }
-// ---------- labels (nombres por nivel de zoom) ----------
-let labM=null,labD=null,labB=null;
-function mkLabels(layer,props){const g=L.layerGroup();
- layer.eachLayer(l=>{try{const p=props(l);if(!p)return;
-  const m=L.marker(p.c,{icon:L.divIcon({html:'<div class="lbl">'+p.n+'</div>',iconSize:[0,0],className:''}),interactive:false,keyboard:false});
-  m._code=p.code;m._pop=p.pop||0;g.addLayer(m);}catch(e){}});
- return g;}
-function syncLabels(){const z=map.getZoom();
- const f=(g,show,vis)=>{if(!g)return;
-  if(!show){if(map.hasLayer(g))map.removeLayer(g);return;}
-  if(!map.hasLayer(g))g.addTo(map);
-  g.eachLayer(m=>{const el=m.getElement();if(el)el.style.display=(vis?vis(m):true)?'':'none';});};
- f(labM,z>=Z_MUNI,m=>{if(m._code==='28079'&&z>=Z_DIST)return false; if(z<=Z_MUNI)return m._pop>=20000; if(z===Z_DIST)return m._pop>=5000; return true;});
- f(labD,z>=Z_DIST&&z<Z_BAR,null);
- f(labB,z>=Z_BAR,null);}
-// ---------- layers / restyle ----------
-function resetStyles(){ if(mLayer) mLayer.setStyle(styleMuni); if(dLayer&&map.hasLayer(dLayer)) dLayer.setStyle(styleDist); if(bLayer&&map.hasLayer(bLayer)) bLayer.setStyle(styleBar); }
-function hl(f,l){ if(simSet||selCode) return; const d=MDATA[f.properties.mun_code]; if(!d) return;
- if(METRIC==='pob'&&level()==='zona'&&mLayer){ mLayer.eachLayer(ly=>{ const dd=MDATA[ly.feature.properties.mun_code]; if(dd&&dd.z===d.z){ ly.setStyle({color:'#ffffff',weight:2.2}); ly.bringToFront(); }}); }
- else { l.setStyle({color:'#ffffff',weight:2.2}); l.bringToFront(); } }
-function restyle(){
- if(mLayer) mLayer.setStyle(styleMuni);
- const z=map.getZoom();
- if(dLayer){ dLayer.setStyle(styleDist);
-   if(z>=Z_DIST&&z<Z_BAR){ if(!map.hasLayer(dLayer)) dLayer.addTo(map); dLayer.bringToFront(); }
-   else if(map.hasLayer(dLayer)) map.removeLayer(dLayer); }
- if(bLayer){ bLayer.setStyle(styleBar);
-   if(z>=Z_BAR){ if(!map.hasLayer(bLayer)) bLayer.addTo(map); bLayer.bringToFront(); }
-   else if(map.hasLayer(bLayer)) map.removeLayer(bLayer); }
- let txt;
- if(z>=Z_BAR) txt='municipios + barrios de Madrid';
- else if(z>=Z_DIST) txt='municipios + distritos de Madrid';
- else txt=(METRIC==='pob'&&z<Z_MUNI)?'zonas (agregado)':'municipios (detalle)';
- document.getElementById('lvl').textContent='Nivel: '+txt; legend(); syncLabels();
-}
-async function loadMuni(){let feats=[];
- try{for(const off of [0,100]){const r=await fetch(GEO(off));const j=await r.json();(j.results||[]).forEach(x=>{if(x.geo_shape){const g=x.geo_shape.geometry||x.geo_shape;feats.push({type:'Feature',properties:{mun_code:x.mun_code},geometry:g});}});}}
- catch(e){document.getElementById('load').textContent='Error geometría: '+e;return;}
- mLayer=L.geoJSON({type:'FeatureCollection',features:feats},{style:styleMuni,onEachFeature:(f,l)=>{l.bindTooltip(()=>tipMuni(f),{className:'mt',sticky:true});l.on('mouseover',()=>hl(f,l));l.on('mouseout',resetStyles);l.on('click',()=>{const d=MDATA[f.properties.mun_code];if(d)openInfo(Object.assign({c:f.properties.mun_code},d),'M');});}}).addTo(map);
- labM=mkLabels(mLayer,l=>{const c=l.feature.properties.mun_code,d=MDATA[c];return d?{c:l.getBounds().getCenter(),n:d.n,code:c,pop:d.p25}:null;});
- restyle();
-}
-async function loadDist(){try{const r=await fetch(GEO_DIST);const gj=await r.json();
- dLayer=L.geoJSON(gj,{style:styleDist,onEachFeature:(f,l)=>{l.bindTooltip(()=>tipDist(f),{className:'mt',sticky:true});l.on('mouseover',()=>{if(simSet||selCode)return;l.setStyle({color:'#fff',weight:2.6});l.bringToFront();});l.on('mouseout',resetStyles);l.on('click',()=>{const c=String(f.properties.cartodb_id),d=DDATA[c];if(d)openInfo(Object.assign({c},d),'D');});}});
- labD=mkLabels(dLayer,l=>{const c=String(l.feature.properties.cartodb_id),d=DDATA[c];return d?{c:l.getBounds().getCenter(),n:d.n,code:c}:null;});
- restyle();}catch(e){}}
-async function loadBar(){try{const r=await fetch(GEO_BAR);const gj=await r.json();
- bLayer=L.geoJSON(gj,{style:styleBar,onEachFeature:(f,l)=>{l.bindTooltip(()=>tipBar(f),{className:'mt',sticky:true});l.on('mouseover',()=>{if(simSet||selCode)return;l.setStyle({color:'#fff',weight:2.4});l.bringToFront();});l.on('mouseout',resetStyles);l.on('click',()=>{const c=String(f.properties.COD_DISBAR),d=BDATA[c];if(d)openInfo(Object.assign({c},d),'B');});}});
- labB=mkLabels(bLayer,l=>{const c=String(l.feature.properties.COD_DISBAR),d=BDATA[c];return d?{c:l.getBounds().getCenter(),n:d.n,code:c}:null;});
- restyle();}catch(e){}}
-map.on('zoomend',restyle);
-// ---------- metric switching ----------
-function setMetric(m){METRIC=m;
- ['pob','pre','ren','esf','ten'].forEach(x=>document.getElementById('t'+x).classList.toggle('on',x===m));
- document.getElementById('mdesc').innerHTML=MDESC[m];
- document.getElementById('segpob').style.display=(m==='pob')?'flex':'none';
- if(selCode){const arr=arrOf(selType);const it=arr.find(x=>x.c===selCode);simSet=null;if(it)openInfo(it,selType);}
- restyle();}
-document.getElementById('bAbs').onclick=()=>{metric='abs';sw();};
-document.getElementById('bPct').onclick=()=>{metric='pct';sw();};
-function sw(){document.getElementById('bAbs').classList.toggle('on',metric==='abs');document.getElementById('bPct').classList.toggle('on',metric==='pct');if(selCode){const arr=arrOf(selType);const it=arr.find(x=>x.c===selCode);if(it)openInfo(it,selType);}restyle();}
-// ---------- legend ----------
-let lg;
-function grad(arr){return 'linear-gradient(to right,'+[0,0.2,0.4,0.6,0.8,1].map(t=>_rampArr(arr,t)).join(',')+')';}
-function legend(){if(lg)lg.remove();lg=L.control({position:'bottomright'});
- lg.onAdd=function(){const div=L.DomUtil.create('div','legend');let html='';
- if(METRIC==='pob'){
-  const g='linear-gradient(to right,rgb(5,48,97),rgb(67,147,195),rgb(247,247,247),rgb(244,165,130),rgb(178,24,43),rgb(103,0,31))';
-  const zona=level()==='zona';
-  let hi,lo;
-  if(zona){const vals=Object.values(ZAGG).map(z=>metric==='abs'?z.a:z.p);hi=Math.max(...vals);lo=Math.min(...vals,metric==='abs'?-1:-0.1);}
-  else{const b=bnds(metric==='abs'?'poba':'pobp',GET[metric==='abs'?'poba':'pobp']);hi=b[1];lo=Math.min(b[0],metric==='abs'?-1:-0.1);}
-  const fk=v=>Math.abs(v)>=1000?(Math.round(v/100)/10).toLocaleString('es')+' mil':Math.round(v).toLocaleString('es');
-  if(metric==='abs'){
-   const t1=fk(hi*0.0625),t2=fk(hi*0.25),t3=fk(hi*0.5625),t4=fk(hi);
-   html='<b>Δ personas 20-25</b>'
-    +'<div style="height:11px;width:190px;background:'+g+';border:1px solid #888;margin:4px 0;border-radius:2px"></div>'
-    +'<div style="position:relative;width:190px;height:12px;color:#555;font-size:10px">'
-    +'<span style="position:absolute;left:0">'+fk(lo)+'</span><span style="position:absolute;left:40%;transform:translateX(-50%)">0</span>'
-    +'<span style="position:absolute;left:55%;transform:translateX(-50%)">+'+t1+'</span><span style="position:absolute;left:70%;transform:translateX(-50%)">+'+t2+'</span>'
-    +'<span style="position:absolute;left:85%;transform:translateX(-50%)">+'+t3+'</span><span style="position:absolute;right:0">+'+t4+'</span></div>'
-    +'<div style="color:#888;margin-top:2px">escala &radic; con marcas reales (totales muy sesgados)'+(zona?'':' · recorte p2-p98')+'</div>'
-    +'<div style="color:#888">rojo=gana · azul=pierde · <span style="color:#2ea043">verde=similar</span></div>';
-  } else {
-   html='<b>Δ % población 20-25</b>'
-    +'<div style="height:11px;width:190px;background:'+g+';border:1px solid #888;margin:4px 0;border-radius:2px"></div>'
-    +'<div style="position:relative;width:190px;height:12px;color:#555;font-size:10px">'
-    +'<span style="position:absolute;left:0">'+lo.toFixed(1)+'%</span><span style="position:absolute;left:40%;transform:translateX(-50%)">0</span>'
-    +'<span style="position:absolute;left:70%;transform:translateX(-50%)">+'+(hi/2).toFixed(1)+'%</span><span style="position:absolute;right:0">+'+hi.toFixed(1)+'%</span></div>'
-    +'<div style="color:#888;margin-top:2px">escala lineal'+(zona?'':' · recorte p2-p98 (extremos saturan)')+'</div>'
-    +'<div style="color:#888">rojo=gana · azul=pierde · <span style="color:#2ea043">verde=similar</span></div>';
-  }
- } else if(METRIC==='ten'){
-  html='<b>Tensión oferta-demanda</b>'
-   +'<div style="margin-top:4px"><span style="background:#d73027;width:11px;height:11px;display:inline-block;border-radius:2px"></span> Caliente (dem↑ prec↑)</div>'
-   +'<div><span style="background:#fc8d59;width:11px;height:11px;display:inline-block;border-radius:2px"></span> Precio↑ sin demanda</div>'
-   +'<div><span style="background:#2ea043;width:11px;height:11px;display:inline-block;border-radius:2px"></span> Recorrido (dem↑ prec rezagado)</div>'
-   +'<div><span style="background:#4575b4;width:11px;height:11px;display:inline-block;border-radius:2px"></span> Frío / estable</div>'
-   +'<div><span style="background:#3a3a3a;width:11px;height:11px;display:inline-block;border-radius:2px"></span> fuera del análisis</div>';
- } else {
-  const cfg={pre:{t:'Precio venta €/m²',a:_YOR},ren:{t:'Rentabilidad bruta alquiler',a:_GRN},esf:{t:'Esfuerzo (años de renta, 80 m²)',a:_PUR}}[METRIC];
-  const rng=bnds(METRIC,GET[METRIC]);
-  const fmt=x=>METRIC==='ren'?x.toFixed(1)+'%':(METRIC==='esf'?x.toFixed(1)+' años':Math.round(x).toLocaleString('es'));
-  const mid=(rng[0]+rng[1])/2;
-  html='<b>'+cfg.t+'</b>'
-   +'<div style="height:11px;width:190px;background:'+grad(cfg.a)+';border:1px solid #888;margin:4px 0;border-radius:2px"></div>'
-   +'<div style="display:flex;justify-content:space-between;width:190px;color:#555"><span>'+fmt(rng[0])+'</span><span>'+fmt(mid)+'</span><span>'+fmt(rng[1])+'</span></div>'
-   +'<div style="color:#888;margin-top:2px">escala lineal · recorte p2-p98 (extremos saturan) · misma escala en los 3 niveles</div>'
-   +'<div style="color:#888">gris = sin dato · <span style="color:#2ea043">verde=similar</span></div>';
- }
- div.innerHTML=html; return div;};
- lg.addTo(map);}
-loadMuni().then(()=>{document.getElementById('load').style.display='none';}); loadDist(); loadBar();
-</script></body></html>
+<div class="warnings" id="warnings" role="status" aria-live="polite"></div>
+<div id="map" role="region" aria-label="Mapa interactivo del mercado de vivienda de la Comunidad de Madrid"></div>
+<script type="module" src="js/dashboard.mjs"></script></body></html>
