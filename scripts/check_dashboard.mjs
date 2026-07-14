@@ -49,6 +49,14 @@ for (const feature of ["writeState", "renderCompare", "qualityBlock", "historyBl
   }
 }
 
+for (const feature of ["activeLevel", "legendBins", "fitLegendRange", "refreshMapVisuals"]) {
+  if (!dashboard.includes(`function ${feature}`)) throw new Error(`Missing phase 4 map feature: ${feature}`);
+}
+
+if (!html.includes("data-legend-bin") && !dashboard.includes("data-legend-bin")) {
+  throw new Error("Interactive legend ranges are missing");
+}
+
 for (const [path, expected] of [
   ["data/geo/municipalities.geojson", 179],
   ["data/geo/districts.geojson", 21],

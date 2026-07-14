@@ -18,9 +18,11 @@ const Z_MUNI=10, Z_DIST=11, Z_BAR=13;
 const VALID_METRICS=new Set(['pob','pre','ren','esf','ten']);
 const query=new URLSearchParams(location.search);
 const queryMetric=query.get('metric'), queryUnit=query.get('unit');
+const queryRange=/^([MDB]):([0-4])$/.exec(query.get('range')||'');
 let METRIC=VALID_METRICS.has(queryMetric)?queryMetric:'pob';
 let metric=queryUnit==='abs'?'abs':'pct';
-let selCode=null, selType='M', simSet=null, simType='M', compareItems=[];
+let selCode=null, selType='M', simSet=null, simType='M', compareItems=[],legendPinned=null,legendHover=null;
+let labelsAll=query.get('labels')==='all';
 const nparam=(name,fallback)=>{const raw=query.get(name);if(raw==null||raw==='')return fallback;const value=Number(raw);return Number.isFinite(value)?value:fallback;};
 const initialView=[nparam('lat',40.42),nparam('lng',-3.72),Math.min(17,Math.max(7,nparam('zoom',9)))];
 const map=new maplibregl.Map({container:'map',style:'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',center:[initialView[1],initialView[0]],zoom:initialView[2],maxZoom:17,attributionControl:false});
@@ -35,6 +37,8 @@ function writeState(){
  params.set('lat',center.lat.toFixed(5));params.set('lng',center.lng.toFixed(5));params.set('zoom',String(map.getZoom()));
  if(selCode)params.set('zone',`${selType}:${selCode}`);
  if(compareItems.length)params.set('compare',compareItems.map(entry=>`${entry.lt}:${entry.item.c}`).join(','));
+ if(labelsAll)params.set('labels','all');
+ if(legendPinned)params.set('range',`${legendPinned.lt}:${legendPinned.index}`);
  history.replaceState(null,'',`${location.pathname}?${params}${location.hash}`);
 }
 const MDESC={
@@ -314,15 +318,18 @@ function hideSim(){simSet=null;document.getElementById('simbox').innerHTML='';re
 const GEO_BY_LEVEL={M:MGEO,D:DGEO,B:BGEO};
 const RECORDS={M:MDATA,D:DDATA,B:BDATA};
 const MAP_CONFIG={
- M:{source:'municipalities',prefix:'municipality',minzoom:0,maxzoom:18,labelMin:10,labelMax:13,line:'#444',width:.7,size:10},
+ M:{source:'municipalities',prefix:'municipality',minzoom:0,maxzoom:18,labelMin:10,labelMax:11,line:'#444',width:.7,size:10},
  D:{source:'districts',prefix:'district',minzoom:11,maxzoom:13,labelMin:11,labelMax:13,line:'#fff',width:1.1,size:11},
  B:{source:'neighborhoods',prefix:'neighborhood',minzoom:13,maxzoom:18,labelMin:13,labelMax:18,line:'#ddd',width:.8,size:10}
 };
 function rawCode(feature,lt){return lt==='M'?String(feature.properties.mun_code):(lt==='D'?String(feature.properties.cartodb_id):String(feature.properties.COD_DISBAR));}
+function activeLevel(){const zoom=map.getZoom();return zoom>=Z_BAR?'B':(zoom>=Z_DIST?'D':'M');}
+function activeLegendRange(){return legendHover||legendPinned;}
+function matchesLegend(record,lt){const range=activeLegendRange();if(!range||range.lt!==lt)return false;const value=mv(record,lt);return value!=null&&value>=range.min&&(value<range.max||(range.last&&value<=range.max));}
 function decoratedGeo(lt){
  return {type:'FeatureCollection',features:GEO_BY_LEVEL[lt].features.map(feature=>{
   const code=rawCode(feature,lt),record=RECORDS[lt][code];
-  return {...feature,properties:{...feature.properties,code,label:record?.n||'',population:record?.p25||0,color:record?fillFor(record,lt):ND,selected:code===selCode&&lt===selType,similar:Boolean(simSet&&simType===lt&&simSet.has(code))}};
+  return {...feature,properties:{...feature.properties,code,label:record?.n||'',population:record?.p25||0,color:record?fillFor(record,lt):ND,selected:code===selCode&&lt===selType,similar:Boolean(simSet&&simType===lt&&simSet.has(code)),rangeMatch:Boolean(record&&matchesLegend(record,lt))}};
  })};
 }
 function extendCoords(bounds,coords){if(typeof coords[0]==='number'){bounds.extend(coords);return;}coords.forEach(value=>extendCoords(bounds,value));}
@@ -350,17 +357,21 @@ function installLevel(lt){
  map.addSource(cfg.source,{type:'geojson',data:decoratedGeo(lt)});
  map.addLayer({id:fillId,type:'fill',source:cfg.source,minzoom:cfg.minzoom,maxzoom:cfg.maxzoom,paint:{'fill-color':['get','color'],'fill-opacity':lt==='M'?.88:.9}});
  map.addLayer({id:lineId,type:'line',source:cfg.source,minzoom:cfg.minzoom,maxzoom:cfg.maxzoom,paint:{
-  'line-color':['case',['boolean',['get','selected'],false],'#ffd400',['boolean',['get','similar'],false],'#2ea043',cfg.line],
-  'line-width':['case',['boolean',['get','selected'],false],2.8,['boolean',['get','similar'],false],2.6,cfg.width]
+  'line-color':['case',['boolean',['get','selected'],false],'#ffd400',['boolean',['get','rangeMatch'],false],'#00b6d9',['boolean',['get','similar'],false],'#2ea043',cfg.line],
+  'line-width':['case',['boolean',['get','selected'],false],2.8,['boolean',['get','rangeMatch'],false],2.4,['boolean',['get','similar'],false],2.6,cfg.width]
  }});
- map.addLayer({id:labelId,type:'symbol',source:cfg.source,minzoom:cfg.labelMin,maxzoom:cfg.labelMax,layout:{'text-field':['get','label'],'text-size':cfg.size,'text-allow-overlap':false,'text-ignore-placement':false},paint:{'text-color':'#fff','text-halo-color':'#000','text-halo-width':1.5}});
+ map.addLayer({id:labelId,type:'symbol',source:cfg.source,minzoom:cfg.labelMin,maxzoom:cfg.labelMax,layout:{'text-field':['get','label'],'text-size':cfg.size,'text-allow-overlap':labelsAll,'text-ignore-placement':false,'symbol-sort-key':['-',0,['get','population']]},paint:{'text-color':'#fff','text-halo-color':'#000','text-halo-width':1.5}});
  map.on('click',fillId,event=>{const code=String(event.features?.[0]?.properties?.code||''),record=RECORDS[lt][code];if(record)openInfo({...record,c:code},lt);});
  map.on('mouseenter',fillId,()=>{map.getCanvas().style.cursor='pointer';});
  map.on('mousemove',fillId,event=>{const feature=event.features?.[0];if(feature)hoverPopup.setLngLat(event.lngLat).setHTML(TIPS[lt](feature)).addTo(map);});
  map.on('mouseleave',fillId,()=>{map.getCanvas().style.cursor='';hoverPopup.remove();});
 }
-function restyle(){
+function refreshMapVisuals(){
  for(const lt of ['M','D','B']){const source=map.getSource(MAP_CONFIG[lt].source);if(source)source.setData(decoratedGeo(lt));}
+ const range=activeLegendRange();for(const lt of ['M','D','B']){const layer=`${MAP_CONFIG[lt].prefix}-fill`;if(map.getLayer(layer))map.setPaintProperty(layer,'fill-opacity',range?['case',['boolean',['get','rangeMatch'],false],.96,.18]:lt==='M'?.88:.9);}
+}
+function restyle(){
+ refreshMapVisuals();
  const z=map.getZoom();
  let txt;
  if(z>=Z_BAR) txt='municipios + barrios de Madrid';
@@ -370,12 +381,12 @@ function restyle(){
 }
 const LOAD_WARNINGS=[];
 function warnLoad(message){LOAD_WARNINGS.push(message);const el=document.getElementById('warnings');el.textContent=LOAD_WARNINGS.join(' · ');el.style.display='block';}
-map.on('load',()=>{try{for(const lt of ['M','D','B'])installLevel(lt);document.getElementById('load').style.display='none';restyle();resolveGeometry(true);}catch(error){document.getElementById('load').textContent='Error al cargar geometrías';warnLoad('No se pudieron preparar las capas locales del mapa.');resolveGeometry(false);}});
+map.on('load',()=>{try{for(const lt of ['M','D','B'])installLevel(lt);if(queryRange)legendPinned=legendBins(queryRange[1])[Number(queryRange[2])]||null;document.getElementById('load').style.display='none';restyle();resolveGeometry(true);}catch(error){document.getElementById('load').textContent='Error al cargar geometrías';warnLoad('No se pudieron preparar las capas locales del mapa.');resolveGeometry(false);}});
 map.on('error',event=>{if(event.error&&!LOAD_WARNINGS.includes('El mapa base no se pudo cargar por completo.'))warnLoad('El mapa base no se pudo cargar por completo.');});
 map.on('zoomend',restyle);
 map.on('moveend',writeState);
 // ---------- metric switching ----------
-function setMetric(m){if(!VALID_METRICS.has(m))return;METRIC=m;
+function setMetric(m){if(!VALID_METRICS.has(m))return;METRIC=m;legendPinned=null;legendHover=null;
  ['pob','pre','ren','esf','ten'].forEach(x=>{const button=document.getElementById('t'+x),active=x===m;button.classList.toggle('on',active);button.setAttribute('aria-pressed',String(active));});
  document.getElementById('metricSelect').value=m;
  document.getElementById('mdesc').innerHTML=MDESC[m];
@@ -431,6 +442,18 @@ document.getElementById('share').addEventListener('click',async()=>{
 document.addEventListener('keydown',event=>{if(event.key==='Escape'){if(document.getElementById('info').style.display==='block')clearSel();else document.getElementById('compare').style.display='none';}});
 // ---------- legend ----------
 function grad(arr){return 'linear-gradient(to right,'+[0,0.2,0.4,0.6,0.8,1].map(t=>_rampArr(arr,t)).join(',')+')';}
+function legendFormat(value){if(METRIC==='pob')return metric==='pct'?`${value>=0?'+':''}${value.toFixed(1)}%`:(Math.abs(value)>=1000?`${(value/1000).toLocaleString('es',{maximumFractionDigits:1})} mil`:Math.round(value).toLocaleString('es'));if(METRIC==='pre')return `${Math.round(value).toLocaleString('es')} €`;if(METRIC==='ren')return `${value.toFixed(1)}%`;return `${value.toFixed(1)} años`;}
+function colorForLegend(value){if(METRIC==='pob')return colPob(value,metric);if(METRIC==='pre')return colSeq(value,_YOR,bnds('pre',GET.pre));if(METRIC==='ren')return colSeq(value,_GRN,bnds('ren',GET.ren));return colSeq(value,_PUR,bnds('esf',GET.esf));}
+function legendBins(lt=activeLevel()){
+ if(METRIC==='ten')return [];
+ let edges;
+ if(METRIC==='pob'&&metric==='pct'){const limit=Math.max(Math.abs(POB_ANNUAL_RANGE[0]),Math.abs(POB_ANNUAL_RANGE[1]),.1);edges=[-limit,-limit*.6,-limit*.2,limit*.2,limit*.6,limit];}
+ else if(METRIC==='pob'){const [baseLo,baseHi]=bnds('poba',GET.poba),lo=Math.min(baseLo,-1),hi=baseHi;edges=[lo,-Math.abs(lo)*.36,-Math.abs(lo)*.04,hi*.04,hi*.36,hi];}
+ else{const range=bnds(METRIC,GET[METRIC]);edges=[0,.2,.4,.6,.8,1].map(position=>range[0]+(range[1]-range[0])*position);}
+ const records=arrOf(lt);return edges.slice(0,-1).map((min,index)=>{const max=edges[index+1],last=index===edges.length-2,count=records.filter(record=>{const value=mv(record,lt);return value!=null&&value>=min&&(value<max||(last&&value<=max));}).length;return {lt,min,max,last,count,index,color:colorForLegend((min+max)/2)};});
+}
+function fitLegendRange(range){const features=GEO_BY_LEVEL[range.lt].features.filter(feature=>{const record=RECORDS[range.lt][rawCode(feature,range.lt)];return record&&matchesLegend(record,range.lt);}),bounds=boundsForFeatures(features);if(bounds)map.fitBounds(bounds,{padding:40,maxZoom:range.lt==='B'?14:12});}
+function legendControls(){const bins=legendBins();if(!bins.length)return '<div class="legend-note">La selección por categoría se incorporará en una fase posterior.</div>';return '<div class="legend-ranges">'+bins.map(bin=>`<button type="button" class="legend-range${legendPinned?.lt===bin.lt&&legendPinned.index===bin.index?' active':''}" data-legend-bin="${bin.index}" aria-pressed="${legendPinned?.lt===bin.lt&&legendPinned.index===bin.index}"><span class="swatch" style="background:${bin.color}"></span><span>${legendFormat(bin.min)} a ${legendFormat(bin.max)}</span><span class="count">${bin.count}</span></button>`).join('')+'</div><div class="legend-note">Pasa por un rango para destacar · pulsa para fijar. <span class="legend-selected">Contorno turquesa = rango</span>.</div><div class="legend-actions"><button type="button" data-legend-clear>Quitar selección</button><button type="button" data-labels-toggle>'+(labelsAll?'Evitar solapes':'Mostrar todos los nombres')+'</button></div>';}
 function legend(){const div=document.getElementById('mapLegend');let html='';
  if(METRIC==='pob'){
   const g='linear-gradient(to right,rgb(5,48,97),rgb(67,147,195),rgb(247,247,247),rgb(244,165,130),rgb(178,24,43),rgb(103,0,31))';
@@ -469,7 +492,12 @@ function legend(){const div=document.getElementById('mapLegend');let html='';
    +'<div style="color:#888;margin-top:2px">escala lineal · recorte p2-p98 (extremos saturan) · misma escala en los 3 niveles</div>'
    +'<div style="color:#888">gris = sin dato · <span style="color:#2ea043">verde=similar</span></div>';
  }
- div.innerHTML=html;}
+ div.innerHTML=html+legendControls();}
+
+const mapLegend=document.getElementById('mapLegend');
+mapLegend.addEventListener('mouseover',event=>{const button=event.target.closest('[data-legend-bin]');if(!button)return;legendHover=legendBins()[Number(button.dataset.legendBin)]||null;refreshMapVisuals();});
+mapLegend.addEventListener('mouseleave',()=>{if(legendHover){legendHover=null;refreshMapVisuals();}});
+mapLegend.addEventListener('click',event=>{const button=event.target.closest('[data-legend-bin]');if(button){const range=legendBins()[Number(button.dataset.legendBin)];legendPinned=legendPinned?.lt===range.lt&&legendPinned.index===range.index?null:range;legendHover=null;restyle();writeState();if(legendPinned)fitLegendRange(legendPinned);return;}if(event.target.closest('[data-legend-clear]')){legendPinned=null;legendHover=null;restyle();writeState();return;}if(event.target.closest('[data-labels-toggle]')){labelsAll=!labelsAll;for(const lt of ['M','D','B']){const layer=`${MAP_CONFIG[lt].prefix}-label`;if(map.getLayer(layer))map.setLayoutProperty(layer,'text-allow-overlap',labelsAll);}legend();writeState();}});
 
 const initialCompare=(query.get('compare')||'').split(',').map(decodeRef).filter(Boolean);
 for(const reference of initialCompare){
