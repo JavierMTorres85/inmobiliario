@@ -72,13 +72,17 @@ if (!dashboard.includes("Math.ceil(values.length*group/5)") || !dashboard.includ
   throw new Error("Legend ranges must be populated quantile groups");
 }
 
-if (!dashboard.includes("['case',['boolean',['get','rangeMatch'],false],.96,0]") ||
-    !dashboard.includes("['case',['boolean',['get','rangeMatch'],false],1,0]")) {
-  throw new Error("Selected legend range must hide non-matching polygons");
+if (!dashboard.includes("rangeColor:range?.color||'#f7f7f7'") ||
+    !dashboard.includes("['case',['boolean',['get','rangeMatch'],false],['get','height'],0]")) {
+  throw new Error("Only selected legend ranges may keep their color and 3D height");
 }
 
-if (!dashboard.includes("legendBins(queryRange[1]).find(bin=>bin.index===Number(queryRange[2]))")) {
-  throw new Error("Legend range must be restored before URL state is rewritten");
+if (!dashboard.includes("const queryRanges=") || !dashboard.includes("function restoreLegendRanges()")) {
+  throw new Error("Multiple legend ranges must be restorable from the URL");
+}
+
+if (!dashboard.includes("dragRotate:true,pitchWithRotate:true") || !dashboard.includes("showCompass:true,visualizePitch:true")) {
+  throw new Error("The 3D camera must support horizontal and vertical mouse rotation");
 }
 
 for (const feature of ["observedSeries", "observedPoint", "availableYears", "setTimeYear", "toggleTimeline"]) {
