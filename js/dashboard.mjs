@@ -1,10 +1,8 @@
-const [MDATA,ZAGG,DDATA,BDATA,DATA_MANIFEST,DATA_RELEASES]=await Promise.all([
+const [MDATA,DDATA,BDATA,DATA_MANIFEST]=await Promise.all([
  '../data/municipalities.json',
- '../data/zones.json',
  '../data/districts.json',
  '../data/neighborhoods.json',
- '../data/manifest.json',
- '../data/releases.json'
+ '../data/manifest.json'
 ].map(async path=>{
  const response=await fetch(new URL(path,import.meta.url));
  if(!response.ok)throw new Error(`No se pudo cargar ${path}: ${response.status}`);
@@ -21,15 +19,13 @@ const VALID_METRICS=new Set(['pob','pre','ren','esf','ten']);
 const query=new URLSearchParams(location.search);
 const queryMetric=query.get('metric'), queryUnit=query.get('unit');
 let METRIC=VALID_METRICS.has(queryMetric)?queryMetric:'pob';
-let metric=queryUnit==='pct'?'pct':'abs';
-let showChanges=query.get('changes')==='1';
+let metric=queryUnit==='abs'?'abs':'pct';
 let selCode=null, selType='M', simSet=null, simType='M', compareItems=[];
 const nparam=(name,fallback)=>{const raw=query.get(name);if(raw==null||raw==='')return fallback;const value=Number(raw);return Number.isFinite(value)?value:fallback;};
 const initialView=[nparam('lat',40.42),nparam('lng',-3.72),Math.min(17,Math.max(7,nparam('zoom',9)))];
 const map=L.map('map',{preferCanvas:true}).setView(initialView.slice(0,2),initialView[2]);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; CARTO · idealista · INE · Ayto. Madrid · límites: ODS/click_that_hood',maxZoom:17,subdomains:'abcd'}).addTo(map);
 let mLayer=null,dLayer=null,bLayer=null,geometryReady=Promise.resolve();
-const level=()=>(METRIC==='pob'&&map.getZoom()<Z_MUNI)?'zona':'muni';
 function itemFor(lt,code){return arrOf(lt).find(item=>item.c===code);}
 function decodeRef(value){const match=/^([MDB]):(.+)$/.exec(value||'');return match?{lt:match[1],code:match[2]}:null;}
 function writeState(){
@@ -38,11 +34,10 @@ function writeState(){
  params.set('lat',center.lat.toFixed(5));params.set('lng',center.lng.toFixed(5));params.set('zoom',String(map.getZoom()));
  if(selCode)params.set('zone',`${selType}:${selCode}`);
  if(compareItems.length)params.set('compare',compareItems.map(entry=>`${entry.lt}:${entry.item.c}`).join(','));
- if(showChanges)params.set('changes','1');
  history.replaceState(null,'',`${location.pathname}?${params}${location.hash}`);
 }
 const MDESC={
- pob:'Crecimiento poblacional: municipios 2020-2025; distritos y barrios de Madrid 2020-2024. Rojo = gana · Azul = pierde. <b>Pincha</b> para la ficha.',
+ pob:'Crecimiento anual equivalente: municipios 2020-2025; distritos y barrios de Madrid 2020-2024. Rojo = gana · Azul = pierde. <b>Pincha</b> para la ficha.',
  pre:'Precio de venta €/m² (informe idealista, jun-2026) con serie 2021-2026. Más oscuro = más caro. Zoom sobre Madrid: distritos y barrios. <b>Pincha</b> para ficha con serie y rankings.',
  ren:'Rentabilidad bruta del alquiler = alquiler×12 ÷ precio de venta (idealista 2026). Verde oscuro = renta más. <b>Pincha</b> para la ficha.',
  esf:'Esfuerzo de compra: años de renta íntegra del hogar medio (INE 2023) para una vivienda de 80 m² al precio actual. Morado oscuro = menos asequible. <b>Pincha</b> para la ficha.',
@@ -77,13 +72,15 @@ function robust(vals){if(!vals.length)return [0,1];if(vals.length>20)return [_pc
 const _BC={};
 function allVals(getter){return [...MARR,...DARR,...BARR].map(getter).filter(v=>v!=null&&isFinite(v));}
 function bnds(key,getter){if(_BC[key])return _BC[key];return _BC[key]=robust(allVals(getter));}
-const GET={pre:x=>x.v,ren:x=>x.rb,esf:x=>x.esf,pobp:x=>x.p!=null?x.p:x.cp,poba:x=>x.a};
-function colPob(v,m,lvl){let hi,lo;
- if(lvl==='zona'){const vals=Object.values(ZAGG).map(z=>m==='abs'?z.a:z.p);hi=Math.max(...vals);lo=Math.min(...vals,m==='abs'?-1:-0.1);}
- else{const b=bnds(m==='abs'?'poba':'pobp',GET[m==='abs'?'poba':'pobp']);hi=b[1];lo=Math.min(b[0],m==='abs'?-1:-0.1);}
+const GET={pre:x=>x.v,ren:x=>x.rb,esf:x=>x.esf,poba:x=>x.a};
+function annualPct(d,lt){const cumulative=lt==='B'?d.cp:d.p;if(cumulative==null)return null;const years=lt==='M'?5:4;return (Math.pow(1+cumulative/100,1/years)-1)*100;}
+const POB_ANNUAL_RANGE=robust([...MARR.map(d=>annualPct(d,'M')),...DARR.map(d=>annualPct(d,'D')),...BARR.map(d=>annualPct(d,'B'))].filter(Number.isFinite));
+function colPob(v,m){let hi,lo;
+ if(m==='pct'){const limit=Math.max(Math.abs(POB_ANNUAL_RANGE[0]),Math.abs(POB_ANNUAL_RANGE[1]),0.1);hi=limit;lo=-limit;}
+ else{const b=bnds('poba',GET.poba);hi=b[1];lo=Math.min(b[0],-1);}
  let s;
  if(m==='abs'){s=v>=0?Math.sqrt(v)/Math.sqrt(hi):-Math.sqrt(-v)/Math.sqrt(-lo);}
- else{s=v>=0?v/hi:-(v/lo);}
+ else{s=v/hi;}
  return _ramp(Math.max(-1,Math.min(1,s)));}
 function colSeq(v,arr,rng){const t=(v-rng[0])/(rng[1]-rng[0]);return _rampArr(arr,Math.max(0,Math.min(t,1)));}
 const TENCOL={'Caliente':'#d73027','Precio':'#fc8d59','Recorrido':'#2ea043','Fr':'#4575b4'};
@@ -91,10 +88,8 @@ function colTen(cu){if(!cu)return '#3a3a3a';for(const k in TENCOL){if(cu.startsW
 const ND='#3a3a3a';
 function fillFor(d,lt){ // d=record, lt='M'|'D'|'B'
  if(METRIC==='pob'){
-  if(lt==='B'){return d.cp!=null?colPob(d.cp,'pct','muni'):ND;}
-  const lvl=(lt==='M')?level():'muni';
-  const rec=(lt==='M'&&lvl==='zona')?ZAGG[d.z]:d;
-  return colPob(metric==='abs'?rec.a:rec.p,metric,lvl);}
+  const value=metric==='abs'?(lt==='B'?null:d.a):annualPct(d,lt);
+  return value==null?ND:colPob(value,metric);}
  if(METRIC==='pre'){return d.v?colSeq(d.v,_YOR,bnds('pre',GET.pre)):ND;}
  if(METRIC==='ren'){return d.rb?colSeq(d.rb,_GRN,bnds('ren',GET.ren)):ND;}
  if(METRIC==='esf'){return d.esf?colSeq(d.esf,_PUR,bnds('esf',GET.esf)):ND;}
@@ -102,11 +97,11 @@ function fillFor(d,lt){ // d=record, lt='M'|'D'|'B'
  return ND;}
 // ---------- value accessors ----------
 function mv(d,lt){ // active metric value for similarity/rank
- if(METRIC==='pob'){if(lt==='B')return d.cp;return metric==='abs'?d.a:d.p;}
+ if(METRIC==='pob')return metric==='abs'?(lt==='B'?null:d.a):annualPct(d,lt);
  if(METRIC==='pre')return d.v; if(METRIC==='ren')return d.rb; if(METRIC==='esf')return d.esf; if(METRIC==='ten')return d.te;
  return null;}
 function fmtv(x,lt){ if(x==null)return 'n.d.';
- if(METRIC==='pob'){if(lt==='B')return (x>=0?'+':'')+x+'%';return metric==='abs'?num(x)+' hab':(x>=0?'+':'')+x+'%';}
+ if(METRIC==='pob')return metric==='abs'?num(x)+' hab':`${x>=0?'+':''}${x.toLocaleString('es',{minimumFractionDigits:2,maximumFractionDigits:2})}%/año`;
  if(METRIC==='pre')return x.toLocaleString('es')+' €/m²';
  if(METRIC==='ren')return x.toFixed(2)+'%'; if(METRIC==='esf')return x.toFixed(1)+' años'; if(METRIC==='ten')return x.toFixed(2);
  return String(x);}
@@ -117,7 +112,7 @@ function bordFor(c,lt,base,bw){let bd=base,w=bw;
  return [bd,w];}
 function styleMuni(f){const c=f.properties.mun_code,d=MDATA[c];
  if(!d) return {fillColor:'#333',color:'#222',weight:.4,fillOpacity:.5};
- const lvl=level();const [bd,w]=bordFor(c,'M',lvl==='zona'?'#111':'#444',lvl==='zona'?0.4:0.7);
+ const [bd,w]=bordFor(c,'M','#444',0.7);
  return {fillColor:fillFor(d,'M'),color:bd,weight:w,fillOpacity:.88};}
 function styleDist(f){const c=String(f.properties.cartodb_id),d=DDATA[c];
  if(!d) return {fillColor:'#333',color:'#fff',weight:1,fillOpacity:.5};
@@ -155,14 +150,14 @@ function uniOf(lt){return lt==='M'?'municipios':(lt==='D'?'distritos':'barrios')
 function qualityBlock(lt){
  const quality=DATA_MANIFEST.metrics[METRIC];
  if(!quality)return '';
- return `<div class="quality"><b>Ficha de calidad del dato</b><br>
+ return `<details class="quality"><summary>Fuente y metodología</summary><div class="quality-details">
  Fuente: ${quality.source}<br>Periodo: ${quality.periods[lt]}<br>
- Tipo: ${quality.kind}<br>Cobertura en ${uniOf(lt)}: ${quality.coverage[lt]}</div>`;
+ Tipo: ${quality.kind}<br>Cobertura en ${uniOf(lt)}: ${quality.coverage[lt]}</div></details>`;
 }
 function historyPair(item,lt){
- if(METRIC==='pob'&&lt!=='B'&&item.p25!=null&&item.la!=null){
+ if(METRIC==='pob'&&lt!=='B'&&item.p20!=null&&item.p25!=null){
   const currentYear=lt==='D'?'2024':'2025';
-  return {label:'Población',oldLabel:String(Number(currentYear)-1),newLabel:currentYear,oldValue:`${(item.p25-item.la).toLocaleString('es')} hab.`,newValue:`${item.p25.toLocaleString('es')} hab.`,note:'Comparación exacta con el último padrón anterior.'};
+  return {label:'Población',oldLabel:'2020',newLabel:currentYear,oldValue:`${item.p20.toLocaleString('es')} hab.`,newValue:`${item.p25.toLocaleString('es')} hab.`,note:`Variación acumulada: ${item.p>=0?'+':''}${item.p}% · equivalente anual: ${annualPct(item,lt).toLocaleString('es',{minimumFractionDigits:2,maximumFractionDigits:2})}%.`};
  }
  if(METRIC==='pob'&&lt==='B'&&item.cp!=null){
   return {label:'Índice de población (2020=100)',oldLabel:'2020',newLabel:'2024',oldValue:'100,0',newValue:(100+item.cp).toLocaleString('es',{minimumFractionDigits:1,maximumFractionDigits:1}),note:'Índice calculado a partir de la variación acumulada publicada.'};
@@ -181,10 +176,9 @@ function historyPair(item,lt){
  return null;
 }
 function historyBlock(item,lt){
- if(!showChanges)return '';
- const pair=historyPair(item,lt),release=DATA_RELEASES.releases[0];
- if(!pair)return `<div class="changes"><h3>Qué ha cambiado</h3><div class="note">No existe un valor anterior comparable para esta métrica y zona. Corte versionado actual: ${release?.label||'sin identificar'} (${release?.date||'s.f.'}).</div></div>`;
- return `<div class="changes"><h3>${pair.label}: anterior frente a actual</h3><div class="change-pair"><div class="old"><span>${pair.oldLabel}</span><strong>${pair.oldValue}</strong></div><div class="new"><span>${pair.newLabel}</span><strong>${pair.newValue}</strong></div></div><div class="note"><b>Azul = anterior · naranja = actual.</b> ${pair.note}</div></div>`;
+ const pair=historyPair(item,lt);
+ if(!pair)return '';
+ return `<div class="changes"><h3>${pair.label}: ${pair.oldLabel} frente a ${pair.newLabel}</h3><div class="change-pair"><div class="old"><span>${pair.oldLabel}</span><strong>${pair.oldValue}</strong></div><div class="new"><span>${pair.newLabel}</span><strong>${pair.newValue}</strong></div></div><div class="note"><b>Azul = inicio · naranja = final.</b> ${pair.note}</div></div>`;
 }
 function populationValue(item,lt){
  if(lt==='B')return item.cp==null?'n.d.':`${item.cp>=0?'+':''}${item.cp}% (2020-2024)`;
@@ -203,12 +197,12 @@ const COMPARE_ROWS=[['Métrica activa','active'],['Población','pob'],['Precio d
 function comparability(first,second){
  if(!second)return {grade:'medium',label:'Comparación incompleta',detail:'Añade una segunda zona para evaluar periodos y naturaleza de los datos.'};
  const quality=DATA_MANIFEST.metrics[METRIC],periodA=quality.periods[first.lt],periodB=quality.periods[second.lt];
- const missing=mv(first.item,first.lt)==null||mv(second.item,second.lt)==null;
+ const missing=mv(first.item,first.lt)==null||mv(second.item,second.lt)==null,normalizedPopulation=METRIC==='pob'&&metric==='pct';
  const derived=/derivad|estimación|índice analítico/i.test(quality.kind);
  let grade='high',label='Comparabilidad alta';
- if(missing||periodA!==periodB){grade='low';label='Comparabilidad baja';}
+ if(missing||(!normalizedPopulation&&periodA!==periodB)){grade='low';label='Comparabilidad baja';}
  else if(first.lt!==second.lt||derived){grade='medium';label='Comparabilidad media';}
- return {grade,label,detail:`${first.item.n}: ${periodA} · ${second.item.n}: ${periodB}. ${quality.kind}.`};
+ return {grade,label,detail:`${first.item.n}: ${periodA} · ${second.item.n}: ${periodB}. ${normalizedPopulation?'Comparación anualizada. ':''}${quality.kind}.`};
 }
 function comparabilityBlock(first,second){const state=comparability(first,second);return `<div class="comparability ${state.grade}"><b>${state.label}</b>${state.detail}</div>`;}
 function comparisonMatrix(){
@@ -255,17 +249,19 @@ function openInfo(item,lt){
  const sub=lt==='D'?'Distrito de Madrid':(lt==='B'?('Barrio &middot; distrito '+(DDATA[String(item.d)]||{}).n):('Municipio &middot; zona '+item.z));
  let body='';
  if(METRIC==='pob'&&lt!=='B'){
-  const anio=lt==='D'?'2024':'2025', prev=lt==='D'?'2023':'2024';
-  const media=5.3, momento=item.lp>(item.p/5)*1.25?'acelerando':(item.lp<(item.p/5)*0.7?'desacelerando':'a ritmo estable');
+  const anio=lt==='D'?'2024':'2025', prev=lt==='D'?'2023':'2024',years=lt==='D'?4:5;
+  const annual=annualPct(item,lt),annualMedian=median(arr.map(entry=>({annual:annualPct(entry,lt)})),'annual');
+  const momento=item.lp>annual*1.25?'acelerando':(item.lp<annual*0.7?'desacelerando':'a ritmo estable');
   body=`<div><span class="big">${item.p25.toLocaleString('es')}</span> hab. (${anio})</div>
   <div>${rk(rankBy(arr,item,'p25'))} más poblado</div>
-  <div class="sec">Crecimiento 2020-${anio} (5 años)</div>
+  <div class="sec">Crecimiento 2020-${anio} (${years} años)</div>
   <div>${num(item.a)} hab &nbsp;·&nbsp; <b>${item.p>=0?'+':''}${item.p}%</b></div>
   <div>${rk(rankBy(arr,item,'a'))} que más sumó &nbsp;|&nbsp; ${rk(rankBy(arr,item,'p'))} en %</div>
+  <div>Equivalente anual: <b>${annual>=0?'+':''}${annual.toLocaleString('es',{minimumFractionDigits:2,maximumFractionDigits:2})}%</b></div>
   <div class="sec">Último año (${prev}&rarr;${anio})</div>
   <div>${num(item.la)} hab &nbsp;·&nbsp; <b>${item.lp>=0?'+':''}${item.lp}%</b></div>
   <div>${rk(rankBy(arr,item,'la'))} que más sumó &nbsp;|&nbsp; ${rk(rankBy(arr,item,'lp'))} en %</div>
-  <div class="ins">Crece <b>${item.p}%</b> en 5 años, ${item.p>=media?'por encima':'por debajo'} de la media regional (+${media}%). Va <b>${momento}</b> (último año ${item.lp>=0?'+':''}${item.lp}% vs ~${(item.p/5).toFixed(1)}%/año del quinquenio).</div>`;
+  <div class="ins">Crece <b>${item.p}%</b> en ${years} años. Su ritmo anual equivalente está ${annual>=annualMedian?'por encima':'por debajo'} de la mediana de su nivel (${annualMedian.toLocaleString('es',{minimumFractionDigits:2,maximumFractionDigits:2})}%/año). Va <b>${momento}</b> (último año ${item.lp>=0?'+':''}${item.lp}% vs ${annual.toLocaleString('es',{minimumFractionDigits:2,maximumFractionDigits:2})}%/año).</div>`;
  } else if(METRIC==='pob'&&lt==='B'){
   body=`<div><span class="big">${item.cp!=null?((item.cp>=0?'+':'')+item.cp+'%'):'n.d.'}</span> población 2020-2024</div>
   <div>${rk(rankBy(arr,item,'cp'))} que más creció (barrios con dato)</div>
@@ -364,8 +360,7 @@ function syncLabels(){const z=map.getZoom();
 // ---------- layers / restyle ----------
 function resetStyles(){ if(mLayer) mLayer.setStyle(styleMuni); if(dLayer&&map.hasLayer(dLayer)) dLayer.setStyle(styleDist); if(bLayer&&map.hasLayer(bLayer)) bLayer.setStyle(styleBar); }
 function hl(f,l){ if(simSet||selCode) return; const d=MDATA[f.properties.mun_code]; if(!d) return;
- if(METRIC==='pob'&&level()==='zona'&&mLayer){ mLayer.eachLayer(ly=>{ const dd=MDATA[ly.feature.properties.mun_code]; if(dd&&dd.z===d.z){ ly.setStyle({color:'#ffffff',weight:2.2}); ly.bringToFront(); }}); }
- else { l.setStyle({color:'#ffffff',weight:2.2}); l.bringToFront(); } }
+ l.setStyle({color:'#ffffff',weight:2.2});l.bringToFront();}
 function restyle(){
  if(mLayer) mLayer.setStyle(styleMuni);
  const z=map.getZoom();
@@ -378,7 +373,7 @@ function restyle(){
  let txt;
  if(z>=Z_BAR) txt='municipios + barrios de Madrid';
  else if(z>=Z_DIST) txt='municipios + distritos de Madrid';
- else txt=(METRIC==='pob'&&z<Z_MUNI)?'zonas (agregado)':'municipios (detalle)';
+ else txt=z<Z_MUNI?'municipios (vista general)':'municipios (detalle)';
  document.getElementById('lvl').textContent='Nivel: '+txt; legend(); syncLabels();
 }
 const LOAD_WARNINGS=[];
@@ -425,9 +420,6 @@ async function runSearch(){
 }
 document.getElementById('zoneSearch').addEventListener('change',runSearch);
 document.getElementById('zoneSearch').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();runSearch();}});
-const changesButton=document.getElementById('toggleChanges');
-function syncChangesButton(){changesButton.classList.toggle('on',showChanges);changesButton.setAttribute('aria-pressed',String(showChanges));}
-changesButton.addEventListener('click',()=>{showChanges=!showChanges;syncChangesButton();if(selCode){const item=itemFor(selType,selCode);if(item)openInfo(item,selType);}writeState();});
 document.getElementById('info').addEventListener('click',event=>{
  const action=event.target.closest('[data-action]')?.dataset.action;
  if(action==='clear-selection')clearSel();
@@ -459,28 +451,21 @@ function legend(){if(lg)lg.remove();lg=L.control({position:'bottomright'});
  lg.onAdd=function(){const div=L.DomUtil.create('div','legend');let html='';
  if(METRIC==='pob'){
   const g='linear-gradient(to right,rgb(5,48,97),rgb(67,147,195),rgb(247,247,247),rgb(244,165,130),rgb(178,24,43),rgb(103,0,31))';
-  const zona=level()==='zona';
   let hi,lo;
-  if(zona){const vals=Object.values(ZAGG).map(z=>metric==='abs'?z.a:z.p);hi=Math.max(...vals);lo=Math.min(...vals,metric==='abs'?-1:-0.1);}
-  else{const b=bnds(metric==='abs'?'poba':'pobp',GET[metric==='abs'?'poba':'pobp']);hi=b[1];lo=Math.min(b[0],metric==='abs'?-1:-0.1);}
+  if(metric==='abs'){const b=bnds('poba',GET.poba);hi=b[1];lo=Math.min(b[0],-1);}
+  else{const limit=Math.max(Math.abs(POB_ANNUAL_RANGE[0]),Math.abs(POB_ANNUAL_RANGE[1]),0.1);hi=limit;lo=-limit;}
   const fk=v=>Math.abs(v)>=1000?(Math.round(v/100)/10).toLocaleString('es')+' mil':Math.round(v).toLocaleString('es');
   if(metric==='abs'){
-   const t1=fk(hi*0.0625),t2=fk(hi*0.25),t3=fk(hi*0.5625),t4=fk(hi);
-   html='<b>Δ personas '+(map.getZoom()>=Z_DIST?'municipios 20-25 · Madrid 20-24':'20-25')+'</b>'
+   html='<b>Cambio total de población</b>'
     +'<div style="height:11px;width:190px;background:'+g+';border:1px solid #888;margin:4px 0;border-radius:2px"></div>'
-    +'<div style="position:relative;width:190px;height:12px;color:#555;font-size:10px">'
-    +'<span style="position:absolute;left:0">'+fk(lo)+'</span><span style="position:absolute;left:40%;transform:translateX(-50%)">0</span>'
-    +'<span style="position:absolute;left:55%;transform:translateX(-50%)">+'+t1+'</span><span style="position:absolute;left:70%;transform:translateX(-50%)">+'+t2+'</span>'
-    +'<span style="position:absolute;left:85%;transform:translateX(-50%)">+'+t3+'</span><span style="position:absolute;right:0">+'+t4+'</span></div>'
-    +'<div style="color:#888;margin-top:2px">escala &radic; con marcas reales (totales muy sesgados)'+(zona?'':' · recorte p2-p98')+'</div>'
+    +'<div style="display:flex;justify-content:space-between;width:190px;color:#555;font-size:10px"><span>'+fk(lo)+'</span><span>0</span><span>+'+fk(hi)+'</span></div>'
+    +'<div style="color:#888;margin-top:2px">escala &radic; declarada · recorte p2-p98</div>'
     +'<div style="color:#888">rojo=gana · azul=pierde · <span style="color:#2ea043">verde=similar</span></div>';
   } else {
-   html='<b>Δ % población '+(map.getZoom()>=Z_DIST?'municipios 20-25 · Madrid 20-24':'20-25')+'</b>'
+   html='<b>Crecimiento anual equivalente</b>'
     +'<div style="height:11px;width:190px;background:'+g+';border:1px solid #888;margin:4px 0;border-radius:2px"></div>'
-    +'<div style="position:relative;width:190px;height:12px;color:#555;font-size:10px">'
-    +'<span style="position:absolute;left:0">'+lo.toFixed(1)+'%</span><span style="position:absolute;left:40%;transform:translateX(-50%)">0</span>'
-    +'<span style="position:absolute;left:70%;transform:translateX(-50%)">+'+(hi/2).toFixed(1)+'%</span><span style="position:absolute;right:0">+'+hi.toFixed(1)+'%</span></div>'
-    +'<div style="color:#888;margin-top:2px">escala lineal'+(zona?'':' · recorte p2-p98 (extremos saturan)')+'</div>'
+    +'<div style="display:flex;justify-content:space-between;width:190px;color:#555;font-size:10px"><span>'+lo.toFixed(1)+'%</span><span>0</span><span>+'+hi.toFixed(1)+'%</span></div>'
+    +'<div style="color:#888;margin-top:2px">escala lineal simétrica · recorte p2-p98</div>'
     +'<div style="color:#888">rojo=gana · azul=pierde · <span style="color:#2ea043">verde=similar</span></div>';
   }
  } else if(METRIC==='ten'){
@@ -510,7 +495,7 @@ for(const reference of initialCompare){
  if(item&&compareItems.length<2)compareItems.push({item,lt:reference.lt});
 }
 const initialZone=decodeRef(query.get('zone'));
-syncChangesButton();setMetric(METRIC);sw();
+setMetric(METRIC);sw();
 if(compareItems.length)renderCompare();
 if(initialZone){const item=itemFor(initialZone.lt,initialZone.code);if(item)openInfo(item,initialZone.lt);}
 geometryReady=Promise.all([loadMuni(),loadDist(),loadBar()]);

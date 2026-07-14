@@ -10,7 +10,7 @@ Cinco métricas conmutables (pestañas arriba a la izquierda), tres niveles por 
 
 | Métrica | Qué muestra |
 |---|---|
-| **Población** | Crecimiento 2020-2025 (padrón INE). Totales o %; alejando, agregado por 5 zonas. |
+| **Población** | Crecimiento anual equivalente (vista inicial) o cambio total. Municipios 2020-2025; distritos y barrios 2020-2024. |
 | **Precio €/m²** | Venta jun-2026 (informe idealista) con **serie 2021-2026** en la ficha (sparkline, Δ5a, CAGR) para los 44 nodos. |
 | **Rentabilidad** | Bruta anual = alquiler×12 ÷ venta. Municipios, distritos y ~86 barrios con ambos datos. |
 | **Esfuerzo** | Años de renta neta del hogar medio (INE Atlas de Renta 2023) para comprar 80 m². |
@@ -18,9 +18,9 @@ Cinco métricas conmutables (pestañas arriba a la izquierda), tres niveles por 
 
 En todas: **pincha** un polígono → ficha con rankings ("Nº más caro", "Nº donde más renta el alquiler"…) e insights; botón **"20 similares"** que resalta en verde los más parecidos en la métrica activa. Gris = sin dato público suficiente.
 
-El panel permite copiar un **enlace reproducible** que conserva métrica, unidad, encuadre, zona seleccionada, comparación y modo histórico. La ficha muestra la fuente, periodo, naturaleza y cobertura del dato. El comparador admite dos zonas, indica si la comparación es alta, media o baja y exporta CSV o una imagen SVG. La interfaz incorpora búsqueda por municipio, distrito o barrio, adapta sus controles a móvil y admite navegación por teclado.
+El panel permite copiar un **enlace reproducible** que conserva métrica, unidad, encuadre, zona seleccionada y comparación. La ficha diferencia siempre el inicio (azul) y el final (naranja), mientras que fuente, periodo, naturaleza y cobertura quedan en «Fuente y metodología». El comparador admite dos zonas, indica si la comparación es alta, media o baja y exporta CSV o una imagen SVG. La interfaz incorpora búsqueda por municipio, distrito o barrio, adapta sus controles a móvil y admite navegación por teclado.
 
-El modo **Anterior azul · actual naranja** nunca mezcla visualmente ambos cortes: muestra dos bloques con color, fecha y una advertencia cuando el valor anterior es estimado o no existe. Los cortes completos se conservan bajo `data/history/`.
+La comparación temporal aparece directamente en la ficha: **azul = inicio** y **naranja = final**, siempre con los años visibles. Los cortes completos se conservan bajo `data/history/`.
 
 ## Estructura del panel
 

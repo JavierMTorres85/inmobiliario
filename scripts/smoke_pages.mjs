@@ -12,7 +12,6 @@ target.searchParams.set("lng", "-3.72");
 target.searchParams.set("zoom", "10");
 target.searchParams.set("zone", "M:28022");
 target.searchParams.set("compare", "M:28022,D:1");
-target.searchParams.set("changes", "1");
 
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
@@ -28,9 +27,9 @@ try {
   await page.locator("#load").waitFor({ state: "hidden", timeout: 60_000 });
   await page.locator("#map .leaflet-overlay-pane canvas, #map .leaflet-overlay-pane svg").first().waitFor({ timeout: 15_000 });
   await page.getByRole("heading", { name: "Boadilla del Monte" }).waitFor();
-  await page.getByText("Ficha de calidad del dato", { exact: true }).waitFor();
-  await page.getByText("Azul = anterior · naranja = actual.").waitFor();
-  await page.getByText("Comparabilidad baja", { exact: true }).waitFor();
+  await page.getByText("Fuente y metodología", { exact: true }).waitFor();
+  await page.getByText("Azul = inicio · naranja = final.").waitFor();
+  await page.getByText("Comparabilidad media", { exact: true }).waitFor();
 
   await page.getByRole("button", { name: "Rentabilidad", exact: true }).click();
   if (!new URL(page.url()).searchParams.get("metric")?.includes("ren")) {

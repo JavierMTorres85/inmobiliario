@@ -28,7 +28,6 @@ const requiredIds = [
   "compare",
   "share",
   "zoneSearch",
-  "toggleChanges",
   "warnings",
 ];
 for (const id of requiredIds) {
@@ -41,7 +40,7 @@ if (!html.includes("municipios 2020-2025") || !html.includes("2020-2024")) {
   throw new Error("Population periods are not explicitly documented in the dashboard");
 }
 
-for (const feature of ["writeState", "renderCompare", "qualityBlock", "historyBlock", "focusZone", "exportComparison", "comparabilityBlock"]) {
+for (const feature of ["writeState", "renderCompare", "qualityBlock", "historyBlock", "annualPct", "focusZone", "exportComparison", "comparabilityBlock"]) {
   if (!dashboard.includes(`function ${feature}`)) {
     throw new Error(`Missing dashboard feature: ${feature}`);
   }
@@ -64,6 +63,14 @@ if (dashboard.includes("public.opendatasoft.com") || dashboard.includes("service
 
 if (!dashboard.includes("if(raw==null||raw==='')return fallback")) {
   throw new Error("Missing URL-state fallback for absent map coordinates");
+}
+
+if (dashboard.includes("ZAGG") || dashboard.includes("level()==='zona'")) {
+  throw new Error("Population overview must not paint municipal polygons with macro-zone aggregates");
+}
+
+if (!html.includes('id="bPct" class="on"') || !dashboard.includes("queryUnit==='abs'?'abs':'pct'")) {
+  throw new Error("Annualized percentage must be the default population view");
 }
 
 console.log("Dashboard module and required controls are valid");
