@@ -31,6 +31,7 @@ const requiredIds = [
   "togglePanel",
   "metricSelect",
   "warnings",
+  "mapLegend",
 ];
 for (const id of requiredIds) {
   if (!html.includes(`id="${id}"`)) {
@@ -61,6 +62,14 @@ for (const [path, expected] of [
 
 if (dashboard.includes("public.opendatasoft.com") || dashboard.includes("services.arcgis.com")) {
   throw new Error("Dashboard still depends on a remote boundary API at runtime");
+}
+
+if (!html.includes("maplibre-gl@5.24.0") || !dashboard.includes("new maplibregl.Map")) {
+  throw new Error("MapLibre GL JS is not configured as the map engine");
+}
+
+if (html.includes("leaflet@") || /\bL\./.test(dashboard)) {
+  throw new Error("Legacy Leaflet runtime code remains in the dashboard");
 }
 
 if (!dashboard.includes("if(raw==null||raw==='')return fallback")) {
