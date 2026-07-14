@@ -73,7 +73,7 @@
  <label class="metric-select" for="metricSelect">Métrica<select id="metricSelect"><option value="pob">Población</option><option value="pre">Precio €/m²</option><option value="ren">Rentabilidad</option><option value="esf">Esfuerzo</option><option value="ten">Demanda-precio</option></select></label>
  <p id="mdesc">Crecimiento anual equivalente: municipios 2020-2025; distritos y barrios 2020-2024. Rojo = gana · Azul = pierde. <b>Pincha</b> para la ficha.</p>
  <div class="seg" id="segpob" role="group" aria-label="Unidad de población"><button type="button" id="bAbs" aria-pressed="false">Cambio total</button><button type="button" id="bPct" class="on" aria-pressed="true">Crecimiento anual (%)</button></div>
- <div class="view-mode" role="group" aria-label="Perspectiva del mapa"><button type="button" id="view2d" class="on" aria-pressed="true">Mapa 2D</button><button type="button" id="view3d" aria-pressed="false">Población 3D</button></div>
+ <div class="view-mode" role="group" aria-label="Perspectiva del mapa"><button type="button" id="view2d" class="on" aria-pressed="true">Mapa 2D</button><button type="button" id="view3d" aria-pressed="false" title="Arrastra con el botón derecho para girar e inclinar">Población 3D</button></div>
  <div class="timeline" id="timeline"><div class="timeline-head"><label for="timeSlider">Tiempo observado</label><output id="timeYear">Actual</output></div><input type="range" id="timeSlider" min="0" max="2" value="2" step="1"><div class="timeline-actions"><button type="button" id="timePlay" aria-pressed="false">▶ Reproducir</button><button type="button" id="timeReset">Volver a actual</button></div><div class="timeline-note" id="timeNote">Solo cortes exactos; no se interpolan años ausentes.</div></div>
  <div class="lvl" id="lvl">Nivel: municipios</div>
  <div class="tools">
@@ -92,4 +92,4 @@
 <div class="warnings" id="warnings" role="status" aria-live="polite"></div>
 <div class="legend" id="mapLegend" aria-label="Leyenda del mapa"></div>
 <div id="map" role="region" aria-label="Mapa interactivo del mercado de vivienda de la Comunidad de Madrid"></div>
-<script type="module" src="js/dashboard.mjs?v=6.2.0"></script></body></html>
+<script type="module" src="js/dashboard.mjs?v=6.3.0"></script></body></html>
