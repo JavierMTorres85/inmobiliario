@@ -17,13 +17,16 @@ target.searchParams.set("changes", "1");
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 const pageErrors = [];
+const requestFailures = [];
 page.on("pageerror", (error) => pageErrors.push(error.message));
+page.on("requestfailed", (request) => requestFailures.push(`${request.method()} ${request.url()}: ${request.failure()?.errorText || "failed"}`));
 
 try {
   const response = await page.goto(target.href, { waitUntil: "domcontentloaded", timeout: 60_000 });
   if (!response?.ok()) throw new Error(`Published page returned HTTP ${response?.status()}`);
 
-  await page.locator("#map .leaflet-interactive").first().waitFor({ timeout: 60_000 });
+  await page.locator("#load").waitFor({ state: "hidden", timeout: 60_000 });
+  await page.locator("#map .leaflet-overlay-pane canvas, #map .leaflet-overlay-pane svg").first().waitFor({ timeout: 15_000 });
   await page.getByRole("heading", { name: "Boadilla del Monte" }).waitFor();
   await page.getByText("Ficha de calidad del dato", { exact: true }).waitFor();
   await page.getByText("Azul = anterior · naranja = actual.").waitFor();
@@ -49,6 +52,10 @@ try {
 
   if (pageErrors.length) throw new Error(`Browser errors: ${pageErrors.join(" | ")}`);
   console.log(`Published dashboard smoke test passed: ${page.url()}`);
+} catch (error) {
+  const diagnostics = [...pageErrors.map((message) => `page: ${message}`), ...requestFailures.slice(0, 10)];
+  if (diagnostics.length) error.message += `\nBrowser diagnostics:\n${diagnostics.join("\n")}`;
+  throw error;
 } finally {
   await browser.close();
 }
