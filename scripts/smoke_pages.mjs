@@ -47,7 +47,11 @@ try {
 
   await page.setViewportSize({ width: 390, height: 844 });
   const panelBox = await page.locator(".panel").boundingBox();
-  if (!panelBox || panelBox.width > 350) throw new Error("Mobile control panel exceeds the viewport");
+  if (!panelBox || panelBox.width > 380 || panelBox.height > 72) throw new Error("Collapsed mobile controls occupy too much of the map");
+  if (!(await page.getByRole("button", { name: "Opciones", exact: true }).isVisible())) throw new Error("Mobile options control is not visible");
+  if (!(await page.locator(".legend").isVisible())) throw new Error("The map legend is hidden on mobile");
+  const infoBox = await page.locator("#info").boundingBox();
+  if (!infoBox || infoBox.height > 390) throw new Error("The initial mobile zone sheet covers too much of the map");
 
   if (pageErrors.length) throw new Error(`Browser errors: ${pageErrors.join(" | ")}`);
   console.log(`Published dashboard smoke test passed: ${page.url()}`);
