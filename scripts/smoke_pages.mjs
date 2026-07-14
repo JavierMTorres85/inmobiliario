@@ -61,9 +61,17 @@ try {
   if (!rangeHref || !new URL(rangeHref).searchParams.has("range")) throw new Error("Legend link does not encode its range");
   await page.goto(rangeHref, { waitUntil: "domcontentloaded" });
   await page.locator("#load").waitFor({ state: "hidden", timeout: 60_000 });
-  if (!(await page.locator(".legend-range.active").isVisible())) throw new Error("Legend range is not restored from the URL");
-  const clearHref = await page.locator(".legend-range.active").getAttribute("href");
-  if (!clearHref || new URL(clearHref).searchParams.has("range")) throw new Error("Active range cannot be cleared by clicking it again");
+  if ((await page.locator(".legend-range.active").count()) !== 1) throw new Error("Legend range is not restored from the URL");
+  const inactiveRanges = page.locator(".legend-range:not(.active)");
+  if ((await inactiveRanges.count()) !== 4) throw new Error("Unexpected active legend state");
+  const secondRangeHref = await inactiveRanges.nth(0).getAttribute("href");
+  if (!secondRangeHref || (new URL(secondRangeHref).searchParams.get("range")||'').split(',').length !== 2) throw new Error("Legend does not accumulate multiple ranges");
+  await page.goto(secondRangeHref, { waitUntil: "domcontentloaded" });
+  await page.locator("#load").waitFor({ state: "hidden", timeout: 60_000 });
+  if ((await page.locator(".legend-range.active").count()) !== 2) throw new Error("Multiple legend ranges are not restored");
+  const activeRanges = page.locator(".legend-range.active");
+  const clearHref = await activeRanges.nth(0).getAttribute("href");
+  if (!clearHref || (new URL(clearHref).searchParams.get("range")||'').split(',').length !== 1) throw new Error("Clicking an active range must remove only that range");
 
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Exportar CSV", exact: true }).click();
