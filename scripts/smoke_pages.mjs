@@ -37,6 +37,13 @@ try {
   await page.waitForFunction(() => new URL(location.href).searchParams.get("year") === "2020");
   await page.getByRole("button", { name: "Volver a actual", exact: true }).click();
   await page.waitForFunction(() => !new URL(location.href).searchParams.has("year"));
+  if (await page.getByText("Rojo = gana", { exact: false }).count()) throw new Error("Removed population explanation is still visible");
+  if (await page.getByRole("button", { name: "Copiar enlace de esta vista", exact: true }).count()) throw new Error("Removed share control is still visible");
+  if (await page.locator("#timeSlider").getAttribute("max") !== "5") throw new Error("Municipal timeline does not expose every year from 2020 to 2025");
+  await page.getByRole("button", { name: "▶ Reproducir", exact: true }).click();
+  await page.waitForFunction(() => new URL(location.href).searchParams.get("year") === "2020");
+  await page.waitForFunction(() => new URL(location.href).searchParams.get("year") === "2021", null, { timeout: 3_000 });
+  await page.getByRole("button", { name: "■ Detener", exact: true }).click();
   await page.getByRole("button", { name: "Mapa 2D", exact: true }).click();
   await page.waitForFunction(() => !new URL(location.href).searchParams.has("view"));
 
