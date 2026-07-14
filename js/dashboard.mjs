@@ -1,8 +1,11 @@
-const [MDATA,DDATA,BDATA,DATA_MANIFEST]=await Promise.all([
+const [MDATA,DDATA,BDATA,DATA_MANIFEST,MGEO,DGEO,BGEO]=await Promise.all([
  '../data/municipalities.json',
  '../data/districts.json',
  '../data/neighborhoods.json',
- '../data/manifest.json'
+ '../data/manifest.json',
+ '../data/geo/municipalities.geojson',
+ '../data/geo/districts.geojson',
+ '../data/geo/neighborhoods.geojson'
 ].map(async path=>{
  const response=await fetch(new URL(path,import.meta.url));
  if(!response.ok)throw new Error(`No se pudo cargar ${path}: ${response.status}`);
@@ -11,9 +14,6 @@ const [MDATA,DDATA,BDATA,DATA_MANIFEST]=await Promise.all([
 const MARR=Object.entries(MDATA).map(([c,d])=>Object.assign({c},d));
 const DARR=Object.entries(DDATA).map(([c,d])=>Object.assign({c},d));
 const BARR=Object.entries(BDATA).map(([c,d])=>Object.assign({c},d));
-const GEO_MUNI=new URL('../data/geo/municipalities.geojson',import.meta.url);
-const GEO_DIST=new URL('../data/geo/districts.geojson',import.meta.url);
-const GEO_BAR=new URL('../data/geo/neighborhoods.geojson',import.meta.url);
 const Z_MUNI=10, Z_DIST=11, Z_BAR=13;
 const VALID_METRICS=new Set(['pob','pre','ren','esf','ten']);
 const query=new URLSearchParams(location.search);
@@ -23,9 +23,10 @@ let metric=queryUnit==='abs'?'abs':'pct';
 let selCode=null, selType='M', simSet=null, simType='M', compareItems=[];
 const nparam=(name,fallback)=>{const raw=query.get(name);if(raw==null||raw==='')return fallback;const value=Number(raw);return Number.isFinite(value)?value:fallback;};
 const initialView=[nparam('lat',40.42),nparam('lng',-3.72),Math.min(17,Math.max(7,nparam('zoom',9)))];
-const map=L.map('map',{preferCanvas:true}).setView(initialView.slice(0,2),initialView[2]);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; CARTO · idealista · INE · Ayto. Madrid · límites: ODS/click_that_hood',maxZoom:17,subdomains:'abcd'}).addTo(map);
-let mLayer=null,dLayer=null,bLayer=null,geometryReady=Promise.resolve();
+const map=new maplibregl.Map({container:'map',style:'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',center:[initialView[1],initialView[0]],zoom:initialView[2],maxZoom:17,attributionControl:false});
+map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-left');
+map.addControl(new maplibregl.AttributionControl({compact:true,customAttribution:'idealista · INE · Ayuntamiento de Madrid · límites ODS/click_that_hood'}));
+let resolveGeometry;const geometryReady=new Promise(resolve=>{resolveGeometry=resolve;});
 function itemFor(lt,code){return arrOf(lt).find(item=>item.c===code);}
 function decodeRef(value){const match=/^([MDB]):(.+)$/.exec(value||'');return match?{lt:match[1],code:match[2]}:null;}
 function writeState(){
@@ -105,23 +106,6 @@ function fmtv(x,lt){ if(x==null)return 'n.d.';
  if(METRIC==='pre')return x.toLocaleString('es')+' €/m²';
  if(METRIC==='ren')return x.toFixed(2)+'%'; if(METRIC==='esf')return x.toFixed(1)+' años'; if(METRIC==='ten')return x.toFixed(2);
  return String(x);}
-// ---------- styles ----------
-function bordFor(c,lt,base,bw){let bd=base,w=bw;
- if(simSet&&simType===lt&&simSet.has(c)){bd='#2ea043';w=2.6;}
- if(c===selCode&&selType===lt){bd='#ffd400';w=2.8;}
- return [bd,w];}
-function styleMuni(f){const c=f.properties.mun_code,d=MDATA[c];
- if(!d) return {fillColor:'#333',color:'#222',weight:.4,fillOpacity:.5};
- const [bd,w]=bordFor(c,'M','#444',0.7);
- return {fillColor:fillFor(d,'M'),color:bd,weight:w,fillOpacity:.88};}
-function styleDist(f){const c=String(f.properties.cartodb_id),d=DDATA[c];
- if(!d) return {fillColor:'#333',color:'#fff',weight:1,fillOpacity:.5};
- const [bd,w]=bordFor(c,'D','#fff',1.1);
- return {fillColor:fillFor(d,'D'),color:bd,weight:w,fillOpacity:.9};}
-function styleBar(f){const c=String(f.properties.COD_DISBAR),d=BDATA[c];
- if(!d) return {fillColor:'#333',color:'#ccc',weight:.6,fillOpacity:.5};
- const [bd,w]=bordFor(c,'B','#ddd',0.8);
- return {fillColor:fillFor(d,'B'),color:bd,weight:w,fillOpacity:.9};}
 // ---------- tooltips ----------
 function tipGen(name,extra,d,lt){let v=mv(d,lt);return `<b>${name}</b>${extra}<br><b>${fmtv(v,lt)}</b><br><i>pincha para la ficha</i>`;}
 function tipMuni(f){const d=MDATA[f.properties.mun_code];if(!d)return f.properties.mun_code;
@@ -327,73 +311,67 @@ function showSim(){
  restyle(); fitSim();
 }
 function hideSim(){simSet=null;document.getElementById('simbox').innerHTML='';restyle();}
-function layerOf(lt){return lt==='M'?mLayer:(lt==='D'?dLayer:bLayer);}
-function codeOf(l,lt){return lt==='M'?l.feature.properties.mun_code:(lt==='D'?String(l.feature.properties.cartodb_id):String(l.feature.properties.COD_DISBAR));}
+const GEO_BY_LEVEL={M:MGEO,D:DGEO,B:BGEO};
+const RECORDS={M:MDATA,D:DDATA,B:BDATA};
+const MAP_CONFIG={
+ M:{source:'municipalities',prefix:'municipality',minzoom:0,maxzoom:18,labelMin:10,labelMax:13,line:'#444',width:.7,size:10},
+ D:{source:'districts',prefix:'district',minzoom:11,maxzoom:13,labelMin:11,labelMax:13,line:'#fff',width:1.1,size:11},
+ B:{source:'neighborhoods',prefix:'neighborhood',minzoom:13,maxzoom:18,labelMin:13,labelMax:18,line:'#ddd',width:.8,size:10}
+};
+function rawCode(feature,lt){return lt==='M'?String(feature.properties.mun_code):(lt==='D'?String(feature.properties.cartodb_id):String(feature.properties.COD_DISBAR));}
+function decoratedGeo(lt){
+ return {type:'FeatureCollection',features:GEO_BY_LEVEL[lt].features.map(feature=>{
+  const code=rawCode(feature,lt),record=RECORDS[lt][code];
+  return {...feature,properties:{...feature.properties,code,label:record?.n||'',population:record?.p25||0,color:record?fillFor(record,lt):ND,selected:code===selCode&&lt===selType,similar:Boolean(simSet&&simType===lt&&simSet.has(code))}};
+ })};
+}
+function extendCoords(bounds,coords){if(typeof coords[0]==='number'){bounds.extend(coords);return;}coords.forEach(value=>extendCoords(bounds,value));}
+function boundsForFeatures(features){const bounds=new maplibregl.LngLatBounds();features.forEach(feature=>extendCoords(bounds,feature.geometry.coordinates));return bounds.isEmpty()?null:bounds;}
+function findFeature(lt,code){return GEO_BY_LEVEL[lt].features.find(feature=>rawCode(feature,lt)===code);}
 function fitZone(lt,code){
- const layer=layerOf(lt);if(!layer)return false;let target=null;
- layer.eachLayer(candidate=>{if(codeOf(candidate,lt)===code)target=candidate;});
- if(!target)return false;
- try{map.fitBounds(target.getBounds(),{padding:[45,45],maxZoom:lt==='B'?15:(lt==='D'?13:11)});return true;}catch(error){return false;}
+ const feature=findFeature(lt,code),bounds=feature&&boundsForFeatures([feature]);if(!bounds)return false;
+ map.fitBounds(bounds,{padding:45,maxZoom:lt==='B'?15:(lt==='D'?13:11)});return true;
 }
 async function focusZone(lt,code){
  const item=itemFor(lt,code);if(!item)return;
  await geometryReady;openInfo(item,lt);
- if(!fitZone(lt,code)&&lt!=='M')map.setView([40.42,-3.70],lt==='B'?14:12);
+ if(!fitZone(lt,code)&&lt!=='M')map.flyTo({center:[-3.70,40.42],zoom:lt==='B'?14:12});
 }
-function fitSim(){ if(!simSet)return; const lyr=layerOf(simType); if(!lyr)return; const b=[];
- lyr.eachLayer(l=>{const c=codeOf(l,simType); if(simSet.has(c)||c===selCode){try{b.push(l.getBounds());}catch(e){}}});
- if(b.length){let bb=b[0];for(let i=1;i<b.length;i++)bb=bb.extend(b[i]); map.fitBounds(bb,{padding:[40,40],maxZoom:simType==='B'?14:12});} }
-// ---------- labels (nombres por nivel de zoom) ----------
-let labM=null,labD=null,labB=null;
-function mkLabels(layer,props){const g=L.layerGroup();
- layer.eachLayer(l=>{try{const p=props(l);if(!p)return;
-  const m=L.marker(p.c,{icon:L.divIcon({html:'<div class="lbl">'+p.n+'</div>',iconSize:[0,0],className:''}),interactive:false,keyboard:false});
-  m._code=p.code;m._pop=p.pop||0;g.addLayer(m);}catch(e){}});
- return g;}
-function syncLabels(){const z=map.getZoom();
- const f=(g,show,vis)=>{if(!g)return;
-  if(!show){if(map.hasLayer(g))map.removeLayer(g);return;}
-  if(!map.hasLayer(g))g.addTo(map);
-  g.eachLayer(m=>{const el=m.getElement();if(el)el.style.display=(vis?vis(m):true)?'':'none';});};
- f(labM,z>=Z_MUNI,m=>{if(m._code==='28079'&&z>=Z_DIST)return false; if(z<=Z_MUNI)return m._pop>=20000; if(z===Z_DIST)return m._pop>=5000; return true;});
- f(labD,z>=Z_DIST&&z<Z_BAR,null);
- f(labB,z>=Z_BAR,null);}
-// ---------- layers / restyle ----------
-function resetStyles(){ if(mLayer) mLayer.setStyle(styleMuni); if(dLayer&&map.hasLayer(dLayer)) dLayer.setStyle(styleDist); if(bLayer&&map.hasLayer(bLayer)) bLayer.setStyle(styleBar); }
-function hl(f,l){ if(simSet||selCode) return; const d=MDATA[f.properties.mun_code]; if(!d) return;
- l.setStyle({color:'#ffffff',weight:2.2});l.bringToFront();}
+function fitSim(){
+ if(!simSet)return;
+ const features=GEO_BY_LEVEL[simType].features.filter(feature=>{const code=rawCode(feature,simType);return simSet.has(code)||code===selCode;}),bounds=boundsForFeatures(features);
+ if(bounds)map.fitBounds(bounds,{padding:40,maxZoom:simType==='B'?14:12});
+}
+// ---------- MapLibre layers / restyle ----------
+const hoverPopup=new maplibregl.Popup({closeButton:false,closeOnClick:false,offset:10});
+const TIPS={M:tipMuni,D:tipDist,B:tipBar};
+function installLevel(lt){
+ const cfg=MAP_CONFIG[lt],fillId=`${cfg.prefix}-fill`,lineId=`${cfg.prefix}-line`,labelId=`${cfg.prefix}-label`;
+ map.addSource(cfg.source,{type:'geojson',data:decoratedGeo(lt)});
+ map.addLayer({id:fillId,type:'fill',source:cfg.source,minzoom:cfg.minzoom,maxzoom:cfg.maxzoom,paint:{'fill-color':['get','color'],'fill-opacity':lt==='M'?.88:.9}});
+ map.addLayer({id:lineId,type:'line',source:cfg.source,minzoom:cfg.minzoom,maxzoom:cfg.maxzoom,paint:{
+  'line-color':['case',['boolean',['get','selected'],false],'#ffd400',['boolean',['get','similar'],false],'#2ea043',cfg.line],
+  'line-width':['case',['boolean',['get','selected'],false],2.8,['boolean',['get','similar'],false],2.6,cfg.width]
+ }});
+ map.addLayer({id:labelId,type:'symbol',source:cfg.source,minzoom:cfg.labelMin,maxzoom:cfg.labelMax,layout:{'text-field':['get','label'],'text-size':cfg.size,'text-allow-overlap':false,'text-ignore-placement':false},paint:{'text-color':'#fff','text-halo-color':'#000','text-halo-width':1.5}});
+ map.on('click',fillId,event=>{const code=String(event.features?.[0]?.properties?.code||''),record=RECORDS[lt][code];if(record)openInfo({...record,c:code},lt);});
+ map.on('mouseenter',fillId,()=>{map.getCanvas().style.cursor='pointer';});
+ map.on('mousemove',fillId,event=>{const feature=event.features?.[0];if(feature)hoverPopup.setLngLat(event.lngLat).setHTML(TIPS[lt](feature)).addTo(map);});
+ map.on('mouseleave',fillId,()=>{map.getCanvas().style.cursor='';hoverPopup.remove();});
+}
 function restyle(){
- if(mLayer) mLayer.setStyle(styleMuni);
+ for(const lt of ['M','D','B']){const source=map.getSource(MAP_CONFIG[lt].source);if(source)source.setData(decoratedGeo(lt));}
  const z=map.getZoom();
- if(dLayer){ dLayer.setStyle(styleDist);
-   if(z>=Z_DIST&&z<Z_BAR){ if(!map.hasLayer(dLayer)) dLayer.addTo(map); dLayer.bringToFront(); }
-   else if(map.hasLayer(dLayer)) map.removeLayer(dLayer); }
- if(bLayer){ bLayer.setStyle(styleBar);
-   if(z>=Z_BAR){ if(!map.hasLayer(bLayer)) bLayer.addTo(map); bLayer.bringToFront(); }
-   else if(map.hasLayer(bLayer)) map.removeLayer(bLayer); }
  let txt;
  if(z>=Z_BAR) txt='municipios + barrios de Madrid';
  else if(z>=Z_DIST) txt='municipios + distritos de Madrid';
  else txt=z<Z_MUNI?'municipios (vista general)':'municipios (detalle)';
- document.getElementById('lvl').textContent='Nivel: '+txt; legend(); syncLabels();
+ document.getElementById('lvl').textContent='Nivel: '+txt;legend();
 }
 const LOAD_WARNINGS=[];
 function warnLoad(message){LOAD_WARNINGS.push(message);const el=document.getElementById('warnings');el.textContent=LOAD_WARNINGS.join(' · ');el.style.display='block';}
-async function loadMuni(){let feats=[];
- try{const r=await fetch(GEO_MUNI);const j=await r.json();feats=(j.features||[]).filter(feature=>MDATA[feature.properties.mun_code]);}
- catch(e){document.getElementById('load').textContent='Error al cargar municipios';warnLoad('No se pudo cargar la geometría municipal.');return false;}
- mLayer=L.geoJSON({type:'FeatureCollection',features:feats},{style:styleMuni,onEachFeature:(f,l)=>{l.bindTooltip(()=>tipMuni(f),{className:'mt',sticky:true});l.on('mouseover',()=>hl(f,l));l.on('mouseout',resetStyles);l.on('click',()=>{const d=MDATA[f.properties.mun_code];if(d)openInfo(Object.assign({c:f.properties.mun_code},d),'M');});}}).addTo(map);
- labM=mkLabels(mLayer,l=>{const c=l.feature.properties.mun_code,d=MDATA[c];return d?{c:l.getBounds().getCenter(),n:d.n,code:c,pop:d.p25}:null;});
- restyle(); return true;
-}
-async function loadDist(){try{const r=await fetch(GEO_DIST);const gj=await r.json();
- dLayer=L.geoJSON(gj,{style:styleDist,onEachFeature:(f,l)=>{l.bindTooltip(()=>tipDist(f),{className:'mt',sticky:true});l.on('mouseover',()=>{if(simSet||selCode)return;l.setStyle({color:'#fff',weight:2.6});l.bringToFront();});l.on('mouseout',resetStyles);l.on('click',()=>{const c=String(f.properties.cartodb_id),d=DDATA[c];if(d)openInfo(Object.assign({c},d),'D');});}});
- labD=mkLabels(dLayer,l=>{const c=String(l.feature.properties.cartodb_id),d=DDATA[c];return d?{c:l.getBounds().getCenter(),n:d.n,code:c}:null;});
- restyle();}catch(e){warnLoad('No se pudieron cargar los distritos de Madrid.');}}
-async function loadBar(){try{const r=await fetch(GEO_BAR);const gj=await r.json();
- bLayer=L.geoJSON(gj,{style:styleBar,onEachFeature:(f,l)=>{l.bindTooltip(()=>tipBar(f),{className:'mt',sticky:true});l.on('mouseover',()=>{if(simSet||selCode)return;l.setStyle({color:'#fff',weight:2.4});l.bringToFront();});l.on('mouseout',resetStyles);l.on('click',()=>{const c=String(f.properties.COD_DISBAR),d=BDATA[c];if(d)openInfo(Object.assign({c},d),'B');});}});
- labB=mkLabels(bLayer,l=>{const c=String(l.feature.properties.COD_DISBAR),d=BDATA[c];return d?{c:l.getBounds().getCenter(),n:d.n,code:c}:null;});
- restyle();}catch(e){warnLoad('No se pudieron cargar los barrios de Madrid.');}}
+map.on('load',()=>{try{for(const lt of ['M','D','B'])installLevel(lt);document.getElementById('load').style.display='none';restyle();resolveGeometry(true);}catch(error){document.getElementById('load').textContent='Error al cargar geometrías';warnLoad('No se pudieron preparar las capas locales del mapa.');resolveGeometry(false);}});
+map.on('error',event=>{if(event.error&&!LOAD_WARNINGS.includes('El mapa base no se pudo cargar por completo.'))warnLoad('El mapa base no se pudo cargar por completo.');});
 map.on('zoomend',restyle);
 map.on('moveend',writeState);
 // ---------- metric switching ----------
@@ -452,10 +430,8 @@ document.getElementById('share').addEventListener('click',async()=>{
 });
 document.addEventListener('keydown',event=>{if(event.key==='Escape'){if(document.getElementById('info').style.display==='block')clearSel();else document.getElementById('compare').style.display='none';}});
 // ---------- legend ----------
-let lg;
 function grad(arr){return 'linear-gradient(to right,'+[0,0.2,0.4,0.6,0.8,1].map(t=>_rampArr(arr,t)).join(',')+')';}
-function legend(){if(lg)lg.remove();lg=L.control({position:'bottomright'});
- lg.onAdd=function(){const div=L.DomUtil.create('div','legend');let html='';
+function legend(){const div=document.getElementById('mapLegend');let html='';
  if(METRIC==='pob'){
   const g='linear-gradient(to right,rgb(5,48,97),rgb(67,147,195),rgb(247,247,247),rgb(244,165,130),rgb(178,24,43),rgb(103,0,31))';
   let hi,lo;
@@ -493,8 +469,7 @@ function legend(){if(lg)lg.remove();lg=L.control({position:'bottomright'});
    +'<div style="color:#888;margin-top:2px">escala lineal · recorte p2-p98 (extremos saturan) · misma escala en los 3 niveles</div>'
    +'<div style="color:#888">gris = sin dato · <span style="color:#2ea043">verde=similar</span></div>';
  }
- div.innerHTML=html; return div;};
- lg.addTo(map);}
+ div.innerHTML=html;}
 
 const initialCompare=(query.get('compare')||'').split(',').map(decodeRef).filter(Boolean);
 for(const reference of initialCompare){
@@ -505,5 +480,3 @@ const initialZone=decodeRef(query.get('zone'));
 setMetric(METRIC);sw();
 if(compareItems.length)renderCompare();
 if(initialZone){const item=itemFor(initialZone.lt,initialZone.code);if(item)openInfo(item,initialZone.lt);}
-geometryReady=Promise.all([loadMuni(),loadDist(),loadBar()]);
-geometryReady.then(([municipalitiesLoaded])=>{if(municipalitiesLoaded)document.getElementById('load').style.display='none';});
