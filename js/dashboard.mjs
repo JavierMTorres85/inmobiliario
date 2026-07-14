@@ -379,9 +379,10 @@ function installLevel(lt){
  map.addLayer({id:`${cfg.prefix}-extrusion`,type:'fill-extrusion',source:cfg.source,minzoom:cfg.minzoom,maxzoom:cfg.maxzoom,layout:{visibility:is3D?'visible':'none'},paint:{'fill-extrusion-color':['get','color'],'fill-extrusion-height':['get','height'],'fill-extrusion-base':0,'fill-extrusion-opacity':.9}});
  map.addLayer({id:lineId,type:'line',source:cfg.source,minzoom:cfg.minzoom,maxzoom:cfg.maxzoom,paint:{
   'line-color':['case',['boolean',['get','selected'],false],'#ffd400',['boolean',['get','rangeMatch'],false],'#00b6d9',['boolean',['get','similar'],false],'#2ea043',cfg.line],
-  'line-width':['case',['boolean',['get','selected'],false],2.8,['boolean',['get','rangeMatch'],false],2.4,['boolean',['get','similar'],false],2.6,cfg.width]
+  'line-width':['case',['boolean',['get','selected'],false],2.8,['boolean',['get','rangeMatch'],false],2.4,['boolean',['get','similar'],false],2.6,cfg.width],
+  'line-opacity':1
  }});
- map.addLayer({id:labelId,type:'symbol',source:cfg.source,minzoom:cfg.labelMin,maxzoom:cfg.labelMax,layout:{'text-field':['get','label'],'text-size':cfg.size,'text-allow-overlap':labelsAll,'text-ignore-placement':false,'symbol-sort-key':['-',0,['get','population']]},paint:{'text-color':'#fff','text-halo-color':'#000','text-halo-width':1.5}});
+ map.addLayer({id:labelId,type:'symbol',source:cfg.source,minzoom:cfg.labelMin,maxzoom:cfg.labelMax,layout:{'text-field':['get','label'],'text-size':cfg.size,'text-allow-overlap':labelsAll,'text-ignore-placement':false,'symbol-sort-key':['-',0,['get','population']]},paint:{'text-color':'#fff','text-halo-color':'#000','text-halo-width':1.5,'text-opacity':1}});
  map.on('click',fillId,event=>{const code=String(event.features?.[0]?.properties?.code||''),record=RECORDS[lt][code];if(record)openInfo({...record,c:code},lt);});
  map.on('mouseenter',fillId,()=>{map.getCanvas().style.cursor='pointer';});
  map.on('mousemove',fillId,event=>{const feature=event.features?.[0];if(feature)hoverPopup.setLngLat(event.lngLat).setHTML(tipForFeature(feature,lt)).addTo(map);});
@@ -389,7 +390,7 @@ function installLevel(lt){
 }
 function refreshMapVisuals(){
  for(const lt of ['M','D','B']){const source=map.getSource(MAP_CONFIG[lt].source);if(source)source.setData(decoratedGeo(lt));}
- const range=activeLegendRange();for(const lt of ['M','D','B']){const layer=`${MAP_CONFIG[lt].prefix}-fill`;if(map.getLayer(layer))map.setPaintProperty(layer,'fill-opacity',range?['case',['boolean',['get','rangeMatch'],false],.96,.18]:lt==='M'?.88:.9);}
+ const range=activeLegendRange();for(const lt of ['M','D','B']){const prefix=MAP_CONFIG[lt].prefix,fill=`${prefix}-fill`,extrusion=`${prefix}-extrusion`,line=`${prefix}-line`,label=`${prefix}-label`,selected=range&&range.lt===lt;if(map.getLayer(fill))map.setPaintProperty(fill,'fill-opacity',selected?['case',['boolean',['get','rangeMatch'],false],.96,0]:lt==='M'?.88:.9);if(map.getLayer(extrusion))map.setPaintProperty(extrusion,'fill-extrusion-opacity',selected?['case',['boolean',['get','rangeMatch'],false],.92,0]:.9);if(map.getLayer(line))map.setPaintProperty(line,'line-opacity',selected?['case',['boolean',['get','rangeMatch'],false],1,0]:1);if(map.getLayer(label))map.setPaintProperty(label,'text-opacity',selected?['case',['boolean',['get','rangeMatch'],false],1,0]:1);}
 }
 function updateViewMode(animate=true){
  for(const lt of ['M','D','B']){const cfg=MAP_CONFIG[lt],fill=`${cfg.prefix}-fill`,extrusion=`${cfg.prefix}-extrusion`;if(map.getLayer(fill))map.setLayoutProperty(fill,'visibility',is3D?'none':'visible');if(map.getLayer(extrusion))map.setLayoutProperty(extrusion,'visibility',is3D?'visible':'none');}
@@ -482,15 +483,14 @@ function legendFormat(value){if(METRIC==='pob')return metric==='pct'?`${value>=0
 function colorForLegend(value){if(METRIC==='pob')return colPob(value,metric);if(METRIC==='pre')return colSeq(value,_YOR,bnds('pre',GET.pre));if(METRIC==='ren')return colSeq(value,_GRN,bnds('ren',GET.ren));return colSeq(value,_PUR,bnds('esf',GET.esf));}
 function legendBins(lt=activeLevel()){
  if(METRIC==='ten')return [];
- let edges;
- if(METRIC==='pob'&&metric==='pct'){const limit=Math.max(Math.abs(POB_ANNUAL_RANGE[0]),Math.abs(POB_ANNUAL_RANGE[1]),.1);edges=[-limit,-limit*.6,-limit*.2,limit*.2,limit*.6,limit];}
- else if(METRIC==='pob'){const [baseLo,baseHi]=bnds('poba',GET.poba),lo=Math.min(baseLo,-1),hi=baseHi;edges=[lo,-Math.abs(lo)*.36,-Math.abs(lo)*.04,hi*.04,hi*.36,hi];}
- else{const range=bnds(METRIC,GET[METRIC]);edges=[0,.2,.4,.6,.8,1].map(position=>range[0]+(range[1]-range[0])*position);}
- const records=arrOf(lt);return edges.slice(0,-1).map((min,index)=>{const max=edges[index+1],last=index===edges.length-2,count=records.filter(record=>{const value=mv(record,lt);return value!=null&&value>=min&&(value<max||(last&&value<=max));}).length;return {lt,min,max,last,count,index,color:colorForLegend((min+max)/2)};});
+ const records=arrOf(lt),values=records.map(record=>mv(record,lt)).filter(Number.isFinite).sort((a,b)=>a-b);if(!values.length)return [];
+ const edges=[values[0]];for(let group=1;group<5;group++){let index=Math.ceil(values.length*group/5);while(index<values.length&&values[index]===values[index-1])index++;if(index<values.length){const boundary=(values[index-1]+values[index])/2;if(boundary>edges[edges.length-1])edges.push(boundary);}}
+ edges.push(values[values.length-1]);
+ return edges.slice(0,-1).map((min,index)=>{const max=edges[index+1],last=index===edges.length-2,count=records.filter(record=>{const value=mv(record,lt);return value!=null&&value>=min&&(value<max||(last&&value<=max));}).length;return {lt,min,max,last,count,index,color:colorForLegend((min+max)/2)};}).filter(bin=>bin.count>0);
 }
 function fitLegendRange(range){const features=GEO_BY_LEVEL[range.lt].features.filter(feature=>{const record=RECORDS[range.lt][rawCode(feature,range.lt)];return record&&matchesLegend(record,range.lt);}),bounds=boundsForFeatures(features);if(bounds)map.fitBounds(bounds,{padding:40,maxZoom:range.lt==='B'?14:12});}
 function optionHref(name,value){const url=new URL(location.href);if(value==null)url.searchParams.delete(name);else url.searchParams.set(name,value);return url.href;}
-function legendControls(){const bins=legendBins();if(!bins.length)return '<div class="legend-note">La selección por categoría se incorporará en una fase posterior.</div>';const ranges=bins.map(bin=>`<a href="${optionHref('range',`${bin.lt}:${bin.index}`)}" class="legend-range${legendPinned?.lt===bin.lt&&legendPinned.index===bin.index?' active':''}" data-legend-bin="${bin.index}" aria-current="${legendPinned?.lt===bin.lt&&legendPinned.index===bin.index}"><span class="swatch" style="background:${bin.color}"></span><span>${legendFormat(bin.min)} a ${legendFormat(bin.max)}</span><span class="count">${bin.count}</span></a>`).join('');return `<div class="legend-ranges">${ranges}</div><div class="legend-note">Pasa por un rango para destacar · pulsa para fijar. <span class="legend-selected">Contorno turquesa = rango</span>.</div><div class="legend-actions"><a href="${optionHref('range',null)}" data-legend-clear>Quitar selección</a><a href="${optionHref('labels',labelsAll?null:'all')}" data-labels-toggle>${labelsAll?'Evitar solapes':'Mostrar todos los nombres'}</a></div>`;}
+function legendControls(){const bins=legendBins();if(!bins.length)return '';const ranges=bins.map(bin=>{const active=legendPinned?.lt===bin.lt&&legendPinned.index===bin.index,href=optionHref('range',active?null:`${bin.lt}:${bin.index}`);return `<a href="${href}" class="legend-range${active?' active':''}" data-legend-bin="${bin.index}" aria-current="${active}"><span class="swatch" style="background:${bin.color}"></span><span>${legendFormat(bin.min)} a ${legendFormat(bin.max)}</span><span class="count">${bin.count}</span></a>`;}).join('');return `<div class="legend-ranges">${ranges}</div>`;}
 function legend(){const div=document.getElementById('mapLegend');let html='';
  if(METRIC==='pob'){
   const g='linear-gradient(to right,rgb(5,48,97),rgb(67,147,195),rgb(247,247,247),rgb(244,165,130),rgb(178,24,43),rgb(103,0,31))';
@@ -529,7 +529,7 @@ function legend(){const div=document.getElementById('mapLegend');let html='';
    +'<div style="color:#888;margin-top:2px">escala lineal · recorte p2-p98 (extremos saturan) · misma escala en los 3 niveles</div>'
    +'<div style="color:#888">gris = sin dato · <span style="color:#2ea043">verde=similar</span></div>';
  }
- div.innerHTML=html+legendControls()+(is3D?`<div class="legend-note"><b>Altura:</b> población ${timeYear??'actual'} · escala √ común. En barrios no hay total disponible.</div>`:'')+(timeYear!=null?`<div class="legend-note"><b>Color temporal:</b> cambio anualizado hasta ${timeYear}; blanco = corte base.</div>`:'');
+ div.innerHTML=html+legendControls();
  div.querySelectorAll('[data-legend-bin]').forEach(button=>{button.addEventListener('mouseenter',()=>{legendHover=legendBins()[Number(button.dataset.legendBin)]||null;refreshMapVisuals();});});
 }
 
