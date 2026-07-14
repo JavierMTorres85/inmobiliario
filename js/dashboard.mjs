@@ -1,7 +1,8 @@
-const [MDATA,DDATA,BDATA,DATA_MANIFEST,MGEO,DGEO,BGEO]=await Promise.all([
+const [MDATA,DDATA,BDATA,ZDATA,DATA_MANIFEST,MGEO,DGEO,BGEO]=await Promise.all([
  '../data/municipalities.json',
  '../data/districts.json',
  '../data/neighborhoods.json',
+ '../data/zones.json',
  '../data/manifest.json',
  '../data/geo/municipalities.geojson',
  '../data/geo/districts.geojson',
@@ -14,6 +15,11 @@ const [MDATA,DDATA,BDATA,DATA_MANIFEST,MGEO,DGEO,BGEO]=await Promise.all([
 const MARR=Object.entries(MDATA).map(([c,d])=>Object.assign({c},d));
 const DARR=Object.entries(DDATA).map(([c,d])=>Object.assign({c},d));
 const BARR=Object.entries(BDATA).map(([c,d])=>Object.assign({c},d));
+const average=(records,key)=>{const values=records.map(record=>record[key]).filter(Number.isFinite);return values.length?values.reduce((sum,value)=>sum+value,0)/values.length:null;};
+function aggregateRecord(c,n,records,population){const p20=population?.p20??records.reduce((sum,record)=>sum+(record.p20||0),0),p25=population?.p25??records.reduce((sum,record)=>sum+(record.p25||0),0),a=p25-p20,la=records.reduce((sum,record)=>sum+(record.la||0),0),series=records.filter(record=>Array.isArray(record.s)&&record.s.length===6);return {c,n,macro:true,p20,p25,a,p:p20?(p25/p20-1)*100:null,la,lp:p25-la?(la/(p25-la))*100:null,v:average(records,'v'),va:average(records,'va'),alq:average(records,'alq'),aa:average(records,'aa'),rb:average(records,'rb'),r:average(records,'r'),esf:average(records,'esf'),te:average(records,'te'),s:series.length?Array.from({length:6},(_,index)=>series.reduce((sum,record)=>sum+record.s[index],0)/series.length):null,coverage:{municipalities:records.length,price:records.filter(record=>record.v!=null).length,series:series.length,alquiler:records.filter(record=>record.alq!=null).length}};}
+const ZARR=Object.entries(ZDATA).map(([name,population])=>aggregateRecord(name,name,MARR.filter(record=>record.z===name),population));
+const CARR=[aggregateRecord('CM','Comunidad de Madrid',MARR)];
+const CDATA=Object.fromEntries(CARR.map(record=>[record.c,record])),ZRECORDS=Object.fromEntries(ZARR.map(record=>[record.c,record]));
 const Z_MUNI=10, Z_DIST=11, Z_BAR=13;
 const VALID_METRICS=new Set(['pob','pre','ren','esf','ten']);
 const query=new URLSearchParams(location.search);
@@ -21,7 +27,7 @@ const queryMetric=query.get('metric'), queryUnit=query.get('unit');
 const queryRanges=(query.get('range')||'').split(',').map(value=>/^([MDB]):([0-4])$/.exec(value)).filter(Boolean);
 let METRIC=VALID_METRICS.has(queryMetric)?queryMetric:'pob';
 let metric=queryUnit==='abs'?'abs':'pct';
-let is3D=query.get('view')==='3d';
+let is3D=query.get('view')==='3d'&&METRIC==='pob';
 let timeYear=query.has('year')&&Number.isFinite(Number(query.get('year')))?Number(query.get('year')):null,timeTimer=null;
 let selCode=null, selType='M', simSet=null, simType='M', compareItems=[],legendPinned=[];
 let labelsAll=query.get('labels')==='all';
@@ -33,7 +39,7 @@ map.dragRotate.enable();map.touchZoomRotate.enableRotation();
 map.addControl(new maplibregl.AttributionControl({compact:true,customAttribution:'idealista · INE · Ayuntamiento de Madrid · límites ODS/click_that_hood'}));
 let resolveGeometry;const geometryReady=new Promise(resolve=>{resolveGeometry=resolve;});
 function itemFor(lt,code){return arrOf(lt).find(item=>item.c===code);}
-function decodeRef(value){const match=/^([MDB]):(.+)$/.exec(value||'');return match?{lt:match[1],code:match[2]}:null;}
+function decodeRef(value){const match=/^([MDBZC]):(.+)$/.exec(value||'');return match?{lt:match[1],code:match[2]}:null;}
 function writeState(){
  const center=map.getCenter(),params=new URLSearchParams();
  params.set('metric',METRIC);if(METRIC==='pob')params.set('unit',metric);
@@ -83,7 +89,7 @@ const _BC={};
 function allVals(getter){return [...MARR,...DARR,...BARR].map(getter).filter(v=>v!=null&&isFinite(v));}
 function bnds(key,getter){if(_BC[key])return _BC[key];return _BC[key]=robust(allVals(getter));}
 const GET={pre:x=>x.v,ren:x=>x.rb,esf:x=>x.esf,poba:x=>x.a};
-function annualPct(d,lt){const cumulative=lt==='B'?d.cp:d.p;if(cumulative==null)return null;const years=lt==='M'?5:4;return (Math.pow(1+cumulative/100,1/years)-1)*100;}
+function annualPct(d,lt){const cumulative=lt==='B'?d.cp:d.p;if(cumulative==null)return null;const years=(lt==='D'||lt==='B')?4:5;return (Math.pow(1+cumulative/100,1/years)-1)*100;}
 const POB_ANNUAL_RANGE=robust([...MARR.map(d=>annualPct(d,'M')),...DARR.map(d=>annualPct(d,'D')),...BARR.map(d=>annualPct(d,'B'))].filter(Number.isFinite));
 function colPob(v,m){let hi,lo;
  if(m==='pct'){const limit=Math.max(Math.abs(POB_ANNUAL_RANGE[0]),Math.abs(POB_ANNUAL_RANGE[1]),0.1);hi=limit;lo=-limit;}
@@ -118,11 +124,11 @@ function fmtv(x,lt){ if(x==null)return 'n.d.';
 // ---------- tooltips ----------
 function tipGen(name,extra,d,lt){let v=mv(d,lt);return `<b>${name}</b>${extra}<br><b>${fmtv(v,lt)}</b><br><i>pincha para la ficha</i>`;}
 function tipMuni(f){const d=MDATA[f.properties.mun_code];if(!d)return f.properties.mun_code;
- if(METRIC==='pob'){return `<b>${d.n}</b> &middot; <span style="color:#888">${d.z}</span><br>${d.p20.toLocaleString('es')} &rarr; ${d.p25.toLocaleString('es')}<br><b>${num(d.a)} (${d.p>=0?'+':''}${d.p}%)</b><br><i>pincha para la ficha</i>`;}
+ if(METRIC==='pob'){return `<b>${d.n}</b> &middot; <span style="color:#888">${d.z}</span><br>${intEs(d.p20)} &rarr; ${intEs(d.p25)}<br><b>${num(d.a)} (${d.p>=0?'+':''}${d.p}%)</b><br><i>pincha para la ficha</i>`;}
  if(METRIC==='ten'){return `<b>${d.n}</b><br><b>${d.cu||'fuera de los 44 nodos analizados'}</b><br><i>pincha para la ficha</i>`;}
  return tipGen(d.n,' &middot; <span style="color:#888">'+d.z+'</span>',d,'M');}
 function tipDist(f){const d=DDATA[String(f.properties.cartodb_id)];if(!d)return f.properties.name;
- if(METRIC==='pob'){return `<b>Distrito ${d.n}</b><br>${d.p20.toLocaleString('es')} &rarr; ${d.p25.toLocaleString('es')}<br><b>${num(d.a)} (${d.p>=0?'+':''}${d.p}%)</b><br><i>pincha para la ficha</i>`;}
+ if(METRIC==='pob'){return `<b>Distrito ${d.n}</b><br>${intEs(d.p20)} &rarr; ${intEs(d.p25)}<br><b>${num(d.a)} (${d.p>=0?'+':''}${d.p}%)</b><br><i>pincha para la ficha</i>`;}
  if(METRIC==='ten'){return `<b>Distrito ${d.n}</b><br><b>${d.cu||'n.d.'}</b><br><i>pincha para la ficha</i>`;}
  return tipGen('Distrito '+d.n,'',d,'D');}
 function tipBar(f){const d=BDATA[String(f.properties.COD_DISBAR)];if(!d)return f.properties.NOMBRE;
@@ -130,7 +136,8 @@ function tipBar(f){const d=BDATA[String(f.properties.COD_DISBAR)];if(!d)return f
  return tipGen(d.n,' &middot; <span style="color:#888">barrio</span>',d,'B');}
 // ---------- ranking / ficha ----------
 function ord(n){return n+'º';}
-function num(x){return (x>=0?'+':'')+x.toLocaleString('es');}
+function intEs(value){return Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
+function num(x){return `${x>=0?'+':'−'}${intEs(Math.abs(x))}`;}
 function rankBy(arr,item,key,asc){const s=arr.filter(x=>x[key]!=null).sort((a,b)=>asc?a[key]-b[key]:b[key]-a[key]);const i=s.findIndex(x=>x.c===item.c);return i<0?null:[i+1,s.length];}
 function rk(r){return r?`<span class="rk">${ord(r[0])}</span> de ${r[1]}`:'n.d.';}
 function median(arr,key){const v=arr.map(x=>x[key]).filter(x=>x!=null).sort((a,b)=>a-b);return v.length?v[Math.floor(v.length/2)]:null;}
@@ -138,13 +145,13 @@ function spark(s){if(!s)return '';const years=[21,22,23,24,25,26];const mx=Math.
  let h='<div class="sparkbox"><div class="spark">';
  s.forEach((v,i)=>{const t=8+36*(v-mn)/((mx-mn)||1);h+=`<div style="height:${t.toFixed(0)}px" title="jun-20${years[i]}: ${v.toLocaleString('es')} €/m²"><span>'${years[i]}</span></div>`;});
  return h+'</div></div>';}
-function arrOf(lt){return lt==='M'?MARR:(lt==='D'?DARR:BARR);}
-function uniOf(lt){return lt==='M'?'municipios':(lt==='D'?'distritos':'barrios');}
+function arrOf(lt){return lt==='M'?MARR:(lt==='D'?DARR:(lt==='B'?BARR:(lt==='Z'?ZARR:CARR)));}
+function uniOf(lt){return lt==='M'?'municipios':(lt==='D'?'distritos':(lt==='B'?'barrios':(lt==='Z'?'zonas territoriales':'comunidad autónoma')));}
 function completeDataBlock(item,lt){
  const cards=[];
- if(lt!=='B'&&item.p25!=null){const year=lt==='M'?2025:2024;cards.push(`<div class="data-card"><b>Población</b><strong>${item.p25.toLocaleString('es')} hab. (${year})</strong>${item.p20!=null?`<span>2020: ${item.p20.toLocaleString('es')} · cambio: ${num(item.a)} (${item.p>=0?'+':''}${item.p}%)</span>`:''}${item.la!=null?`<span>Último año: ${num(item.la)} (${item.lp>=0?'+':''}${item.lp}%)</span>`:''}</div>`);}
+ if(lt!=='B'&&item.p25!=null){const year=lt==='D'?2024:2025,previous=year-1;cards.push(`<div class="data-card"><b>Población</b><strong>${intEs(item.p25)} hab. (${year})</strong>${item.p20!=null?`<span>2020: ${intEs(item.p20)} · cambio: ${num(item.a)} personas (${item.p>=0?'+':''}${item.p.toLocaleString('es',{maximumFractionDigits:1})}%)</span>`:''}${item.la!=null?`<span>${previous}→${year}: ${num(item.la)} personas (${item.lp>=0?'+':''}${item.lp.toLocaleString('es',{maximumFractionDigits:1})}%)</span>`:''}</div>`);}
  if(lt==='B'&&item.cp!=null)cards.push(`<div class="data-card"><b>Población</b><strong>${item.cp>=0?'+':''}${item.cp}%</strong><span>Cambio acumulado 2020-2024</span></div>`);
- if(item.v!=null)cards.push(`<div class="data-card"><b>Precio de venta</b><strong>${item.v.toLocaleString('es')} €/m²</strong>${item.va!=null?`<span>Variación anual: ${item.va>=0?'+':''}${item.va}%</span>`:''}${item.s?.length?`<span>2021→2026: ${item.s[0].toLocaleString('es')} → ${item.s[item.s.length-1].toLocaleString('es')} €/m²</span>`:''}</div>`);
+ if(item.v!=null)cards.push(`<div class="data-card"><b>${item.macro?'Precio medio de venta':'Precio de venta'}</b><strong>${Math.round(item.v).toLocaleString('es')} €/m²</strong>${item.va!=null?`<span>Variación anual media: ${item.va>=0?'+':''}${item.va.toLocaleString('es',{maximumFractionDigits:1})}%</span>`:''}${item.s?.length?`<span>jun-2021 → jun-2026: ${Math.round(item.s[0]).toLocaleString('es')} → ${Math.round(item.s[item.s.length-1]).toLocaleString('es')} €/m²</span>`:''}${item.macro?`<span>Media simple · ${item.coverage.price}/${item.coverage.municipalities} municipios con precio actual</span>`:''}</div>`);
  if(item.alq!=null||item.rb!=null)cards.push(`<div class="data-card"><b>Alquiler y rentabilidad</b>${item.alq!=null?`<strong>${item.alq.toLocaleString('es')} €/m²/mes</strong>`:''}${item.aa!=null?`<span>Variación anual alquiler: ${item.aa>=0?'+':''}${item.aa}%</span>`:''}${item.rb!=null?`<span>Rentabilidad bruta: <b>${item.rb.toFixed(2)}%</b></span>`:''}</div>`);
  if(item.r!=null||item.esf!=null)cards.push(`<div class="data-card"><b>Renta y esfuerzo</b>${item.r!=null?`<strong>${item.r.toLocaleString('es')} € por hogar</strong>`:''}${item.esf!=null?`<span>Compra de 80 m²: <b>${item.esf.toFixed(1)} años de renta</b></span>`:''}</div>`);
  if(item.cu||item.te!=null)cards.push(`<div class="data-card"><b>Demanda-precio</b>${item.cu?`<strong>${item.cu}</strong>`:''}${item.te!=null?`<span>Índice: ${item.te}</span>`:''}</div>`);
@@ -153,7 +160,7 @@ function completeDataBlock(item,lt){
 function historyPair(item,lt){
  if(METRIC==='pob'&&lt!=='B'&&item.p20!=null&&item.p25!=null){
   const currentYear=lt==='D'?'2024':'2025';
-  return {label:'Población',oldLabel:'2020',newLabel:currentYear,oldValue:`${item.p20.toLocaleString('es')} hab.`,newValue:`${item.p25.toLocaleString('es')} hab.`,note:`Variación acumulada: ${item.p>=0?'+':''}${item.p}% · equivalente anual: ${annualPct(item,lt).toLocaleString('es',{minimumFractionDigits:2,maximumFractionDigits:2})}%.`};
+  return {label:'Población',oldLabel:'2020',newLabel:currentYear,oldValue:`${intEs(item.p20)} hab.`,newValue:`${intEs(item.p25)} hab.`,note:`Variación acumulada: ${item.p>=0?'+':''}${item.p.toLocaleString('es',{maximumFractionDigits:1})}% · equivalente anual: ${annualPct(item,lt).toLocaleString('es',{minimumFractionDigits:2,maximumFractionDigits:2})}%.`};
  }
  if(METRIC==='pob'&&lt==='B'&&item.cp!=null){
   return {label:'Índice de población (2020=100)',oldLabel:'2020',newLabel:'2024',oldValue:'100,0',newValue:(100+item.cp).toLocaleString('es',{minimumFractionDigits:1,maximumFractionDigits:1}),note:'Índice calculado a partir de la variación acumulada publicada.'};
@@ -192,7 +199,7 @@ function comparisonValue(item,lt,key){
 const COMPARE_ROWS=[['Métrica activa','active'],['Población','pob'],['Precio de venta','pre'],['Rentabilidad bruta','ren'],['Esfuerzo de compra','esf'],['Demanda-precio','ten']];
 function comparability(first,second){
  if(!second)return {grade:'medium',label:'Comparación incompleta',detail:'Añade una segunda zona para evaluar periodos y naturaleza de los datos.'};
- const quality=DATA_MANIFEST.metrics[METRIC],periodA=quality.periods[first.lt],periodB=quality.periods[second.lt];
+ const quality=DATA_MANIFEST.metrics[METRIC],periodFor=lt=>quality.periods[(lt==='C'||lt==='Z')?'M':lt],periodA=periodFor(first.lt),periodB=periodFor(second.lt);
  const missing=mv(first.item,first.lt)==null||mv(second.item,second.lt)==null,normalizedPopulation=METRIC==='pob'&&metric==='pct';
  const derived=/derivad|estimación|índice analítico/i.test(quality.kind);
  let grade='high',label='Comparabilidad alta';
@@ -242,22 +249,23 @@ function addCompare(){
 function openInfo(item,lt){
  selCode=item.c; selType=lt; simSet=null;
  const arr=arrOf(lt), tipo=uniOf(lt);
- const sub=lt==='D'?'Distrito de Madrid':(lt==='B'?('Barrio &middot; distrito '+(DDATA[String(item.d)]||{}).n):('Municipio &middot; zona '+item.z));
+ const sub=lt==='C'?'Resumen de toda la región':(lt==='Z'?`Agregado de ${item.coverage.municipalities} municipios`:(lt==='D'?'Distrito de Madrid':(lt==='B'?('Barrio &middot; distrito '+(DDATA[String(item.d)]||{}).n):('Municipio &middot; zona '+item.z))));
  let body='';
+ if(item.macro){const activeValue=mv(item,lt);if(activeValue!=null)body+=historyBlock(item,lt);body+=completeDataBlock(item,lt);const inCompare=compareItems.some(entry=>entry.lt===lt&&entry.item.c===item.c),info=document.getElementById('info');info.classList.remove('expanded');info.innerHTML=`<div class="hd"><button type="button" class="sheet-toggle" data-action="toggle-info-size" aria-label="Ampliar ficha" aria-expanded="false">↕</button><button type="button" class="x" data-action="clear-selection" aria-label="Cerrar ficha">&times;</button><h2>${item.n}</h2><div class="sub">${sub}</div></div><div class="bd">${body}<button type="button" class="compare-add" data-action="add-compare">${inCompare?'Ver en el comparador':'Añadir al comparador'}</button><div id="simbox"></div></div>`;info.style.display='block';writeState();restyle();return;}
  if(METRIC==='pob'&&lt!=='B'){
   const anio=lt==='D'?'2024':'2025', prev=lt==='D'?'2023':'2024',years=lt==='D'?4:5;
   const annual=annualPct(item,lt),annualMedian=median(arr.map(entry=>({annual:annualPct(entry,lt)})),'annual');
   const momento=item.lp>annual*1.25?'acelerando':(item.lp<annual*0.7?'desacelerando':'a ritmo estable');
-  body=`<div><span class="big">${item.p25.toLocaleString('es')}</span> hab. (${anio})</div>
+  body=`<div><span class="big">${intEs(item.p25)}</span> hab. (${anio})</div>
   <div>${rk(rankBy(arr,item,'p25'))} más poblado</div>
   <div class="sec">Crecimiento 2020-${anio} (${years} años)</div>
   <div>${num(item.a)} hab &nbsp;·&nbsp; <b>${item.p>=0?'+':''}${item.p}%</b></div>
   <div>${rk(rankBy(arr,item,'a'))} que más sumó &nbsp;|&nbsp; ${rk(rankBy(arr,item,'p'))} en %</div>
   <div>Equivalente anual: <b>${annual>=0?'+':''}${annual.toLocaleString('es',{minimumFractionDigits:2,maximumFractionDigits:2})}%</b></div>
-  <div class="sec">Último año (${prev}&rarr;${anio})</div>
-  <div>${num(item.la)} hab &nbsp;·&nbsp; <b>${item.lp>=0?'+':''}${item.lp}%</b></div>
+  <div class="sec">${prev}&rarr;${anio}</div>
+  <div>${num(item.la)} personas &nbsp;·&nbsp; <b>${item.lp>=0?'+':''}${item.lp}%</b></div>
   <div>${rk(rankBy(arr,item,'la'))} que más sumó &nbsp;|&nbsp; ${rk(rankBy(arr,item,'lp'))} en %</div>
-  <div class="ins">Crece <b>${item.p}%</b> en ${years} años. Su ritmo anual equivalente está ${annual>=annualMedian?'por encima':'por debajo'} de la mediana de su nivel (${annualMedian.toLocaleString('es',{minimumFractionDigits:2,maximumFractionDigits:2})}%/año). Va <b>${momento}</b> (último año ${item.lp>=0?'+':''}${item.lp}% vs ${annual.toLocaleString('es',{minimumFractionDigits:2,maximumFractionDigits:2})}%/año).</div>`;
+  <div class="ins">Crece <b>${item.p}%</b> en ${years} años. Su ritmo anual equivalente está ${annual>=annualMedian?'por encima':'por debajo'} de la mediana de su nivel (${annualMedian.toLocaleString('es',{minimumFractionDigits:2,maximumFractionDigits:2})}%/año). Va <b>${momento}</b> (${prev}→${anio}: ${item.lp>=0?'+':''}${item.lp}% vs ${annual.toLocaleString('es',{minimumFractionDigits:2,maximumFractionDigits:2})}%/año).</div>`;
  } else if(METRIC==='pob'&&lt==='B'){
   body=`<div><span class="big">${item.cp!=null?((item.cp>=0?'+':'')+item.cp+'%'):'n.d.'}</span> población 2020-2024</div>
   <div>${rk(rankBy(arr,item,'cp'))} que más creció (barrios con dato)</div>
@@ -290,7 +298,7 @@ function openInfo(item,lt){
   let e='';for(const k in expl){if(item.cu&&item.cu.startsWith(k)){e=expl[k];break;}}
   body=`<div><span class="big">${item.cu||'n.d.'}</span></div>
   ${item.te!=null?`<div>Índice demanda-precio: <b>${item.te}</b> &nbsp;·&nbsp; ${rk(rankBy(arr,item,'te'))} más tensionado</div>`:''}
-  ${item.s?`<div class="sec">Precio 2021→2026</div><div>${item.s[0].toLocaleString('es')} → ${item.s[5].toLocaleString('es')} €/m² (+${Math.round((item.s[5]/item.s[0]-1)*100)}%)</div>`:''}
+  ${item.s?`<div class="sec">Precio jun-2021 → jun-2026</div><div>${item.s[0].toLocaleString('es')} → ${item.s[5].toLocaleString('es')} €/m² (+${Math.round((item.s[5]/item.s[0]-1)*100)}%)</div>`:''}
   ${METRIC==='ten'&&item.p!=null?`<div class="sec">Demanda</div><div>Población 5 años: <b>${item.p>=0?'+':''}${item.p}%</b></div>`:''}
   <div class="ins">${item.cu?e+' Este índice todavía no incluye la oferta de anuncios; se añadirá cuando esté disponible la API de idealista.':'Fuera de los 44 nodos del análisis demanda-precio (23 municipios tier-A + 21 distritos).'}</div>`;
  }
@@ -365,6 +373,7 @@ function fitZone(lt,code){
 async function focusZone(lt,code){
  const item=itemFor(lt,code);if(!item)return;
  await geometryReady;openInfo(item,lt);
+ if(lt==='C'||lt==='Z'){map.flyTo({center:[-3.70,40.42],zoom:8.2});return;}
  if(!fitZone(lt,code)&&lt!=='M')map.flyTo({center:[-3.70,40.42],zoom:lt==='B'?14:12});
 }
 function fitSim(){
@@ -375,7 +384,7 @@ function fitSim(){
 // ---------- MapLibre layers / restyle ----------
 const hoverPopup=new maplibregl.Popup({closeButton:false,closeOnClick:false,offset:10});
 const TIPS={M:tipMuni,D:tipDist,B:tipBar};
-function tipForFeature(feature,lt){const base=TIPS[lt](feature);if(timeYear==null)return base;const record=RECORDS[lt][String(feature.properties.code)],point=observedPoint(record,lt,timeYear);if(!point)return `<b>${timeYear}</b><br>Sin población total exacta para este corte.<br>${base}`;const change=point.growth==null?'corte base':`${point.growth>=0?'+':''}${point.growth.toLocaleString('es',{minimumFractionDigits:2,maximumFractionDigits:2})}%/año desde ${point.from}`;return `<b>${timeYear}: ${point.population.toLocaleString('es')} hab.</b><br>${change}<br>${base}`;}
+function tipForFeature(feature,lt){const base=TIPS[lt](feature);if(timeYear==null)return base;const record=RECORDS[lt][String(feature.properties.code)],point=observedPoint(record,lt,timeYear);if(!point)return `<b>${timeYear}</b><br>Sin población total para este corte.<br>${base}`;const change=point.growth==null?'corte base':`${point.growth>=0?'+':''}${point.growth.toLocaleString('es',{minimumFractionDigits:2,maximumFractionDigits:2})}%/año desde ${point.from}`;return `<b>${timeYear}: ${intEs(point.population)} hab.</b><br>${change}<br>${base}`;}
 function installLevel(lt){
  const cfg=MAP_CONFIG[lt],fillId=`${cfg.prefix}-fill`,lineId=`${cfg.prefix}-line`,labelId=`${cfg.prefix}-label`;
  map.addSource(cfg.source,{type:'geojson',data:decoratedGeo(lt)});
@@ -408,7 +417,7 @@ function stopTimeline(){if(timeTimer){clearInterval(timeTimer);timeTimer=null;}c
 function toggleTimeline(){if(timeTimer){stopTimeline();return;}const years=availableYears();if(!years.length)return;let index=timeYear==null?-1:years.indexOf(timeYear);if(index>=years.length-1)index=-1;document.getElementById('timePlay').textContent='■ Detener';document.getElementById('timePlay').setAttribute('aria-pressed','true');const advance=()=>{index++;setTimeYear(years[index]);if(index>=years.length-1)stopTimeline();};advance();if(index<years.length-1)timeTimer=setInterval(advance,1200);}
 function restyle(){
  refreshMapVisuals();
- updateTimelineUI();legend();
+ document.getElementById('macroWrap').style.display=map.getZoom()<Z_MUNI?'block':'none';updateTimelineUI();legend();
 }
 const LOAD_WARNINGS=[];
 function warnLoad(message){LOAD_WARNINGS.push(message);const el=document.getElementById('warnings');el.textContent=LOAD_WARNINGS.join(' · ');el.style.display='block';}
@@ -418,13 +427,14 @@ map.on('error',event=>{if(event.error&&!LOAD_WARNINGS.includes('El mapa base no 
 map.on('zoomend',()=>{stopTimeline();restyle();});
 map.on('moveend',writeState);
 // ---------- metric switching ----------
-function setMetric(m){if(!VALID_METRICS.has(m))return;METRIC=m;legendPinned=[];if(m!=='pob'&&timeYear!=null){timeYear=null;stopTimeline();}
+function setMetric(m){if(!VALID_METRICS.has(m))return;const leaving3D=m!=='pob'&&is3D;METRIC=m;legendPinned=[];if(m!=='pob'){is3D=false;if(timeYear!=null){timeYear=null;stopTimeline();}}
  ['pob','pre','ren','esf','ten'].forEach(x=>{const button=document.getElementById('t'+x),active=x===m;button.classList.toggle('on',active);button.setAttribute('aria-pressed',String(active));});
  document.getElementById('metricSelect').value=m;
  document.getElementById('mdesc').innerHTML=MDESC[m];
  document.getElementById('segpob').style.display=(m==='pob')?'flex':'none';
+ document.querySelector('.view-mode').style.display=(m==='pob')?'flex':'none';document.getElementById('timeline').style.display=(m==='pob')?'block':'none';
  if(selCode){const arr=arrOf(selType);const it=arr.find(x=>x.c===selCode);simSet=null;if(it)openInfo(it,selType);}
- if(compareItems.length)renderCompare(false);writeState();restyle();}
+ if(compareItems.length)renderCompare(false);if(leaving3D&&map.getLayer('municipality-fill'))updateViewMode(false);else{writeState();restyle();}}
 document.querySelectorAll('[data-metric]').forEach(button=>button.addEventListener('click',()=>setMetric(button.dataset.metric)));
 document.getElementById('metricSelect').addEventListener('change',event=>{setMetric(event.target.value);closeMobilePanel();});
 document.getElementById('bAbs').onclick=()=>{metric='abs';sw();};
@@ -435,8 +445,8 @@ document.getElementById('timeSlider').addEventListener('input',event=>{const yea
 document.getElementById('timePlay').onclick=toggleTimeline;
 document.getElementById('timeReset').onclick=()=>{stopTimeline();setTimeYear(null);};
 function sw(){const abs=metric==='abs';document.getElementById('bAbs').classList.toggle('on',abs);document.getElementById('bAbs').setAttribute('aria-pressed',String(abs));document.getElementById('bPct').classList.toggle('on',!abs);document.getElementById('bPct').setAttribute('aria-pressed',String(!abs));if(selCode){const arr=arrOf(selType);const it=arr.find(x=>x.c===selCode);if(it)openInfo(it,selType);}if(compareItems.length)renderCompare(false);writeState();restyle();}
-const SEARCH_LABEL={M:'municipio',D:'distrito',B:'barrio'};
-const SEARCH_ENTRIES=[...MARR.map(item=>({item,lt:'M'})),...DARR.map(item=>({item,lt:'D'})),...BARR.map(item=>({item,lt:'B'}))].map(entry=>({...entry,label:`${entry.item.n} — ${SEARCH_LABEL[entry.lt]}`}));
+const SEARCH_LABEL={M:'municipio',D:'distrito',B:'barrio',Z:'zona territorial',C:'comunidad'};
+const SEARCH_ENTRIES=[...CARR.map(item=>({item,lt:'C'})),...ZARR.map(item=>({item,lt:'Z'})),...MARR.map(item=>({item,lt:'M'})),...DARR.map(item=>({item,lt:'D'})),...BARR.map(item=>({item,lt:'B'}))].map(entry=>({...entry,label:`${entry.item.n} — ${SEARCH_LABEL[entry.lt]}`}));
 const normalizeSearch=value=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('es').trim();
 const zoneOptions=document.getElementById('zoneOptions');
 SEARCH_ENTRIES.forEach(entry=>{const option=document.createElement('option');option.value=entry.label;zoneOptions.append(option);});
@@ -449,6 +459,7 @@ async function runSearch(){
 }
 document.getElementById('zoneSearch').addEventListener('change',runSearch);
 document.getElementById('zoneSearch').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();runSearch();}});
+document.getElementById('macroSelect').addEventListener('change',event=>{const reference=decodeRef(event.target.value);if(reference)focusZone(reference.lt,reference.code);});
 document.getElementById('info').addEventListener('click',event=>{
  const action=event.target.closest('[data-action]')?.dataset.action;
  if(action==='clear-selection')clearSel();
@@ -533,5 +544,5 @@ if(timeYear!=null){METRIC='pob';metric='pct';}
 setMetric(METRIC);
 restoreLegendRanges();
 sw();
-if(compareItems.length)renderCompare();
+if(compareItems.length)renderCompare(false);
 if(initialZone){const item=itemFor(initialZone.lt,initialZone.code);if(item)openInfo(item,initialZone.lt);}
