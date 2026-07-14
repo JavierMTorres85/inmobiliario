@@ -34,6 +34,9 @@ const requiredIds = [
   "mapLegend",
   "view2d",
   "view3d",
+  "timeSlider",
+  "timePlay",
+  "timeReset",
 ];
 for (const id of requiredIds) {
   if (!html.includes(`id="${id}"`)) {
@@ -60,6 +63,10 @@ for (const feature of ["populationHeight", "updateViewMode"]) {
 }
 
 if (!dashboard.includes("type:'fill-extrusion'")) throw new Error("3D population extrusion layer is missing");
+
+for (const feature of ["observedSeries", "observedPoint", "availableYears", "setTimeYear", "toggleTimeline"]) {
+  if (!dashboard.includes(`function ${feature}`)) throw new Error(`Missing phase 6 timeline feature: ${feature}`);
+}
 
 if (!html.includes("data-legend-bin") && !dashboard.includes("data-legend-bin")) {
   throw new Error("Interactive legend ranges are missing");
