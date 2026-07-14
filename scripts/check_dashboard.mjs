@@ -36,6 +36,8 @@ const requiredIds = [
   "timeSlider",
   "timePlay",
   "timeReset",
+  "macroWrap",
+  "macroSelect",
 ];
 for (const id of requiredIds) {
   if (!html.includes(`id="${id}"`)) {
@@ -96,6 +98,29 @@ if (!dashboard.includes("function interpolatedPopulation") ||
     !dashboard.includes("duration:1050") ||
     !dashboard.includes("timeTimer=setInterval(advance,1200)")) {
   throw new Error("The timeline must interpolate every year with smooth transitions");
+}
+
+if (!dashboard.includes("function aggregateRecord") || !dashboard.includes("const ZARR=") || !dashboard.includes("const CARR=")) {
+  throw new Error("Community and five-zone macro summaries are missing");
+}
+
+if (!dashboard.includes("m!=='pob'&&is3D") || !dashboard.includes("querySelector('.view-mode').style.display=(m==='pob')?'flex':'none'")) {
+  throw new Error("3D controls must be limited to population");
+}
+
+if (!dashboard.includes("function intEs") || !dashboard.includes("${previous}→${year}: ${num(item.la)} personas")) {
+  throw new Error("Population values need dotted thousands and explicit annual dates");
+}
+
+const municipalities = JSON.parse(fs.readFileSync("data/municipalities.json", "utf8"));
+const districts = JSON.parse(fs.readFileSync("data/districts.json", "utf8"));
+const neighborhoods = JSON.parse(fs.readFileSync("data/neighborhoods.json", "utf8"));
+const count = (records, predicate) => Object.values(records).filter(predicate).length;
+if (count(municipalities, (item) => item.la != null) !== 179 || count(districts, (item) => item.la != null) !== 21 || count(neighborhoods, (item) => item.la != null) !== 0) {
+  throw new Error("Unexpected coverage for the latest population year");
+}
+if (count(municipalities, (item) => item.s?.length === 6) !== 23 || count(districts, (item) => item.s?.length === 6) !== 21 || count(neighborhoods, (item) => item.s?.length === 6) !== 0) {
+  throw new Error("Unexpected 2021-2026 price-series coverage");
 }
 
 if (!html.includes("data-legend-bin") && !dashboard.includes("data-legend-bin")) {
