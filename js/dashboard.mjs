@@ -22,6 +22,7 @@ const queryRange=/^([MDB]):([0-4])$/.exec(query.get('range')||'');
 let METRIC=VALID_METRICS.has(queryMetric)?queryMetric:'pob';
 let metric=queryUnit==='abs'?'abs':'pct';
 let is3D=query.get('view')==='3d';
+let timeYear=query.has('year')&&Number.isFinite(Number(query.get('year')))?Number(query.get('year')):null,timeTimer=null;
 let selCode=null, selType='M', simSet=null, simType='M', compareItems=[],legendPinned=null,legendHover=null;
 let labelsAll=query.get('labels')==='all';
 const nparam=(name,fallback)=>{const raw=query.get(name);if(raw==null||raw==='')return fallback;const value=Number(raw);return Number.isFinite(value)?value:fallback;};
@@ -41,6 +42,7 @@ function writeState(){
  if(labelsAll)params.set('labels','all');
  if(legendPinned)params.set('range',`${legendPinned.lt}:${legendPinned.index}`);
  if(is3D)params.set('view','3d');
+ if(timeYear!=null)params.set('year',String(timeYear));
  history.replaceState(null,'',`${location.pathname}?${params}${location.hash}`);
 }
 const MDESC={
@@ -325,7 +327,14 @@ const MAP_CONFIG={
  B:{source:'neighborhoods',prefix:'neighborhood',minzoom:13,maxzoom:18,labelMin:13,labelMax:18,line:'#ddd',width:.8,size:10}
 };
 const MAX_POPULATION=Math.max(...MARR.map(record=>record.p25||0),...DARR.map(record=>record.p25||0));
-function populationHeight(record){return record?.p25?Math.sqrt(record.p25/MAX_POPULATION)*12000:0;}
+function populationHeight(recordOrValue){const population=typeof recordOrValue==='number'?recordOrValue:recordOrValue?.p25;return population?Math.sqrt(population/MAX_POPULATION)*12000:0;}
+function observedSeries(record,lt){
+ if(!record)return [];
+ if(lt==='M'&&record.p20!=null&&record.p25!=null&&record.la!=null)return [{year:2020,population:record.p20},{year:2024,population:record.p25-record.la},{year:2025,population:record.p25}];
+ if(lt==='D'&&record.p20!=null&&record.p25!=null&&record.la!=null)return [{year:2020,population:record.p20},{year:2023,population:record.p25-record.la},{year:2024,population:record.p25}];
+ return [];
+}
+function observedPoint(record,lt,year){const series=observedSeries(record,lt),index=series.findIndex(point=>point.year===year);if(index<0)return null;const point={...series[index],growth:null,from:null};if(index>0){const previous=series[index-1],years=point.year-previous.year;point.growth=(Math.pow(point.population/previous.population,1/years)-1)*100;point.from=previous.year;}return point;}
 function rawCode(feature,lt){return lt==='M'?String(feature.properties.mun_code):(lt==='D'?String(feature.properties.cartodb_id):String(feature.properties.COD_DISBAR));}
 function activeLevel(){const zoom=map.getZoom();return zoom>=Z_BAR?'B':(zoom>=Z_DIST?'D':'M');}
 function activeLegendRange(){return legendHover||legendPinned;}
@@ -333,7 +342,8 @@ function matchesLegend(record,lt){const range=activeLegendRange();if(!range||ran
 function decoratedGeo(lt){
  return {type:'FeatureCollection',features:GEO_BY_LEVEL[lt].features.map(feature=>{
   const code=rawCode(feature,lt),record=RECORDS[lt][code];
-  return {...feature,properties:{...feature.properties,code,label:record?.n||'',population:record?.p25||0,height:populationHeight(record),color:record?fillFor(record,lt):ND,selected:code===selCode&&lt===selType,similar:Boolean(simSet&&simType===lt&&simSet.has(code)),rangeMatch:Boolean(record&&matchesLegend(record,lt))}};
+  const point=timeYear==null?null:observedPoint(record,lt,timeYear),color=timeYear!=null?(point?(point.growth==null?_ramp(0):colPob(point.growth,'pct')):ND):(record?fillFor(record,lt):ND),height=timeYear!=null?(point?populationHeight(point.population):0):populationHeight(record);
+  return {...feature,properties:{...feature.properties,code,label:record?.n||'',population:point?.population||record?.p25||0,height,color,selected:code===selCode&&lt===selType,similar:Boolean(simSet&&simType===lt&&simSet.has(code)),rangeMatch:Boolean(record&&matchesLegend(record,lt))}};
  })};
 }
 function extendCoords(bounds,coords){if(typeof coords[0]==='number'){bounds.extend(coords);return;}coords.forEach(value=>extendCoords(bounds,value));}
@@ -356,6 +366,7 @@ function fitSim(){
 // ---------- MapLibre layers / restyle ----------
 const hoverPopup=new maplibregl.Popup({closeButton:false,closeOnClick:false,offset:10});
 const TIPS={M:tipMuni,D:tipDist,B:tipBar};
+function tipForFeature(feature,lt){const base=TIPS[lt](feature);if(timeYear==null)return base;const record=RECORDS[lt][String(feature.properties.code)],point=observedPoint(record,lt,timeYear);if(!point)return `<b>${timeYear}</b><br>Sin población total exacta para este corte.<br>${base}`;const change=point.growth==null?'corte base':`${point.growth>=0?'+':''}${point.growth.toLocaleString('es',{minimumFractionDigits:2,maximumFractionDigits:2})}%/año desde ${point.from}`;return `<b>${timeYear}: ${point.population.toLocaleString('es')} hab.</b><br>${change}<br>${base}`;}
 function installLevel(lt){
  const cfg=MAP_CONFIG[lt],fillId=`${cfg.prefix}-fill`,lineId=`${cfg.prefix}-line`,labelId=`${cfg.prefix}-label`;
  map.addSource(cfg.source,{type:'geojson',data:decoratedGeo(lt)});
@@ -368,7 +379,7 @@ function installLevel(lt){
  map.addLayer({id:labelId,type:'symbol',source:cfg.source,minzoom:cfg.labelMin,maxzoom:cfg.labelMax,layout:{'text-field':['get','label'],'text-size':cfg.size,'text-allow-overlap':labelsAll,'text-ignore-placement':false,'symbol-sort-key':['-',0,['get','population']]},paint:{'text-color':'#fff','text-halo-color':'#000','text-halo-width':1.5}});
  map.on('click',fillId,event=>{const code=String(event.features?.[0]?.properties?.code||''),record=RECORDS[lt][code];if(record)openInfo({...record,c:code},lt);});
  map.on('mouseenter',fillId,()=>{map.getCanvas().style.cursor='pointer';});
- map.on('mousemove',fillId,event=>{const feature=event.features?.[0];if(feature)hoverPopup.setLngLat(event.lngLat).setHTML(TIPS[lt](feature)).addTo(map);});
+ map.on('mousemove',fillId,event=>{const feature=event.features?.[0];if(feature)hoverPopup.setLngLat(event.lngLat).setHTML(tipForFeature(feature,lt)).addTo(map);});
  map.on('mouseleave',fillId,()=>{map.getCanvas().style.cursor='';hoverPopup.remove();});
 }
 function refreshMapVisuals(){
@@ -380,6 +391,11 @@ function updateViewMode(animate=true){
  document.getElementById('view2d').classList.toggle('on',!is3D);document.getElementById('view2d').setAttribute('aria-pressed',String(!is3D));document.getElementById('view3d').classList.toggle('on',is3D);document.getElementById('view3d').setAttribute('aria-pressed',String(is3D));
  const camera={pitch:is3D?55:0,bearing:is3D?-18:0,duration:animate?700:0};map.easeTo(camera);writeState();restyle();
 }
+function availableYears(lt=activeLevel()){return lt==='M'?[2020,2024,2025]:(lt==='D'?[2020,2023,2024]:[]);}
+function updateTimelineUI(){const lt=activeLevel(),years=availableYears(lt),slider=document.getElementById('timeSlider'),output=document.getElementById('timeYear'),note=document.getElementById('timeNote');slider.disabled=!years.length;slider.max=String(Math.max(0,years.length-1));const index=timeYear==null?years.length-1:years.indexOf(timeYear);slider.value=String(Math.max(0,index));output.textContent=timeYear==null?'Actual':String(timeYear);note.textContent=!years.length?'Barrios: sin población total oficial; timelapse no disponible.':`${lt==='M'?'Municipios':'Distritos'}: ${years.join(' · ')}. Solo observaciones exactas; color = variación anualizada desde el corte anterior.`;}
+function setTimeYear(year){if(year!=null&&METRIC!=='pob')setMetric('pob');if(year!=null&&metric!=='pct'){metric='pct';sw();}timeYear=year;writeState();refreshMapVisuals();updateTimelineUI();legend();}
+function stopTimeline(){if(timeTimer){clearInterval(timeTimer);timeTimer=null;}const button=document.getElementById('timePlay');button.textContent='▶ Reproducir';button.setAttribute('aria-pressed','false');}
+function toggleTimeline(){if(timeTimer){stopTimeline();return;}const years=availableYears();if(!years.length)return;let index=Math.max(0,years.indexOf(timeYear));document.getElementById('timePlay').textContent='■ Detener';document.getElementById('timePlay').setAttribute('aria-pressed','true');setTimeYear(years[index]);timeTimer=setInterval(()=>{index=(index+1)%years.length;setTimeYear(years[index]);},1400);}
 function restyle(){
  refreshMapVisuals();
  const z=map.getZoom();
@@ -387,16 +403,16 @@ function restyle(){
  if(z>=Z_BAR) txt='municipios + barrios de Madrid';
  else if(z>=Z_DIST) txt='municipios + distritos de Madrid';
  else txt=z<Z_MUNI?'municipios (vista general)':'municipios (detalle)';
- document.getElementById('lvl').textContent='Nivel: '+txt+(is3D?(activeLevel()==='B'?' · 3D sin altura: no hay total barrial':' · altura = población actual (escala √)'):'');legend();
+ document.getElementById('lvl').textContent='Nivel: '+txt+(is3D?(activeLevel()==='B'?' · 3D sin altura: no hay total barrial':` · altura = población ${timeYear??'actual'} (escala √)`):'');updateTimelineUI();legend();
 }
 const LOAD_WARNINGS=[];
 function warnLoad(message){LOAD_WARNINGS.push(message);const el=document.getElementById('warnings');el.textContent=LOAD_WARNINGS.join(' · ');el.style.display='block';}
 map.on('load',()=>{try{for(const lt of ['M','D','B'])installLevel(lt);if(queryRange)legendPinned=legendBins(queryRange[1])[Number(queryRange[2])]||null;document.getElementById('load').style.display='none';updateViewMode(false);resolveGeometry(true);}catch(error){document.getElementById('load').textContent='Error al cargar geometrías';warnLoad('No se pudieron preparar las capas locales del mapa.');resolveGeometry(false);}});
 map.on('error',event=>{if(event.error&&!LOAD_WARNINGS.includes('El mapa base no se pudo cargar por completo.'))warnLoad('El mapa base no se pudo cargar por completo.');});
-map.on('zoomend',restyle);
+map.on('zoomend',()=>{stopTimeline();restyle();});
 map.on('moveend',writeState);
 // ---------- metric switching ----------
-function setMetric(m){if(!VALID_METRICS.has(m))return;METRIC=m;legendPinned=null;legendHover=null;
+function setMetric(m){if(!VALID_METRICS.has(m))return;METRIC=m;legendPinned=null;legendHover=null;if(m!=='pob'&&timeYear!=null){timeYear=null;stopTimeline();}
  ['pob','pre','ren','esf','ten'].forEach(x=>{const button=document.getElementById('t'+x),active=x===m;button.classList.toggle('on',active);button.setAttribute('aria-pressed',String(active));});
  document.getElementById('metricSelect').value=m;
  document.getElementById('mdesc').innerHTML=MDESC[m];
@@ -409,6 +425,9 @@ document.getElementById('bAbs').onclick=()=>{metric='abs';sw();};
 document.getElementById('bPct').onclick=()=>{metric='pct';sw();};
 document.getElementById('view2d').onclick=()=>{is3D=false;updateViewMode();};
 document.getElementById('view3d').onclick=()=>{is3D=true;updateViewMode();};
+document.getElementById('timeSlider').addEventListener('input',event=>{const years=availableYears();setTimeYear(years[Number(event.target.value)]??null);});
+document.getElementById('timePlay').onclick=toggleTimeline;
+document.getElementById('timeReset').onclick=()=>{stopTimeline();setTimeYear(null);};
 function sw(){const abs=metric==='abs';document.getElementById('bAbs').classList.toggle('on',abs);document.getElementById('bAbs').setAttribute('aria-pressed',String(abs));document.getElementById('bPct').classList.toggle('on',!abs);document.getElementById('bPct').setAttribute('aria-pressed',String(!abs));if(selCode){const arr=arrOf(selType);const it=arr.find(x=>x.c===selCode);if(it)openInfo(it,selType);}if(compareItems.length)renderCompare(false);writeState();restyle();}
 const SEARCH_LABEL={M:'municipio',D:'distrito',B:'barrio'};
 const SEARCH_ENTRIES=[...MARR.map(item=>({item,lt:'M'})),...DARR.map(item=>({item,lt:'D'})),...BARR.map(item=>({item,lt:'B'}))].map(entry=>({...entry,label:`${entry.item.n} — ${SEARCH_LABEL[entry.lt]}`}));
@@ -505,7 +524,7 @@ function legend(){const div=document.getElementById('mapLegend');let html='';
    +'<div style="color:#888;margin-top:2px">escala lineal · recorte p2-p98 (extremos saturan) · misma escala en los 3 niveles</div>'
    +'<div style="color:#888">gris = sin dato · <span style="color:#2ea043">verde=similar</span></div>';
  }
- div.innerHTML=html+legendControls()+(is3D?'<div class="legend-note"><b>Altura:</b> población actual · escala √ común. En barrios no hay total disponible.</div>':'');
+ div.innerHTML=html+legendControls()+(is3D?`<div class="legend-note"><b>Altura:</b> población ${timeYear??'actual'} · escala √ común. En barrios no hay total disponible.</div>`:'')+(timeYear!=null?`<div class="legend-note"><b>Color temporal:</b> cambio anualizado hasta ${timeYear}; blanco = corte base.</div>`:'');
  div.querySelectorAll('[data-legend-bin]').forEach(button=>{button.addEventListener('mouseenter',()=>{legendHover=legendBins()[Number(button.dataset.legendBin)]||null;refreshMapVisuals();});});
 }
 
@@ -518,6 +537,7 @@ for(const reference of initialCompare){
  if(item&&compareItems.length<2)compareItems.push({item,lt:reference.lt});
 }
 const initialZone=decodeRef(query.get('zone'));
+if(timeYear!=null){METRIC='pob';metric='pct';}
 setMetric(METRIC);sw();
 if(compareItems.length)renderCompare();
 if(initialZone){const item=itemFor(initialZone.lt,initialZone.code);if(item)openInfo(item,initialZone.lt);}
