@@ -26,6 +26,12 @@ El panel permite copiar un **enlace reproducible** que conserva métrica, unidad
 
 En móvil los controles permanecen plegados bajo **Opciones**, la métrica se elige desde un selector táctil y la ficha se abre como panel inferior reducido o ampliable. La leyenda permanece visible y los controles principales respetan un área táctil mínima de 44 px.
 
+La leyenda divide la escala de color en cinco intervalos proporcionales: al pasar
+por uno se destacan sus zonas y al pulsarlo la selección queda fijada y se
+conserva en el enlace compartible. Los rótulos muestran únicamente el nivel
+geográfico activo; el usuario puede forzar todos los nombres cuando necesite
+comprobar la cobertura, aceptando posibles solapes.
+
 La comparación temporal aparece directamente en la ficha: **azul = inicio** y **naranja = final**, siempre con los años visibles. Los cortes completos se conservan bajo `data/history/`.
 
 ## Estructura del panel
