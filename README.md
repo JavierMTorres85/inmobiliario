@@ -14,7 +14,7 @@ Cinco métricas conmutables (pestañas arriba a la izquierda), tres niveles por 
 | **Precio €/m²** | Venta jun-2026 (informe idealista) con **serie 2021-2026** en la ficha (sparkline, Δ5a, CAGR) para los 44 nodos. |
 | **Rentabilidad** | Bruta anual = alquiler×12 ÷ venta. Municipios, distritos y ~86 barrios con ambos datos. |
 | **Esfuerzo** | Años de renta neta del hogar medio (INE Atlas de Renta 2023) para comprar 80 m². |
-| **Tensión** | Cuadrante oferta-demanda de los 44 nodos (Caliente / Recorrido / Precio↑ sin demanda / Frío). |
+| **Demanda-precio** | Cuadrante de 44 nodos basado en crecimiento poblacional y precio (Caliente / Recorrido / Precio↑ sin demanda / Frío). Todavía no incorpora oferta. |
 
 En todas: **pincha** un polígono → ficha con rankings ("Nº más caro", "Nº donde más renta el alquiler"…) e insights; botón **"20 similares"** que resalta en verde los más parecidos en la métrica activa. Gris = sin dato público suficiente.
 
@@ -24,7 +24,13 @@ En todas: **pincha** un polígono → ficha con rankings ("Nº más caro", "Nº 
 |---|---|
 | `Estudio_poblacion_CdM_2020_2025.xlsx` / `.md` | Estudio poblacional y de migración 2020-2025 (Padrón INE): crecimiento por municipio, rankings, agregados por eje metropolitano y patrón espacial. |
 | `Madrid_granularidad_densidad_FINAL.xlsx` | 179 municipios + árbol 21 distritos › 131 barrios con población, superficie y **densidad**. |
-| `Tension_oferta_demanda_CdM.xlsx` | Dashboard: **tensión oferta-demanda** por nodo con serie de precios 2021-2026; **barrios** (122 zonas idealista); y hoja de **rentabilidad bruta y esfuerzo de compra** (municipios, distritos y barrios). La pata de **oferta** (nº de anuncios) queda pendiente de la API de idealista. |
+| `Tension_oferta_demanda_CdM.xlsx` | Dashboard de **demanda-precio** por nodo con serie de precios 2021-2026; **barrios** (122 zonas idealista); y hoja de **rentabilidad bruta y esfuerzo de compra**. La oferta de anuncios queda pendiente de la API de idealista. |
+
+## Preparación para la API de idealista
+
+Se ha añadido una base Python inactiva para recoger en el futuro totales agregados de anuncios de venta y alquiler, sin publicar credenciales ni anuncios individuales. Incluye OAuth, renovación del token, timeouts, reintentos, paginación, plantilla de localizaciones, pruebas y un workflow mensual desactivado. La activación está documentada en [`docs/IDEALISTA_API.md`](docs/IDEALISTA_API.md).
+
+Hasta disponer de acceso y datos de oferta, la quinta métrica se denomina **demanda-precio** y no oferta-demanda.
 
 ## Método (resumen)
 

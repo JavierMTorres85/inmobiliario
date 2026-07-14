@@ -1,0 +1,15 @@
+[
+  {
+    "code": "28079",
+    "name": "Madrid",
+    "level": "municipality",
+    "location_id": "REPLACE_WITH_IDEALISTA_LOCATION_ID"
+  },
+  {
+    "code": "01",
+    "name": "Centro",
+    "level": "district",
+    "location_id": "REPLACE_WITH_IDEALISTA_LOCATION_ID"
+  }
+]
+
