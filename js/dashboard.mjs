@@ -22,7 +22,7 @@ const queryMetric=query.get('metric'), queryUnit=query.get('unit');
 let METRIC=VALID_METRICS.has(queryMetric)?queryMetric:'pob';
 let metric=queryUnit==='pct'?'pct':'abs';
 let selCode=null, selType='M', simSet=null, simType='M', compareItems=[];
-const nparam=(name,fallback)=>{const value=Number(query.get(name));return Number.isFinite(value)?value:fallback;};
+const nparam=(name,fallback)=>{const raw=query.get(name);if(raw==null||raw==='')return fallback;const value=Number(raw);return Number.isFinite(value)?value:fallback;};
 const initialView=[nparam('lat',40.42),nparam('lng',-3.72),Math.min(17,Math.max(7,nparam('zoom',9)))];
 const map=L.map('map',{preferCanvas:true}).setView(initialView.slice(0,2),initialView[2]);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; CARTO · idealista · INE · Ayto. Madrid',maxZoom:17,subdomains:'abcd'}).addTo(map);

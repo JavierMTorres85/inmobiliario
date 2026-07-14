@@ -45,4 +45,8 @@ for (const feature of ["writeState", "renderCompare", "qualityBlock"]) {
   }
 }
 
+if (!dashboard.includes("if(raw==null||raw==='')return fallback")) {
+  throw new Error("Missing URL-state fallback for absent map coordinates");
+}
+
 console.log("Dashboard module and required controls are valid");
