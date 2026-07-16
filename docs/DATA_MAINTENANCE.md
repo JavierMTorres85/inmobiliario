@@ -55,3 +55,29 @@ npm ci
 npx playwright install chromium
 npm run smoke:pages -- https://javiermtorres85.github.io/inmobiliario/
 ```
+
+
+## Actualizar series de población
+
+Ejecutar el workflow **Update population data** (Actions → Run workflow), que
+descarga INE 2881 (municipios) y Ayto 300557 (distritos y barrios), añade la
+serie anual `py` a cada registro, recalcula los campos derivados (resúmenes de
+distritos y barrios anclados a 2020-2024) y abre una PR validada. En local:
+
+```bash
+python scripts/update_population.py --dry-run   # valida sin escribir
+python scripts/update_population.py             # escribe data/*.json
+python scripts/build_manifest.py && python scripts/validate_repository.py
+```
+
+## Versión de los assets del panel
+
+`index.html` referencia `js/dashboard.mjs?v=<hash>` donde el hash son los 8
+primeros caracteres del sha256 del módulo. Tras cualquier cambio en
+`js/dashboard.mjs`:
+
+```bash
+npm run fix:asset   # reescribe la referencia con el hash actual
+```
+
+La validación de CI falla si la referencia queda obsoleta.

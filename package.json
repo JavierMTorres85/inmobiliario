@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "smoke:pages": "node scripts/smoke_pages.mjs"
+    "smoke:pages": "node scripts/smoke_pages.mjs",
+    "fix:asset": "node scripts/check_dashboard.mjs --fix"
   },
   "devDependencies": {
     "playwright": "1.61.1"

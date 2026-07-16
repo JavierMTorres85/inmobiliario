@@ -1,6 +1,9 @@
 import fs from "node:fs";
+import crypto from "node:crypto";
 
-const source = process.argv[2] || "index.html";
+const args = process.argv.slice(2).filter((value) => value !== "--fix");
+const applyFix = process.argv.includes("--fix");
+const source = args[0] || "index.html";
 const html = source === "-" ? fs.readFileSync(0, "utf8") : fs.readFileSync(source, "utf8");
 const scriptPattern = /<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi;
 const inlineScripts = [...html.matchAll(scriptPattern)]
@@ -160,6 +163,28 @@ if (dashboard.includes("ZAGG") || dashboard.includes("level()==='zona'")) {
 
 if (!html.includes('id="bPct" class="on"') || !dashboard.includes("queryUnit==='abs'?'abs':'pct'")) {
   throw new Error("Annualized percentage must be the default population view");
+}
+
+// ---------------------------------------------------------------------------
+// Versionado por hash de contenido: index.html debe referenciar
+// dashboard.mjs?v=<8 primeros hex del sha256 del fichero>. Así, cualquier cambio
+// del módulo invalida la caché de Pages sin depender de acordarse de subir v=.
+// `node scripts/check_dashboard.mjs --fix` reescribe index.html con el hash actual.
+// ---------------------------------------------------------------------------
+const expectedVersion = crypto.createHash("sha256").update(dashboard).digest("hex").slice(0, 8);
+const versionMatch = html.match(/dashboard\.mjs\?v=([\w.-]+)/);
+if (!versionMatch) throw new Error("index.html must reference dashboard.mjs with a ?v= cache-busting parameter");
+if (versionMatch[1] !== expectedVersion) {
+  if (applyFix) {
+    const fixed = html.replace(/dashboard\.mjs\?v=[\w.-]+/g, `dashboard.mjs?v=${expectedVersion}`);
+    fs.writeFileSync(source === "-" ? "index.html" : source, fixed);
+    console.log(`Asset version actualizado a v=${expectedVersion}`);
+  } else {
+    throw new Error(
+      `Stale asset version: index.html references v=${versionMatch[1]} but js/dashboard.mjs hashes to v=${expectedVersion}. ` +
+      "Run: node scripts/check_dashboard.mjs --fix"
+    );
+  }
 }
 
 console.log("Dashboard module and required controls are valid");

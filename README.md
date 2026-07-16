@@ -26,7 +26,8 @@ Al alejar el mapa por debajo del nivel municipal aparece **Resumen territorial**
 permite abrir y comparar la Comunidad de Madrid completa o las cinco zonas
 Norte, Este, Sur, Centro / Metropolitano y Oeste. La población se agrega sin
 pérdida desde los 179 municipios. Precio, alquiler y demás indicadores se
-presentan como media simple de los municipios con dato, mostrando su cobertura.
+presentan como **media ponderada por población** de los municipios con dato,
+mostrando su cobertura (así Madrid no pesa lo mismo que La Hiruela).
 
 La URL conserva métrica, unidad, encuadre, zona seleccionada y comparación. La ficha diferencia siempre el inicio (azul) y el final (naranja) y reúne todos los indicadores disponibles de la zona, omitiendo campos vacíos. El comparador admite dos zonas, indica si la comparación es alta, media o baja y exporta CSV o una imagen SVG. La interfaz incorpora búsqueda por municipio, distrito o barrio, adapta sus controles a móvil y admite navegación por teclado.
 
@@ -41,14 +42,16 @@ se elimina pulsándolo de nuevo.
 La perspectiva **Población 3D**, disponible únicamente en Población, conserva el color de la métrica activa y eleva
 cada municipio o distrito según su población actual. La altura usa una raíz
 cuadrada declarada para que Madrid no aplaste visualmente al resto. Los barrios
-permanecen planos porque el corte actual no contiene población total oficial a
-ese nivel. Al entrar se encuadra Madrid en primer plano y la cámara admite giro
+permanecen planos hasta que el corte incluya su población total oficial (la
+ingesta del workflow de población la añade). Al entrar se encuadra Madrid en primer plano y la cámara admite giro
 horizontal e inclinación vertical con el ratón, además del control de brújula.
 
 El control de tiempo recorre año a año 2020–2025 en municipios y 2020–2024 en
-distritos. Conserva como anclas los cortes disponibles e interpola linealmente
-los años intermedios solo para producir una transición visual continua; no
-altera ni completa los archivos de datos originales.
+distritos (y en barrios cuando el corte incluye su serie). Si el corte contiene
+la serie anual oficial (`py`, ingerida con el workflow *Update population data*
+desde INE 2881 y Ayto 300557), cada año mostrado es dato real. Solo si falta esa
+serie se conservan las anclas disponibles y se interpola linealmente para dar
+continuidad visual, sin alterar los archivos de datos originales.
 
 Las fichas identifican de forma explícita el último intervalo de población:
 2024→2025 en municipios y 2023→2024 en distritos. La serie completa de precio
@@ -65,6 +68,18 @@ La comparación temporal aparece directamente en la ficha: **azul = inicio** y *
 - `data/manifest.json`: procedencia, periodo, tipo y cobertura de cada métrica.
 - `data/geo/`: límites locales de 179 municipios, 21 distritos y 131 barrios; la visita ya no consulta APIs geográficas externas.
 - `data/releases.json` y `data/history/`: índice y copias inmutables de cada corte.
+
+La referencia `js/dashboard.mjs?v=…` de `index.html` es el **hash del contenido**
+del módulo: `node scripts/check_dashboard.mjs` falla si queda obsoleta y
+`npm run fix:asset` la regenera, de modo que Pages nunca sirve un módulo viejo
+con un HTML nuevo. El smoke post-despliegue espera además a que la versión
+publicada coincida con la del commit antes de asertar (handshake), evitando
+falsos rojos por la propagación del CDN de Pages.
+
+El workflow manual **Update population data** descarga las series anuales
+oficiales de población (INE tabla 2881 para municipios; Ayto. de Madrid,
+conjunto 300557, para distritos y barrios), añade `py` a cada registro,
+recalcula los campos derivados y abre una PR con el nuevo corte.
 
 Cada cambio propuesto en una rama o en `main` ejecuta validación automática de Python, pruebas, JSON/GeoJSON, cobertura, credenciales y JavaScript mediante GitHub Actions. Tras publicar, una segunda automatización abre GitHub Pages con Chromium y prueba los flujos esenciales. El mantenimiento está documentado en [`docs/DATA_MAINTENANCE.md`](docs/DATA_MAINTENANCE.md).
 

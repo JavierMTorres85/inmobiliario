@@ -16,7 +16,9 @@ const MARR=Object.entries(MDATA).map(([c,d])=>Object.assign({c},d));
 const DARR=Object.entries(DDATA).map(([c,d])=>Object.assign({c},d));
 const BARR=Object.entries(BDATA).map(([c,d])=>Object.assign({c},d));
 const average=(records,key)=>{const values=records.map(record=>record[key]).filter(Number.isFinite);return values.length?values.reduce((sum,value)=>sum+value,0)/values.length:null;};
-function aggregateRecord(c,n,records,population){const p20=population?.p20??records.reduce((sum,record)=>sum+(record.p20||0),0),p25=population?.p25??records.reduce((sum,record)=>sum+(record.p25||0),0),a=p25-p20,la=records.reduce((sum,record)=>sum+(record.la||0),0),series=records.filter(record=>Array.isArray(record.s)&&record.s.length===6);return {c,n,macro:true,p20,p25,a,p:p20?(p25/p20-1)*100:null,la,lp:p25-la?(la/(p25-la))*100:null,v:average(records,'v'),va:average(records,'va'),alq:average(records,'alq'),aa:average(records,'aa'),rb:average(records,'rb'),r:average(records,'r'),esf:average(records,'esf'),te:average(records,'te'),s:series.length?Array.from({length:6},(_,index)=>series.reduce((sum,record)=>sum+record.s[index],0)/series.length):null,coverage:{municipalities:records.length,price:records.filter(record=>record.v!=null).length,series:series.length,alquiler:records.filter(record=>record.alq!=null).length}};}
+// Media ponderada por población (p25). Si ningún registro con dato tiene peso, cae a media simple.
+const wavg=(records,key)=>{const items=records.filter(record=>Number.isFinite(record[key])&&Number.isFinite(record.p25)&&record.p25>0);if(!items.length)return average(records,key);const weight=items.reduce((sum,record)=>sum+record.p25,0);return items.reduce((sum,record)=>sum+record[key]*record.p25,0)/weight;};
+function aggregateRecord(c,n,records,population){const p20=population?.p20??records.reduce((sum,record)=>sum+(record.p20||0),0),p25=population?.p25??records.reduce((sum,record)=>sum+(record.p25||0),0),a=p25-p20,la=records.reduce((sum,record)=>sum+(record.la||0),0),series=records.filter(record=>Array.isArray(record.s)&&record.s.length===6);return {c,n,macro:true,p20,p25,a,p:p20?(p25/p20-1)*100:null,la,lp:p25-la?(la/(p25-la))*100:null,v:wavg(records,'v'),va:wavg(records,'va'),alq:wavg(records,'alq'),aa:wavg(records,'aa'),rb:wavg(records,'rb'),r:wavg(records,'r'),esf:wavg(records,'esf'),te:wavg(records,'te'),s:series.length?Array.from({length:6},(_,index)=>{const weight=series.reduce((sum,record)=>sum+(record.p25||1),0);return series.reduce((sum,record)=>sum+record.s[index]*(record.p25||1),0)/weight;}):null,coverage:{municipalities:records.length,price:records.filter(record=>record.v!=null).length,series:series.length,alquiler:records.filter(record=>record.alq!=null).length}};}
 const ZARR=Object.entries(ZDATA).map(([name,population])=>aggregateRecord(name,name,MARR.filter(record=>record.z===name),population));
 const CARR=[aggregateRecord('CM','Comunidad de Madrid',MARR)];
 const CDATA=Object.fromEntries(CARR.map(record=>[record.c,record])),ZRECORDS=Object.fromEntries(ZARR.map(record=>[record.c,record]));
@@ -113,7 +115,7 @@ function fillFor(d,lt){ // d=record, lt='M'|'D'|'B'
  return ND;}
 // ---------- value accessors ----------
 function mv(d,lt){ // active metric value for similarity/rank
- if(METRIC==='pob')return metric==='abs'?(lt==='B'?null:d.a):annualPct(d,lt);
+ if(METRIC==='pob')return metric==='abs'?(d.a??null):annualPct(d,lt);
  if(METRIC==='pre')return d.v; if(METRIC==='ren')return d.rb; if(METRIC==='esf')return d.esf; if(METRIC==='ten')return d.te;
  return null;}
 function fmtv(x,lt){ if(x==null)return 'n.d.';
@@ -149,13 +151,13 @@ function arrOf(lt){return lt==='M'?MARR:(lt==='D'?DARR:(lt==='B'?BARR:(lt==='Z'?
 function uniOf(lt){return lt==='M'?'municipios':(lt==='D'?'distritos':(lt==='B'?'barrios':(lt==='Z'?'zonas territoriales':'comunidad autónoma')));}
 function completeDataBlock(item,lt){
  const cards=[];
- if(lt!=='B'&&item.p25!=null){const year=lt==='D'?2024:2025,previous=year-1;cards.push(`<div class="data-card"><b>Población</b><strong>${intEs(item.p25)} hab. (${year})</strong>${item.p20!=null?`<span>2020: ${intEs(item.p20)} · cambio: ${num(item.a)} personas (${item.p>=0?'+':''}${item.p.toLocaleString('es',{maximumFractionDigits:1})}%)</span>`:''}${item.la!=null?`<span>${previous}→${year}: ${num(item.la)} personas (${item.lp>=0?'+':''}${item.lp.toLocaleString('es',{maximumFractionDigits:1})}%)</span>`:''}</div>`);}
+ if(item.p25!=null){const year=lt==='M'?2025:2024,previous=year-1;cards.push(`<div class="data-card"><b>Población</b><strong>${intEs(item.p25)} hab. (${year})</strong>${item.p20!=null?`<span>2020: ${intEs(item.p20)} · cambio: ${num(item.a)} personas (${item.p>=0?'+':''}${item.p.toLocaleString('es',{maximumFractionDigits:1})}%)</span>`:''}${item.la!=null?`<span>${previous}→${year}: ${num(item.la)} personas (${item.lp>=0?'+':''}${item.lp.toLocaleString('es',{maximumFractionDigits:1})}%)</span>`:''}</div>`);}
  if(lt==='B'&&item.cp!=null)cards.push(`<div class="data-card"><b>Población</b><strong>${item.cp>=0?'+':''}${item.cp}%</strong><span>Cambio acumulado 2020-2024</span></div>`);
- if(item.v!=null)cards.push(`<div class="data-card"><b>${item.macro?'Precio medio de venta':'Precio de venta'}</b><strong>${Math.round(item.v).toLocaleString('es')} €/m²</strong>${item.va!=null?`<span>Variación anual media: ${item.va>=0?'+':''}${item.va.toLocaleString('es',{maximumFractionDigits:1})}%</span>`:''}${item.s?.length?`<span>jun-2021 → jun-2026: ${Math.round(item.s[0]).toLocaleString('es')} → ${Math.round(item.s[item.s.length-1]).toLocaleString('es')} €/m²</span>`:''}${item.macro?`<span>Media simple · ${item.coverage.price}/${item.coverage.municipalities} municipios con precio actual</span>`:''}</div>`);
+ if(item.v!=null)cards.push(`<div class="data-card"><b>${item.macro?'Precio medio de venta':'Precio de venta'}</b><strong>${Math.round(item.v).toLocaleString('es')} €/m²</strong>${item.va!=null?`<span>Variación anual media: ${item.va>=0?'+':''}${item.va.toLocaleString('es',{maximumFractionDigits:1})}%</span>`:''}${item.s?.length?`<span>jun-2021 → jun-2026: ${Math.round(item.s[0]).toLocaleString('es')} → ${Math.round(item.s[item.s.length-1]).toLocaleString('es')} €/m²</span>`:''}${item.macro?`<span>Media ponderada por población · ${item.coverage.price}/${item.coverage.municipalities} municipios con precio actual</span>`:''}</div>`);
  if(item.alq!=null||item.rb!=null)cards.push(`<div class="data-card"><b>Alquiler y rentabilidad</b>${item.alq!=null?`<strong>${item.alq.toLocaleString('es')} €/m²/mes</strong>`:''}${item.aa!=null?`<span>Variación anual alquiler: ${item.aa>=0?'+':''}${item.aa}%</span>`:''}${item.rb!=null?`<span>Rentabilidad bruta: <b>${item.rb.toFixed(2)}%</b></span>`:''}</div>`);
  if(item.r!=null||item.esf!=null)cards.push(`<div class="data-card"><b>Renta y esfuerzo</b>${item.r!=null?`<strong>${item.r.toLocaleString('es')} € por hogar</strong>`:''}${item.esf!=null?`<span>Compra de 80 m²: <b>${item.esf.toFixed(1)} años de renta</b></span>`:''}</div>`);
  if(item.cu||item.te!=null)cards.push(`<div class="data-card"><b>Demanda-precio</b>${item.cu?`<strong>${item.cu}</strong>`:''}${item.te!=null?`<span>Índice: ${item.te}</span>`:''}</div>`);
- return cards.length?`<div class="all-data"><h3>Todos los datos disponibles</h3>${cards.join('')}</div>`:'<div class="no-data"><b>Esta zona no tiene indicadores cuantitativos en el conjunto actual.</b><span>No se muestran campos vacíos ni valores inventados.</span></div>';
+ return cards.length?`<div class="all-data" data-testid="zone-all-data"><h3>Todos los datos disponibles</h3>${cards.join('')}</div>`:'<div class="no-data"><b>Esta zona no tiene indicadores cuantitativos en el conjunto actual.</b><span>No se muestran campos vacíos ni valores inventados.</span></div>';
 }
 function historyPair(item,lt){
  if(METRIC==='pob'&&lt!=='B'&&item.p20!=null&&item.p25!=null){
@@ -207,7 +209,7 @@ function comparability(first,second){
  else if(first.lt!==second.lt||derived){grade='medium';label='Comparabilidad media';}
  return {grade,label,detail:`${first.item.n}: ${periodA} · ${second.item.n}: ${periodB}. ${normalizedPopulation?'Comparación anualizada. ':''}${quality.kind}.`};
 }
-function comparabilityBlock(first,second){const state=comparability(first,second);return `<div class="comparability ${state.grade}"><b>${state.label}</b>${state.detail}</div>`;}
+function comparabilityBlock(first,second){const state=comparability(first,second);return `<div class="comparability ${state.grade}" data-testid="compare-verdict" data-grade="${state.grade}"><b>${state.label}</b>${state.detail}</div>`;}
 function comparisonMatrix(){
  const first=compareItems[0],second=compareItems[1];
  return {first,second,rows:COMPARE_ROWS.map(([label,key])=>[label,first?comparisonValue(first.item,first.lt,key):'',second?comparisonValue(second.item,second.lt,key):''])};
@@ -236,7 +238,7 @@ function renderCompare(open=true){
  const {first,second,rows}=comparisonMatrix();
  body.innerHTML=`${comparabilityBlock(first,second)}<table><thead><tr><th>Indicador</th><th>${first.item.n}<br><small>${uniOf(first.lt)}</small></th><th>${second?`${second.item.n}<br><small>${uniOf(second.lt)}</small>`:'Segunda zona'}</th></tr></thead><tbody>
  ${rows.map(row=>`<tr><th>${row[0]}</th><td>${row[1]}</td><td>${second?row[2]:'Selecciona otra zona y pulsa «Añadir»'}</td></tr>`).join('')}
- </tbody></table><div class="actions">${compareItems.map((entry,index)=>`<button type="button" data-remove-compare="${index}">Quitar ${entry.item.n}</button>`).join('')}<button type="button" data-clear-compare>Vaciar</button><button type="button" class="export" data-export="csv">Exportar CSV</button><button type="button" class="export" data-export="svg">Exportar imagen SVG</button></div>`;
+ </tbody></table><div class="actions">${compareItems.map((entry,index)=>`<button type="button" data-remove-compare="${index}">Quitar ${entry.item.n}</button>`).join('')}<button type="button" data-clear-compare>Vaciar</button><button type="button" class="export" data-testid="export-csv" data-export="csv">Exportar CSV</button><button type="button" class="export" data-export="svg">Exportar imagen SVG</button></div>`;
  if(open)panel.style.display='block';
  writeState();
 }
@@ -251,9 +253,9 @@ function openInfo(item,lt){
  const arr=arrOf(lt), tipo=uniOf(lt);
  const sub=lt==='C'?'Resumen de toda la región':(lt==='Z'?`Agregado de ${item.coverage.municipalities} municipios`:(lt==='D'?'Distrito de Madrid':(lt==='B'?('Barrio &middot; distrito '+(DDATA[String(item.d)]||{}).n):('Municipio &middot; zona '+item.z))));
  let body='';
- if(item.macro){const activeValue=mv(item,lt);if(activeValue!=null)body+=historyBlock(item,lt);body+=completeDataBlock(item,lt);const inCompare=compareItems.some(entry=>entry.lt===lt&&entry.item.c===item.c),info=document.getElementById('info');info.classList.remove('expanded');info.innerHTML=`<div class="hd"><button type="button" class="sheet-toggle" data-action="toggle-info-size" aria-label="Ampliar ficha" aria-expanded="false">↕</button><button type="button" class="x" data-action="clear-selection" aria-label="Cerrar ficha">&times;</button><h2>${item.n}</h2><div class="sub">${sub}</div></div><div class="bd">${body}<button type="button" class="compare-add" data-action="add-compare">${inCompare?'Ver en el comparador':'Añadir al comparador'}</button><div id="simbox"></div></div>`;info.style.display='block';writeState();restyle();return;}
- if(METRIC==='pob'&&lt!=='B'){
-  const anio=lt==='D'?'2024':'2025', prev=lt==='D'?'2023':'2024',years=lt==='D'?4:5;
+ if(item.macro){const activeValue=mv(item,lt);if(activeValue!=null)body+=historyBlock(item,lt);body+=completeDataBlock(item,lt);const inCompare=compareItems.some(entry=>entry.lt===lt&&entry.item.c===item.c),info=document.getElementById('info');info.classList.remove('expanded');info.innerHTML=`<div class="hd"><button type="button" class="sheet-toggle" data-action="toggle-info-size" aria-label="Ampliar ficha" aria-expanded="false">↕</button><button type="button" class="x" data-action="clear-selection" aria-label="Cerrar ficha">&times;</button><h2>${item.n}</h2><div class="sub">${sub}</div></div><div class="bd">${body}<button type="button" class="compare-add" data-testid="add-compare" data-action="add-compare">${inCompare?'Ver en el comparador':'Añadir al comparador'}</button><div id="simbox"></div></div>`;info.style.display='block';writeState();restyle();return;}
+ if(METRIC==='pob'&&(lt!=='B'||item.p25!=null)){
+  const anio=lt==='M'?'2025':'2024', prev=lt==='M'?'2024':'2023',years=lt==='M'?5:4;
   const annual=annualPct(item,lt),annualMedian=median(arr.map(entry=>({annual:annualPct(entry,lt)})),'annual');
   const momento=item.lp>annual*1.25?'acelerando':(item.lp<annual*0.7?'desacelerando':'a ritmo estable');
   body=`<div><span class="big">${intEs(item.p25)}</span> hab. (${anio})</div>
@@ -312,7 +314,7 @@ function openInfo(item,lt){
  info.classList.remove('expanded');
  info.innerHTML=`<div class="hd"><button type="button" class="sheet-toggle" data-action="toggle-info-size" aria-label="Ampliar ficha" aria-expanded="false">↕</button><button type="button" class="x" data-action="clear-selection" aria-label="Cerrar ficha">&times;</button><h2>${item.n}</h2><div class="sub">${sub}</div></div>
  <div class="bd">${body}
- <button type="button" class="compare-add" data-action="add-compare">${inCompare?'Ver en el comparador':'Añadir al comparador'}</button>
+ <button type="button" class="compare-add" data-testid="add-compare" data-action="add-compare">${inCompare?'Ver en el comparador':'Añadir al comparador'}</button>
  ${canSim?`<button type="button" class="sim" data-action="show-similar">Mostrar 20 similares en ${MLAB()}</button>`:''}
  <div id="simbox"></div></div>`;
  info.style.display='block';
@@ -344,6 +346,8 @@ const MAX_POPULATION=Math.max(...MARR.map(record=>record.p25||0),...DARR.map(rec
 function populationHeight(recordOrValue){const population=typeof recordOrValue==='number'?recordOrValue:recordOrValue?.p25;return population?Math.sqrt(population/MAX_POPULATION)*12000:0;}
 function observedSeries(record,lt){
  if(!record)return [];
+ // Serie anual real (py: año→población) cuando el corte la incluye; sin interpolación.
+ if(record.py){const years=Object.keys(record.py).map(Number).filter(Number.isFinite).sort((a,b)=>a-b);if(years.length>=2)return years.map(year=>({year,population:record.py[String(year)]}));}
  if(lt==='M'&&record.p20!=null&&record.p25!=null&&record.la!=null)return [{year:2020,population:record.p20},{year:2024,population:record.p25-record.la},{year:2025,population:record.p25}];
  if(lt==='D'&&record.p20!=null&&record.p25!=null&&record.la!=null)return [{year:2020,population:record.p20},{year:2023,population:record.p25-record.la},{year:2024,population:record.p25}];
  return [];
@@ -410,7 +414,7 @@ function updateViewMode(animate=true){
  document.getElementById('view2d').classList.toggle('on',!is3D);document.getElementById('view2d').setAttribute('aria-pressed',String(!is3D));document.getElementById('view3d').classList.toggle('on',is3D);document.getElementById('view3d').setAttribute('aria-pressed',String(is3D));
  const camera=is3D?{center:[-3.7038,40.4168],zoom:9.35,pitch:64,bearing:-24,padding:{top:190,bottom:0,left:0,right:0},duration:animate?900:0}:{pitch:0,bearing:0,padding:{top:0,bottom:0,left:0,right:0},duration:animate?700:0};map.easeTo(camera);writeState();restyle();
 }
-function availableYears(lt=activeLevel()){const limits=lt==='M'?[2020,2025]:(lt==='D'?[2020,2024]:null);return limits?Array.from({length:limits[1]-limits[0]+1},(_,index)=>limits[0]+index):[];}
+function availableYears(lt=activeLevel()){const limits=lt==='M'?[2020,2025]:(lt==='D'?[2020,2024]:(BARR.some(record=>record.py)?[2020,2024]:null));return limits?Array.from({length:limits[1]-limits[0]+1},(_,index)=>limits[0]+index):[];}
 function updateTimelineUI(){const years=availableYears(),slider=document.getElementById('timeSlider'),output=document.getElementById('timeYear');slider.disabled=!years.length;slider.max=String(Math.max(0,years.length-1));const index=timeYear==null?years.length-1:years.indexOf(timeYear);slider.value=String(Math.max(0,index));output.textContent=timeYear==null?'Actual':String(timeYear);}
 function setTimeYear(year){if(year!=null&&METRIC!=='pob')setMetric('pob');if(year!=null&&metric!=='pct'){metric='pct';sw();}timeYear=year;for(const lt of ['M','D','B']){const prefix=MAP_CONFIG[lt].prefix;for(const property of ['fill-color','fill-extrusion-color','fill-extrusion-height']){const layer=property==='fill-color'?`${prefix}-fill`:`${prefix}-extrusion`;if(map.getLayer(layer))map.setPaintProperty(layer,`${property}-transition`,{duration:1050,delay:0});}}writeState();refreshMapVisuals();updateTimelineUI();legend();}
 function stopTimeline(){if(timeTimer){clearInterval(timeTimer);timeTimer=null;}const button=document.getElementById('timePlay');button.textContent='▶ Reproducir';button.setAttribute('aria-pressed','false');}
