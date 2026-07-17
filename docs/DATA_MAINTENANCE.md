@@ -81,3 +81,21 @@ npm run fix:asset   # reescribe la referencia con el hash actual
 ```
 
 La validación de CI falla si la referencia queda obsoleta.
+
+
+## Actualizar precios de idealista
+
+El workflow **Update idealista prices** corre el día 3 de cada mes (y a mano
+con Run workflow): reextrae el informe público de venta y alquiler
+(municipios, distritos y barrios por zona `zi`), recalcula rentabilidad y
+esfuerzo, actualiza los periodos del manifiesto y abre una PR. Las series
+2021-2026 y los cuadrantes de demanda-precio no se tocan. En local:
+
+```bash
+python scripts/update_prices.py --dry-run
+python scripts/update_prices.py
+```
+
+Si idealista bloquea a los runners de GitHub, ejecutar en local y abrir la PR
+con los JSON resultantes. El job aborta sin escribir si la cobertura cae por
+debajo de mínimos (60 municipios venta / 25 alquiler / 21 distritos).
