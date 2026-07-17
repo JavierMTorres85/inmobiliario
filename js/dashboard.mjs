@@ -56,7 +56,7 @@ function writeState(){
  history.replaceState(null,'',`${location.pathname}?${params}${location.hash}`);
  // Los enlaces de la leyenda incorporan la URL completa: re-render para que
  // nunca lleven estado obsoleto (p. ej. un comparador añadido después).
- if(typeof legend==='function'&&document.getElementById('mapLegend'))legend();
+ if(!timeTimer&&typeof legend==='function'&&document.getElementById('mapLegend'))legend();
 }
 const MDESC={
  pob:'Crecimiento poblacional en municipios de Madrid, período 2020-2025.',
