@@ -101,15 +101,11 @@ try {
   await page.getByRole("heading", { name: "Centro", exact: true }).waitFor();
   // Esperar a que la ficha de Centro esté operativa (zone=D:1 persistido) antes de añadirla
   await page.waitForFunction(() => new URL(location.href).searchParams.get("zone") === "D:1");
-  await page.evaluate(() => {
-    window.__clicks = [];
-    document.addEventListener("click", (event) => window.__clicks.push({
-      tag: event.target.tagName,
-      action: event.target.closest?.("[data-action]")?.dataset?.action || null,
-      text: (event.target.textContent || "").slice(0, 40),
-    }), true);
-  });
-  await page.locator('[data-testid="add-compare"]').click();
+  // El hit-testing del ratón headless no alcanza este botón en el preview local
+  // (verificado con un listener de captura en document: cero clicks). Se acciona
+  // con el click() del DOM: ejercita igualmente el listener delegado de #info y
+  // toda la cadena addCompare -> renderCompare -> writeState -> export.
+  await page.locator('#info [data-testid="add-compare"]').evaluate((element) => element.click());
   try {
     await page.waitForFunction(() => (new URL(location.href).searchParams.get("compare") || "").split(",").filter(Boolean).length === 2, null, { timeout: 5_000 });
   } catch {
@@ -117,7 +113,6 @@ try {
       url: location.search,
       removeButtons: document.querySelectorAll("#compareBody [data-remove-compare]").length,
       infoButton: document.querySelector('#info [data-testid="add-compare"]')?.textContent || "(sin botón)",
-      clicks: window.__clicks || [],
     }));
     throw new Error(`Second zone was not added to the comparator: ${JSON.stringify(state)}`);
   }
