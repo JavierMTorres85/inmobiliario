@@ -15,6 +15,7 @@ const [MDATA,DDATA,BDATA,ZDATA,DATA_MANIFEST,MGEO,DGEO,BGEO]=await Promise.all([
 const MARR=Object.entries(MDATA).map(([c,d])=>Object.assign({c},d));
 const DARR=Object.entries(DDATA).map(([c,d])=>Object.assign({c},d));
 const BARR=Object.entries(BDATA).map(([c,d])=>Object.assign({c},d));
+const PRE_PERIOD=(DATA_MANIFEST.metrics&&DATA_MANIFEST.metrics.pre&&DATA_MANIFEST.metrics.pre.periods&&DATA_MANIFEST.metrics.pre.periods.M)||'junio de 2026';
 const average=(records,key)=>{const values=records.map(record=>record[key]).filter(Number.isFinite);return values.length?values.reduce((sum,value)=>sum+value,0)/values.length:null;};
 // Media ponderada por población (p25). Si ningún registro con dato tiene peso, cae a media simple.
 const wavg=(records,key)=>{const items=records.filter(record=>Number.isFinite(record[key])&&Number.isFinite(record.p25)&&record.p25>0);if(!items.length)return average(records,key);const weight=items.reduce((sum,record)=>sum+record.p25,0);return items.reduce((sum,record)=>sum+record[key]*record.p25,0)/weight;};
@@ -56,7 +57,7 @@ function writeState(){
 }
 const MDESC={
  pob:'Crecimiento poblacional en municipios de Madrid, período 2020-2025.',
- pre:'Precio de venta €/m² (informe idealista, jun-2026) con serie 2021-2026. Más oscuro = más caro. Zoom sobre Madrid: distritos y barrios. <b>Pincha</b> para ficha con serie y rankings.',
+ pre:`Precio de venta €/m² (informe idealista, ${PRE_PERIOD}) con serie 2021-2026. Más oscuro = más caro. Zoom sobre Madrid: distritos y barrios. <b>Pincha</b> para ficha con serie y rankings.`,
  ren:'Rentabilidad bruta del alquiler = alquiler×12 ÷ precio de venta (idealista 2026). Verde oscuro = renta más. <b>Pincha</b> para la ficha.',
  esf:'Esfuerzo de compra: años de renta íntegra del hogar medio (INE 2023) para una vivienda de 80 m² al precio actual. Morado oscuro = menos asequible. <b>Pincha</b> para la ficha.',
  ten:'Demanda-precio (44 nodos analizados): cruza crecimiento poblacional y tendencia de precio a 5 años. La oferta de anuncios se añadirá cuando esté disponible la API de idealista. <b>Pincha</b> para la ficha.'};
@@ -172,7 +173,7 @@ function historyPair(item,lt){
  }
  if(METRIC==='pre'&&item.v!=null&&item.va!=null&&item.va!==-100){
   const previous=Math.round(item.v/(1+item.va/100));
-  return {label:'Precio de venta',oldLabel:'corte anterior (estimado)',newLabel:'jun-2026',oldValue:`≈ ${previous.toLocaleString('es')} €/m²`,newValue:`${item.v.toLocaleString('es')} €/m²`,note:'El valor anterior se estima a partir de la variación anual; el actual es el dato publicado.'};
+  return {label:'Precio de venta',oldLabel:'corte anterior (estimado)',newLabel:PRE_PERIOD,oldValue:`≈ ${previous.toLocaleString('es')} €/m²`,newValue:`${item.v.toLocaleString('es')} €/m²`,note:'El valor anterior se estima a partir de la variación anual; el actual es el dato publicado.'};
  }
  if(METRIC==='ren'&&item.alq!=null&&item.aa!=null&&item.aa!==-100){
   const previous=item.alq/(1+item.aa/100);
@@ -278,7 +279,7 @@ function openInfo(item,lt){
   const d5=item.s?Math.round((item.s[5]/item.s[0]-1)*100):null;
   const cagr=item.s?((Math.pow(item.s[5]/item.s[0],1/5)-1)*100):null;
   const momento=(item.va!=null&&cagr!=null)?(item.va>cagr*1.25?'acelerando':(item.va<cagr*0.7?'frenándose':'a ritmo estable')):null;
-  body=`<div><span class="big">${item.v?item.v.toLocaleString('es'):'n.d.'}</span> €/m² (jun-2026)</div>
+  body=`<div><span class="big">${item.v?item.v.toLocaleString('es'):'n.d.'}</span> €/m² (${PRE_PERIOD})</div>
   <div>${rk(rankBy(arr,item,'v'))} más caro de los ${tipo} con dato</div>
   ${item.va!=null?`<div class="sec">Variación anual</div><div><b>${item.va>=0?'+':''}${item.va}%</b> &nbsp;·&nbsp; ${rk(rankBy(arr,item,'va'))} que más sube</div>`:''}
   ${item.s?`<div class="sec">Serie jun-2021 → jun-2026</div>${spark(item.s)}<div>${item.s[0].toLocaleString('es')} → ${item.s[5].toLocaleString('es')} €/m² &nbsp;·&nbsp; <b>+${d5}% en 5 años</b> (${cagr.toFixed(1)}%/año)</div>`:''}
