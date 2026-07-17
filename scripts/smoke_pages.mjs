@@ -127,9 +127,17 @@ try {
   const clearHref = await activeRanges.nth(0).getAttribute("href");
   if (!clearHref || (new URL(clearHref).searchParams.get("range") || "").split(",").length !== 1) throw new Error("Clicking an active range must remove only that range");
 
-  const download = page.waitForEvent("download");
+  const removeButtons = await page.locator("#compareBody [data-remove-compare]").count();
+  if (removeButtons !== 2) {
+    const share = await page.locator("#shareStatus").textContent().catch(() => "");
+    throw new Error(`Comparator lost its zones after legend navigation (remove buttons: ${removeButtons}; status: ${share}; url: ${page.url()})`);
+  }
+  const download = page.waitForEvent("download", { timeout: 15_000 }).catch(() => null);
   await page.locator('[data-testid="export-csv"]').click();
-  await download;
+  if (!(await download)) {
+    const share = await page.locator("#shareStatus").textContent().catch(() => "");
+    throw new Error(`CSV export did not trigger a download (status: "${share}")`);
+  }
 
   const macroUrl = new URL(baseUrl);
   macroUrl.searchParams.set("metric", "pre");
