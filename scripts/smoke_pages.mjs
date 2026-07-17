@@ -83,8 +83,8 @@ try {
   await page.locator("#timePlay").click();
   await page.waitForFunction(() => new URL(location.href).searchParams.get("year") === "2020");
   await page.waitForFunction(() => new URL(location.href).searchParams.get("year") === "2021", null, { timeout: 3_000 });
-  await page.locator("#timePlay").click(); // segundo clic = detener
-  if ((await page.locator("#timePlay").getAttribute("aria-pressed")) !== "false") throw new Error("Timeline playback did not stop");
+  if ((await page.locator("#timePlay").getAttribute("aria-pressed")) === "true") await page.locator("#timePlay").click(); // detener si sigue reproduciendo
+  await page.waitForFunction(() => document.getElementById("timePlay")?.getAttribute("aria-pressed") === "false", null, { timeout: 5_000 });
   await page.locator("#view2d").click();
   await page.waitForFunction(() => !new URL(location.href).searchParams.has("view"));
 
