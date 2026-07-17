@@ -49,3 +49,27 @@ jobs:
           node --check js/dashboard.mjs
           node --check scripts/smoke_pages.mjs
           node scripts/check_dashboard.mjs
+
+  preview-smoke:
+    # El mismo smoke del sitio publicado, contra un servidor estático local:
+    # caza regresiones funcionales ANTES de fusionar, sin esperar al deploy.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      - name: Serve the dashboard locally
+        run: |
+          python3 -m http.server 8080 &
+          for i in $(seq 1 20); do curl -sf http://127.0.0.1:8080/index.html >/dev/null && break; sleep 1; done
+
+      - name: Run the smoke suite against the local preview
+        run: npm run smoke:pages -- "http://127.0.0.1:8080/"

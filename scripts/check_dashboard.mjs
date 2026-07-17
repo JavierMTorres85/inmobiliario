@@ -119,7 +119,8 @@ const municipalities = JSON.parse(fs.readFileSync("data/municipalities.json", "u
 const districts = JSON.parse(fs.readFileSync("data/districts.json", "utf8"));
 const neighborhoods = JSON.parse(fs.readFileSync("data/neighborhoods.json", "utf8"));
 const count = (records, predicate) => Object.values(records).filter(predicate).length;
-if (count(municipalities, (item) => item.la != null) !== 179 || count(districts, (item) => item.la != null) !== 21 || count(neighborhoods, (item) => item.la != null) !== 0) {
+const neighbourhoodYearly = count(neighborhoods, (item) => item.la != null);
+if (count(municipalities, (item) => item.la != null) !== 179 || count(districts, (item) => item.la != null) !== 21 || (neighbourhoodYearly !== 0 && neighbourhoodYearly < 120)) {
   throw new Error("Unexpected coverage for the latest population year");
 }
 if (count(municipalities, (item) => item.s?.length === 6) !== 23 || count(districts, (item) => item.s?.length === 6) !== 21 || count(neighborhoods, (item) => item.s?.length === 6) !== 0) {

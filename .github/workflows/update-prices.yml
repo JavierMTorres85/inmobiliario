@@ -1,0 +1,73 @@
+name: Update idealista prices
+
+# Reextrae el informe público de precios de idealista (venta y alquiler:
+# municipios, distritos y barrios), recalcula rentabilidad y esfuerzo y abre
+# una PR. Las series históricas 2021-2026 y los cuadrantes no se tocan.
+# Si idealista bloquea a los runners de GitHub, el job falla con el error HTTP
+# y puede ejecutarse en local: python scripts/update_prices.py
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Solo validar y resumir, sin abrir PR"
+        type: boolean
+        default: false
+  schedule:
+    - cron: "45 7 3 * *"   # día 3 de cada mes, 07:45 UTC
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-prices
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run offline tests first
+        run: python -m unittest tests.test_update_prices -v
+
+      - name: Download and apply price report
+        run: |
+          python scripts/update_prices.py ${{ inputs.dry_run && '--dry-run' || '' }}
+
+      - name: Rebuild manifest and validate
+        if: ${{ !inputs.dry_run }}
+        run: |
+          python scripts/build_manifest.py
+          python scripts/build_manifest.py --check
+          python scripts/validate_repository.py
+          node --check js/dashboard.mjs
+          node scripts/check_dashboard.mjs
+
+      - name: Open pull request with the new prices
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet; then
+            echo "Sin cambios frente al corte actual; no se abre PR."
+            exit 0
+          fi
+          BRANCH="data/prices-$(date -u +%Y%m%d-%H%M)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add data/
+          git commit -m "Actualizar precios idealista (informe público)"
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "Actualizar precios idealista" \
+            --body "Reextracción mensual del informe público (venta y alquiler). Revisa el resumen del job (mes del informe, cobertura, avisos de variación >30%) antes de fusionar." \
+            --base main --head "$BRANCH"

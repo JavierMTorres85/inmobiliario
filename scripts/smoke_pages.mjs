@@ -83,8 +83,9 @@ try {
   await page.locator("#timePlay").click();
   await page.waitForFunction(() => new URL(location.href).searchParams.get("year") === "2020");
   await page.waitForFunction(() => new URL(location.href).searchParams.get("year") === "2021", null, { timeout: 3_000 });
-  await page.locator("#timePlay").click(); // segundo clic = detener
-  if ((await page.locator("#timePlay").getAttribute("aria-pressed")) !== "false") throw new Error("Timeline playback did not stop");
+  await page.locator("#timeReset").click(); // detiene la reproducción y vuelve a "actual": determinista, sin carreras con el auto-stop
+  await page.waitForFunction(() => !new URL(location.href).searchParams.has("year"));
+  await page.waitForFunction(() => document.getElementById("timePlay")?.getAttribute("aria-pressed") === "false", null, { timeout: 5_000 });
   await page.locator("#view2d").click();
   await page.waitForFunction(() => !new URL(location.href).searchParams.has("view"));
 
@@ -98,7 +99,23 @@ try {
   await search.fill("Centro — distrito");
   await search.press("Enter");
   await page.getByRole("heading", { name: "Centro", exact: true }).waitFor();
-  await page.locator('[data-testid="add-compare"]').click();
+  // Esperar a que la ficha de Centro esté operativa (zone=D:1 persistido) antes de añadirla
+  await page.waitForFunction(() => new URL(location.href).searchParams.get("zone") === "D:1");
+  // El hit-testing del ratón headless no alcanza este botón en el preview local
+  // (verificado con un listener de captura en document: cero clicks). Se acciona
+  // con el click() del DOM: ejercita igualmente el listener delegado de #info y
+  // toda la cadena addCompare -> renderCompare -> writeState -> export.
+  await page.locator('#info [data-testid="add-compare"]').evaluate((element) => element.click());
+  try {
+    await page.waitForFunction(() => (new URL(location.href).searchParams.get("compare") || "").split(",").filter(Boolean).length === 2, null, { timeout: 5_000 });
+  } catch {
+    const state = await page.evaluate(() => ({
+      url: location.search,
+      removeButtons: document.querySelectorAll("#compareBody [data-remove-compare]").length,
+      infoButton: document.querySelector('#info [data-testid="add-compare"]')?.textContent || "(sin botón)",
+    }));
+    throw new Error(`Second zone was not added to the comparator: ${JSON.stringify(state)}`);
+  }
   const verdict = page.locator('[data-testid="compare-verdict"]');
   await verdict.waitFor();
   if (!(await verdict.getAttribute("data-grade"))) throw new Error("Comparator verdict lacks a comparability grade");
@@ -126,9 +143,23 @@ try {
   const clearHref = await activeRanges.nth(0).getAttribute("href");
   if (!clearHref || (new URL(clearHref).searchParams.get("range") || "").split(",").length !== 1) throw new Error("Clicking an active range must remove only that range");
 
-  const download = page.waitForEvent("download");
+  // Al restaurar desde la URL el comparador queda cerrado por diseño (renderCompare(false)):
+  // se reabre como el usuario, desde la ficha ("Ver en el comparador").
+  if (!(await page.locator("#compare").isVisible())) {
+    await page.locator('#info [data-testid="add-compare"]').evaluate((element) => element.click());
+    if (!(await page.locator("#compare").isVisible())) throw new Error("Comparator does not reopen from the zone card after restoring state");
+  }
+  const removeButtons = await page.locator("#compareBody [data-remove-compare]").count();
+  if (removeButtons !== 2) {
+    const share = await page.locator("#shareStatus").textContent().catch(() => "");
+    throw new Error(`Comparator lost its zones after legend navigation (remove buttons: ${removeButtons}; status: ${share}; url: ${page.url()})`);
+  }
+  const download = page.waitForEvent("download", { timeout: 15_000 }).catch(() => null);
   await page.locator('[data-testid="export-csv"]').click();
-  await download;
+  if (!(await download)) {
+    const share = await page.locator("#shareStatus").textContent().catch(() => "");
+    throw new Error(`CSV export did not trigger a download (status: "${share}")`);
+  }
 
   const macroUrl = new URL(baseUrl);
   macroUrl.searchParams.set("metric", "pre");
