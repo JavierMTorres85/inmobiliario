@@ -3,7 +3,7 @@ name: Smoke test published dashboard
 on:
   deployment_status:
   schedule:
-    - cron: "30 6 * * 1"
+    - cron: "30 6 * * *"
   workflow_dispatch:
 
 permissions:
