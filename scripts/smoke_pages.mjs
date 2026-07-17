@@ -143,6 +143,12 @@ try {
   const clearHref = await activeRanges.nth(0).getAttribute("href");
   if (!clearHref || (new URL(clearHref).searchParams.get("range") || "").split(",").length !== 1) throw new Error("Clicking an active range must remove only that range");
 
+  // Al restaurar desde la URL el comparador queda cerrado por diseño (renderCompare(false)):
+  // se reabre como el usuario, desde la ficha ("Ver en el comparador").
+  if (!(await page.locator("#compare").isVisible())) {
+    await page.locator('#info [data-testid="add-compare"]').evaluate((element) => element.click());
+    if (!(await page.locator("#compare").isVisible())) throw new Error("Comparator does not reopen from the zone card after restoring state");
+  }
   const removeButtons = await page.locator("#compareBody [data-remove-compare]").count();
   if (removeButtons !== 2) {
     const share = await page.locator("#shareStatus").textContent().catch(() => "");
