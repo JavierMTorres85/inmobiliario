@@ -83,7 +83,8 @@ try {
   await page.locator("#timePlay").click();
   await page.waitForFunction(() => new URL(location.href).searchParams.get("year") === "2020");
   await page.waitForFunction(() => new URL(location.href).searchParams.get("year") === "2021", null, { timeout: 3_000 });
-  if ((await page.locator("#timePlay").getAttribute("aria-pressed")) === "true") await page.locator("#timePlay").click(); // detener si sigue reproduciendo
+  await page.locator("#timeReset").click(); // detiene la reproducción y vuelve a "actual": determinista, sin carreras con el auto-stop
+  await page.waitForFunction(() => !new URL(location.href).searchParams.has("year"));
   await page.waitForFunction(() => document.getElementById("timePlay")?.getAttribute("aria-pressed") === "false", null, { timeout: 5_000 });
   await page.locator("#view2d").click();
   await page.waitForFunction(() => !new URL(location.href).searchParams.has("view"));
