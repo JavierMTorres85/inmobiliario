@@ -76,6 +76,12 @@ con un HTML nuevo. El smoke post-despliegue espera además a que la versión
 publicada coincida con la del commit antes de asertar (handshake), evitando
 falsos rojos por la propagación del CDN de Pages.
 
+El workflow mensual **Update idealista prices** reextrae el informe público de
+precios (venta y alquiler) y abre una PR con los valores al día; la fecha del
+corte que muestra el panel sale del manifiesto, no de textos fijos. Además del
+smoke post-despliegue, cada PR ejecuta el mismo smoke contra una vista previa
+local, de modo que las regresiones funcionales se detectan antes de fusionar.
+
 El workflow manual **Update population data** descarga las series anuales
 oficiales de población (INE tabla 2881 para municipios; Ayto. de Madrid,
 conjunto 300557, para distritos y barrios), añade `py` a cada registro,
